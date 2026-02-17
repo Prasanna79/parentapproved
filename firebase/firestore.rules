@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /families/{familyId} {
+      allow read, write: if request.auth != null && request.auth.uid == familyId;
+
+      match /playlists/{playlistId} {
+        // Owner can CRUD
+        allow read, write: if request.auth != null && request.auth.uid == familyId;
+        // Paired TV can read
+        allow read: if request.auth != null
+          && exists(/databases/$(database)/documents/tv_devices/$(request.auth.uid))
+          && get(/databases/$(database)/documents/tv_devices/$(request.auth.uid)).data.family_id == familyId;
+      }
+    }
+
+    match /tv_devices/{deviceDocId} {
+      // TV can create its own doc (anonymous auth)
+      allow create: if request.auth != null
+        && request.resource.data.family_id == null
+        && request.resource.data.device_uid == request.auth.uid;
+      // TV can read its own doc
+      allow read: if request.auth != null
+        && resource.data.device_uid == request.auth.uid;
+      // TV can update its own doc (for re-pairing, FCM token refresh)
+      allow update: if request.auth != null
+        && resource.data.device_uid == request.auth.uid;
+      // Parent can query by pairing_code and activate (set family_id)
+      allow list: if request.auth != null;
+      allow update: if request.auth != null
+        && resource.data.family_id == null
+        && request.resource.data.family_id == request.auth.uid;
+    }
+
+    match /play_events/{eventId} {
+      allow create: if request.auth != null;
+    }
+  }
+}

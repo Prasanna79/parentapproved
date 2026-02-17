@@ -1,0 +1,30 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Android build artifacts
+**/build/
+**/.gradle/
+**/local.properties
+*.apk
+*.aab
+
+# Signing
+*.keystore
+*.jks
+
+# Firebase
+firebase-debug.log
+**/google-services.json
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Claude Code
+.claude/

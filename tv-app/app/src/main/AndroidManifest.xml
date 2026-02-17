@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <application
+        android:name=".KidsWatchApp"
+        android:allowBackup="true"
+        android:label="KidsWatch"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.KidsWatchTV"
+        android:banner="@drawable/ic_launcher_background">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name=".debug.DebugReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.kidswatch.tv.DEBUG_RESET_PAIRING" />
+                <action android:name="com.kidswatch.tv.DEBUG_REFRESH_PLAYLISTS" />
+                <action android:name="com.kidswatch.tv.DEBUG_FORCE_FLUSH_EVENTS" />
+                <action android:name="com.kidswatch.tv.DEBUG_SIMULATE_OFFLINE" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
