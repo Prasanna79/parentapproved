@@ -568,6 +568,50 @@ REMOTE (V0.3):
 | Relay compromised | Attacker can MITM. Rotate slugs. Rebuild. No persistent data lost (TV has everything) |
 | Parent's QR code photo shared/leaked | Slug + PIN exposed. Mitigate: PIN rotation daily. Worst case: parent re-enables remote on TV, gets new slug |
 
+### Round 5: HTTPS vs HTTP — End to End
+
+#### Local (V0.2): Plain HTTP
+
+The TV has an IP address (`192.168.x.x`), not a domain name. No domain = no Let's Encrypt cert. Self-signed cert would be *worse* UX — browsers show a full-page "Your connection is not private" warning that would terrify parents. Plain HTTP just shows a small "Not Secure" badge in the address bar.
+
+```
+Phone --HTTP--> TV Ktor (192.168.x.x:8080)
+       ^^^^^^^^
+       local WiFi only, no cert possible
+```
+
+The PIN travels in plaintext on your home WiFi. Same as every other local device: your router admin page, your printer, your NAS, your smart home hub. All HTTP. Sniffing requires already being on the same network.
+
+Modern browser features that require HTTPS (service workers, clipboard API, geolocation) aren't needed for a playlist management dashboard. Forms, fetch, cookies all work fine over HTTP.
+
+#### Remote (V0.3): HTTPS + WSS
+
+```
+Phone --HTTPS--> Relay --WSS--> TV
+       ^^^^^^           ^^^^
+       Let's Encrypt    encrypted WebSocket
+       on relay domain  (TV connects outbound)
+```
+
+- Parent → Relay: HTTPS with a real cert (Let's Encrypt on `relay.kidswatch.app`)
+- TV → Relay: WSS (encrypted WebSocket, TV initiates outbound)
+- Inside the TV: relay WS client → localhost Ktor. Unencrypted but it's `127.0.0.1` — never leaves the device.
+
+The relay terminates TLS from the parent, forwards the request over the encrypted WS to the TV. **The relay sees the decrypted request in memory** as it forwards (standard for any reverse proxy / load balancer). You run the relay, so this is acceptable.
+
+#### PIN Exposure Summary
+
+| Path | PIN encrypted in transit? | Who can sniff? |
+|------|--------------------------|----------------|
+| Local (V0.2) | No (HTTP on WiFi) | Someone on your home network with a packet sniffer |
+| Remote (V0.3) | Yes (HTTPS + WSS) | Only the relay operator (you) sees it in memory |
+
+#### Is Local HTTP Acceptable?
+
+Yes. The threat model for local is "someone on your WiFi." If they're sniffing packets, they can also see your router admin password, your printer jobs, your Chromecast traffic, and everything else that runs on HTTP locally. The PIN isn't the weakest link — your network is. And it's your home network.
+
+If this ever becomes a concern (e.g., shared apartment WiFi), the parent can always switch to remote mode where everything is encrypted.
+
 ### Email Collection?
 
 **Don't.** No remote codes means no reason to track who's using the relay. Zero data on the relay (just in-memory slug→WebSocket mappings). No GDPR concerns. No breach risk (nothing to breach). If you need to communicate with users: GitHub issues, README, or the charity's channels.
