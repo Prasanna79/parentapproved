@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <uses-feature
         android:name="android.software.leanback"
@@ -16,7 +18,8 @@
         android:label="KidsWatch"
         android:supportsRtl="true"
         android:theme="@style/Theme.KidsWatchTV"
-        android:banner="@drawable/ic_launcher_background">
+        android:banner="@drawable/ic_launcher_background"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
@@ -32,10 +35,27 @@
             android:name=".debug.DebugReceiver"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.kidswatch.tv.DEBUG_RESET_PAIRING" />
+                <!-- Server/Playlists -->
+                <action android:name="com.kidswatch.tv.DEBUG_ADD_PLAYLIST" />
+                <action android:name="com.kidswatch.tv.DEBUG_REMOVE_PLAYLIST" />
+                <action android:name="com.kidswatch.tv.DEBUG_RESOLVE_PLAYLIST" />
                 <action android:name="com.kidswatch.tv.DEBUG_REFRESH_PLAYLISTS" />
-                <action android:name="com.kidswatch.tv.DEBUG_FORCE_FLUSH_EVENTS" />
+                <action android:name="com.kidswatch.tv.DEBUG_GET_PLAYLISTS" />
+                <action android:name="com.kidswatch.tv.DEBUG_GET_SERVER_STATUS" />
+                <!-- PIN/Auth -->
+                <action android:name="com.kidswatch.tv.DEBUG_GET_PIN" />
+                <action android:name="com.kidswatch.tv.DEBUG_RESET_PIN" />
+                <action android:name="com.kidswatch.tv.DEBUG_SIMULATE_AUTH" />
+                <action android:name="com.kidswatch.tv.DEBUG_GET_AUTH_STATE" />
+                <!-- Playback -->
+                <action android:name="com.kidswatch.tv.DEBUG_PLAY_VIDEO" />
+                <action android:name="com.kidswatch.tv.DEBUG_STOP_PLAYBACK" />
+                <action android:name="com.kidswatch.tv.DEBUG_GET_NOW_PLAYING" />
+                <!-- Lifecycle -->
+                <action android:name="com.kidswatch.tv.DEBUG_FULL_RESET" />
                 <action android:name="com.kidswatch.tv.DEBUG_SIMULATE_OFFLINE" />
+                <action android:name="com.kidswatch.tv.DEBUG_GET_STATE_DUMP" />
+                <action android:name="com.kidswatch.tv.DEBUG_CLEAR_PLAY_EVENTS" />
             </intent-filter>
         </receiver>
     </application>

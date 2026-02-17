@@ -13,17 +13,20 @@ interface PlayEventDao {
     @Update
     suspend fun update(event: PlayEventEntity)
 
-    @Query("SELECT * FROM play_events WHERE flushed = 0")
-    suspend fun getUnflushed(): List<PlayEventEntity>
+    @Query("SELECT * FROM play_events ORDER BY startedAt DESC LIMIT :limit")
+    suspend fun getRecent(limit: Int = 20): List<PlayEventEntity>
 
-    @Query("UPDATE play_events SET flushed = 1 WHERE id IN (:ids)")
-    suspend fun markFlushed(ids: List<Long>)
+    @Query("SELECT * FROM play_events WHERE startedAt >= :dayStartMillis ORDER BY startedAt DESC")
+    suspend fun getForToday(dayStartMillis: Long): List<PlayEventEntity>
 
-    @Query("SELECT COUNT(*) FROM play_events WHERE flushed = 0")
-    suspend fun unflushedCount(): Int
+    @Query("SELECT COALESCE(SUM(durationSec), 0) FROM play_events WHERE startedAt >= :dayStartMillis")
+    suspend fun sumDurationToday(dayStartMillis: Long): Int
 
-    @Query("DELETE FROM play_events WHERE flushed = 1")
-    suspend fun deleteFlushed()
+    @Query("SELECT * FROM play_events WHERE id = :id")
+    suspend fun getById(id: Long): PlayEventEntity?
+
+    @Query("SELECT COUNT(*) FROM play_events")
+    suspend fun count(): Int
 
     @Query("DELETE FROM play_events")
     suspend fun deleteAll()

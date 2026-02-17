@@ -20,18 +20,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.google.firebase.auth.FirebaseAuth
 import com.kidswatch.tv.BuildConfig
-import com.kidswatch.tv.data.FirebaseManager
+import com.kidswatch.tv.ServiceLocator
 import com.kidswatch.tv.data.events.PlayEventRecorder
 import com.kidswatch.tv.ui.components.LogPanel
-import com.kidswatch.tv.ui.theme.TvAccent
 import com.kidswatch.tv.ui.theme.TvBackground
 import com.kidswatch.tv.ui.theme.TvPrimary
 import com.kidswatch.tv.ui.theme.TvText
@@ -43,16 +40,10 @@ import com.kidswatch.tv.util.OfflineSimulator
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
-    familyId: String?,
     onBack: () -> Unit,
-    onResetPairing: () -> Unit,
-    onUnpair: () -> Unit,
     onRefresh: () -> Unit,
 ) {
     var showLog by remember { mutableStateOf(false) }
-    var pendingEvents by remember { mutableIntStateOf(0) }
-
-    PlayEventRecorder.pendingCount { pendingEvents = it }
 
     Column(
         modifier = Modifier
@@ -88,24 +79,25 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // --- Connection ---
+        Text("Connection", style = MaterialTheme.typography.titleMedium, color = TvText)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("PIN: ${ServiceLocator.pinManager.getCurrentPin()}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
+        Text("Active sessions: ${ServiceLocator.sessionManager.getActiveSessionCount()}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         // --- Debug ---
         Text("Debug", style = MaterialTheme.typography.titleMedium, color = TvWarning)
         Spacer(modifier = Modifier.height(8.dp))
 
-        // State inspector
-        Text("State Inspector", style = MaterialTheme.typography.bodyMedium, color = TvTextDim)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text("Device UID: ${FirebaseManager.uid ?: "none"}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
-        Text("Family ID: ${familyId ?: "none"}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
         Text("Offline sim: ${OfflineSimulator.isOffline}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
-        Text("Pending events: $pendingEvents", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
 
         Spacer(modifier = Modifier.height(12.dp))
 
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SettingsBtn("Reset Pairing") { onResetPairing() }
-            SettingsBtn("Unpair") { onUnpair() }
-            SettingsBtn("Force Flush Events") { PlayEventRecorder.flush() }
+            SettingsBtn("Reset PIN") { ServiceLocator.pinManager.resetPin() }
+            SettingsBtn("Clear Sessions") { ServiceLocator.sessionManager.invalidateAll() }
             SettingsBtn("Clear Events") { PlayEventRecorder.clearAll() }
             SettingsBtn(if (OfflineSimulator.isOffline) "Go Online" else "Simulate Offline") {
                 OfflineSimulator.toggle()

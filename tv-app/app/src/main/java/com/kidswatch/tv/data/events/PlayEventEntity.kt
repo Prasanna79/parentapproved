@@ -11,5 +11,4 @@ data class PlayEventEntity(
     val startedAt: Long,
     val durationSec: Int = 0,
     val completedPct: Int = 0,
-    val flushed: Boolean = false,
 )

@@ -1,0 +1,195 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    min-height: 100vh;
+}
+
+#app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+h1 {
+    color: #00d4aa;
+    font-size: 1.8em;
+    margin-bottom: 8px;
+}
+
+h2 {
+    color: #e0e0e0;
+    font-size: 1.2em;
+    margin-bottom: 12px;
+}
+
+/* Auth Screen */
+#auth-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    text-align: center;
+}
+
+#auth-screen p {
+    color: #888;
+    margin-bottom: 24px;
+}
+
+#pin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 280px;
+}
+
+#pin-input {
+    font-size: 2em;
+    text-align: center;
+    letter-spacing: 8px;
+    padding: 12px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background: #16213e;
+    color: #00d4aa;
+    outline: none;
+}
+
+#pin-input:focus {
+    border-color: #00d4aa;
+}
+
+button {
+    padding: 12px 24px;
+    font-size: 1em;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    background: #00d4aa;
+    color: #1a1a2e;
+    cursor: pointer;
+}
+
+button:active {
+    opacity: 0.8;
+}
+
+/* Dashboard */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #333;
+}
+
+.badge {
+    background: #00d4aa;
+    color: #1a1a2e;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 600;
+}
+
+section {
+    margin-bottom: 32px;
+}
+
+/* Playlist form */
+#playlist-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+#playlist-form input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background: #16213e;
+    color: #e0e0e0;
+    font-size: 0.9em;
+    outline: none;
+}
+
+#playlist-form input:focus {
+    border-color: #00d4aa;
+}
+
+#playlist-form button {
+    white-space: nowrap;
+    padding: 10px 16px;
+    font-size: 0.9em;
+}
+
+/* Playlist list */
+#playlist-list, #recent-list {
+    list-style: none;
+}
+
+#playlist-list li, #recent-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #16213e;
+    border-radius: 8px;
+}
+
+.delete-btn {
+    background: #e74c3c;
+    padding: 6px 12px;
+    font-size: 0.8em;
+}
+
+/* Stats */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.stat-card {
+    background: #16213e;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2em;
+    font-weight: 700;
+    color: #00d4aa;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 4px;
+}
+
+/* Utilities */
+.hidden {
+    display: none !important;
+}
+
+.error {
+    color: #e74c3c;
+    font-size: 0.9em;
+    margin-top: 8px;
+}

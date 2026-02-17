@@ -29,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kidswatch.feasibility.debug.DebugAction
+import com.kidswatch.feasibility.debug.DebugActionBus
 import com.kidswatch.feasibility.ui.components.LogEntry
 import com.kidswatch.feasibility.ui.components.LogLevel
 import com.kidswatch.feasibility.ui.components.ResultLogPanel
@@ -62,6 +64,7 @@ fun PlaylistTestScreen(onBack: () -> Unit) {
     var resolving by remember { mutableStateOf(false) }
 
     fun log(message: String, level: LogLevel = LogLevel.INFO) {
+        Log.d("KW-Test5", "[${level.name}] $message")
         logs.add(LogEntry(message, level))
     }
 
@@ -182,6 +185,20 @@ fun PlaylistTestScreen(onBack: () -> Unit) {
                 log("Resolution FAILED (${elapsed}ms): ${e.javaClass.simpleName}: ${e.message}", LogLevel.ERROR)
             } finally {
                 resolving = false
+            }
+        }
+    }
+
+    // Listen for ADB debug actions
+    LaunchedEffect(Unit) {
+        DebugActionBus.actions.collect { action ->
+            when (action) {
+                is DebugAction.ResolvePlaylist -> {
+                    val (id, label) = TEST_PLAYLISTS.getOrElse(action.index) { TEST_PLAYLISTS[0] }
+                    resolvePlaylist(id, label)
+                }
+                is DebugAction.ClearLogs -> logs.clear()
+                else -> {}
             }
         }
     }

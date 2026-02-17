@@ -40,15 +40,15 @@ import com.kidswatch.tv.ui.theme.TvWarning
 
 @Composable
 fun HomeScreen(
-    familyId: String,
     onPlayVideo: (videoId: String, playlistId: String, videoIndex: Int) -> Unit,
     onSettings: () -> Unit,
+    onConnect: () -> Unit,
     viewModel: HomeViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(familyId) {
-        viewModel.start(familyId)
+    LaunchedEffect(Unit) {
+        viewModel.start()
     }
 
     Box(
@@ -75,6 +75,13 @@ fun HomeScreen(
                         Text("Refresh Videos", color = TvText)
                     }
                     Button(
+                        onClick = onConnect,
+                        colors = ButtonDefaults.buttonColors(containerColor = TvAccent),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Text("Connect Phone", color = TvBackground)
+                    }
+                    Button(
                         onClick = onSettings,
                         colors = ButtonDefaults.buttonColors(containerColor = TvPrimary.copy(alpha = 0.7f)),
                         shape = RoundedCornerShape(8.dp),
@@ -90,11 +97,19 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = "All set! Add playlists at kidswatch.app to start watching.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = TvTextDim,
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "No playlists yet!",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = TvText,
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Connect your phone to add YouTube playlists",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = TvTextDim,
+                            )
+                        }
                     }
                 }
                 uiState.isLoading && uiState.rows.all { it.videos.isEmpty() } -> {
@@ -117,7 +132,7 @@ fun HomeScreen(
                             PlaylistRowSection(
                                 row = row,
                                 onPlayVideo = { video ->
-                                    onPlayVideo(video.videoId, row.meta.youtubePlaylistId, video.position)
+                                    onPlayVideo(video.videoId, row.youtubePlaylistId, video.position)
                                 },
                             )
                         }
@@ -151,7 +166,7 @@ private fun PlaylistRowSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = row.meta.displayName,
+                text = row.displayName,
                 style = MaterialTheme.typography.titleMedium,
                 color = TvText,
             )

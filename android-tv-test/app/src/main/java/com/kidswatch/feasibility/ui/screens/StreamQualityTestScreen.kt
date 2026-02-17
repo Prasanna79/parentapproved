@@ -1,5 +1,6 @@
 package com.kidswatch.feasibility.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
+import com.kidswatch.feasibility.debug.DebugAction
+import com.kidswatch.feasibility.debug.DebugActionBus
 import com.kidswatch.feasibility.ui.components.LogEntry
 import com.kidswatch.feasibility.ui.components.LogLevel
 import com.kidswatch.feasibility.ui.components.ResultLogPanel
@@ -59,7 +62,7 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.VideoStream
 
 private val TEST_VIDEOS = listOf(
-    "M7lc1UVf-VE" to "BabyShark",
+    "XqZsoesa55w" to "BabyShark",
     "dQw4w9WgXcQ" to "RickAstley",
     "rfscVS0vtbw" to "SesameStreet",
 )
@@ -82,6 +85,7 @@ fun StreamQualityTestScreen(onBack: () -> Unit) {
     var audioStreams by remember { mutableStateOf<List<AudioStream>>(emptyList()) }
 
     fun log(message: String, level: LogLevel = LogLevel.INFO) {
+        Log.d("KW-Test6", "[${level.name}] $message")
         logs.add(LogEntry(message, level))
     }
 
@@ -228,6 +232,23 @@ fun StreamQualityTestScreen(onBack: () -> Unit) {
             .createMediaSource(MediaItem.fromUri(audio.content))
         exoPlayer.setMediaSource(MergingMediaSource(videoSource, audioSource))
         exoPlayer.prepare()
+    }
+
+    // Listen for ADB debug actions
+    LaunchedEffect(Unit) {
+        DebugActionBus.actions.collect { action ->
+            when (action) {
+                is DebugAction.ExtractStreams -> {
+                    val (id, _) = TEST_VIDEOS.getOrElse(action.index) { TEST_VIDEOS[0] }
+                    extractStreams(id)
+                }
+                is DebugAction.PlayProgressive -> playProgressive(action.resolution)
+                is DebugAction.PlayMerged -> playMerged(action.resolution)
+                is DebugAction.StopPlayer -> { exoPlayer.stop(); log("Stopped") }
+                is DebugAction.ClearLogs -> logs.clear()
+                else -> {}
+            }
+        }
     }
 
     Column(

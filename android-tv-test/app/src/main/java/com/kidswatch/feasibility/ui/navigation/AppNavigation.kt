@@ -1,9 +1,12 @@
 package com.kidswatch.feasibility.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.kidswatch.feasibility.debug.DebugAction
+import com.kidswatch.feasibility.debug.DebugActionBus
 import com.kidswatch.feasibility.ui.screens.AccountManagerTestScreen
 import com.kidswatch.feasibility.ui.screens.EmbedTestScreen
 import com.kidswatch.feasibility.ui.screens.HomeScreen
@@ -25,6 +28,16 @@ object Routes {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+
+    LaunchedEffect(Unit) {
+        DebugActionBus.actions.collect { action ->
+            if (action is DebugAction.Navigate) {
+                navController.navigate(action.route) {
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
 
     NavHost(navController = navController, startDestination = Routes.HOME) {
         composable(Routes.HOME) {

@@ -8,5 +8,6 @@ class KidsWatchApp : Application() {
     override fun onCreate() {
         super.onCreate()
         NewPipe.init(NewPipeDownloader.instance)
+        ServiceLocator.init(this)
     }
 }

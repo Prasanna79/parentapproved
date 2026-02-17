@@ -31,8 +31,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
+import com.kidswatch.tv.ServiceLocator
 import com.kidswatch.tv.data.PlaylistRepository
-import com.kidswatch.tv.data.cache.CacheDatabase
 import com.kidswatch.tv.data.events.PlayEventRecorder
 import com.kidswatch.tv.data.models.VideoItem
 import com.kidswatch.tv.playback.StreamSelector
@@ -59,7 +59,7 @@ fun PlaybackScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val db = remember { CacheDatabase.getInstance(context) }
+    val db = remember { ServiceLocator.database }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var currentVideoIndex by remember { mutableIntStateOf(startIndex) }
     var playlist by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
@@ -204,14 +204,6 @@ fun PlaybackScreen(
                 val pct = if (duration > 0) ((position * 100) / duration).toInt() else 0
                 PlayEventRecorder.updateEvent(elapsed, pct)
             }
-        }
-    }
-
-    // Periodic flush
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(5 * 60 * 1000L)
-            PlayEventRecorder.flush()
         }
     }
 

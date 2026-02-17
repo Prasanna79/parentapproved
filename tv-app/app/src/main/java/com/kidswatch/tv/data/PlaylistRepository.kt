@@ -12,6 +12,12 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.ServiceList
 
+data class PlaylistMeta(
+    val id: Long,
+    val youtubePlaylistId: String,
+    val displayName: String,
+)
+
 object PlaylistRepository {
 
     suspend fun resolvePlaylist(playlistId: String): List<VideoItem> = withContext(Dispatchers.IO) {
@@ -69,12 +75,10 @@ object PlaylistRepository {
             async {
                 meta.youtubePlaylistId to try {
                     val videos = resolvePlaylist(meta.youtubePlaylistId)
-                    // Cache
                     cacheVideos(db, meta.youtubePlaylistId, videos)
                     PlaylistResult.Success(videos)
                 } catch (e: Exception) {
                     AppLogger.error("Resolve ${meta.youtubePlaylistId} failed: ${e.message}")
-                    // Try cache fallback
                     val cached = getCachedVideos(db, meta.youtubePlaylistId)
                     if (cached.isNotEmpty()) {
                         PlaylistResult.CachedFallback(cached)
@@ -86,7 +90,7 @@ object PlaylistRepository {
         }.awaitAll().toMap()
     }
 
-    private suspend fun cacheVideos(db: CacheDatabase, playlistId: String, videos: List<VideoItem>) {
+    suspend fun cacheVideos(db: CacheDatabase, playlistId: String, videos: List<VideoItem>) {
         withContext(Dispatchers.IO) {
             db.videoDao().deleteByPlaylist(playlistId)
             db.videoDao().insertAll(videos.map { v ->
