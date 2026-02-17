@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kidswatch.tv.BuildConfig
 import com.kidswatch.tv.ui.components.VideoCard
+import com.kidswatch.tv.ui.theme.OverscanPadding
 import com.kidswatch.tv.ui.theme.TvAccent
 import com.kidswatch.tv.ui.theme.TvBackground
 import com.kidswatch.tv.ui.theme.TvPrimary
@@ -55,6 +56,7 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(TvBackground)
+            .padding(OverscanPadding)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Top bar

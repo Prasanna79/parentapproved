@@ -1,6 +1,7 @@
 package com.kidswatch.tv.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,9 +20,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackException
@@ -35,6 +42,9 @@ import com.kidswatch.tv.ServiceLocator
 import com.kidswatch.tv.data.PlaylistRepository
 import com.kidswatch.tv.data.events.PlayEventRecorder
 import com.kidswatch.tv.data.models.VideoItem
+import com.kidswatch.tv.playback.DpadKeyHandler
+import com.kidswatch.tv.playback.PlaybackCommand
+import com.kidswatch.tv.playback.PlaybackCommandBus
 import com.kidswatch.tv.playback.StreamSelector
 import com.kidswatch.tv.ui.theme.TvAccent
 import com.kidswatch.tv.ui.theme.TvBackground
@@ -64,6 +74,8 @@ fun PlaybackScreen(
     var currentVideoIndex by remember { mutableIntStateOf(startIndex) }
     var playlist by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
     var playStartTime by remember { mutableStateOf(0L) }
+    var playlistTitle by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
@@ -82,6 +94,7 @@ fun PlaybackScreen(
         object {
             var extractAndPlay: ((String) -> Unit)? = null
             var advanceToNext: (() -> Unit)? = null
+            var goToPrev: (() -> Unit)? = null
             var skipAfterDelay: (() -> Unit)? = null
         }
     }
@@ -101,6 +114,26 @@ fun PlaybackScreen(
         }
     }
 
+    controller.goToPrev = {
+        val elapsedSec = ((System.currentTimeMillis() - playStartTime) / 1000).toInt()
+        PlayEventRecorder.endEvent(elapsedSec, 0)
+
+        if (elapsedSec > 5) {
+            // Restart current video
+            controller.extractAndPlay?.invoke(playlistRef.value[indexRef.intValue].videoId)
+        } else {
+            val prevIndex = indexRef.intValue - 1
+            if (prevIndex >= 0) {
+                currentVideoIndex = prevIndex
+                indexRef.intValue = prevIndex
+                controller.extractAndPlay?.invoke(playlistRef.value[prevIndex].videoId)
+            } else {
+                // Already at first video, restart it
+                controller.extractAndPlay?.invoke(playlistRef.value[indexRef.intValue].videoId)
+            }
+        }
+    }
+
     controller.skipAfterDelay = {
         scope.launch {
             delay(3000)
@@ -112,7 +145,18 @@ fun PlaybackScreen(
         errorMessage = null
         AppLogger.log("Extracting stream: $vid")
         playStartTime = System.currentTimeMillis()
-        PlayEventRecorder.startEvent(vid, playlistId)
+
+        val currentVideo = playlistRef.value.getOrNull(indexRef.intValue)
+        val title = currentVideo?.title ?: vid
+        val durationMs = (currentVideo?.durationSeconds ?: 0) * 1000L
+
+        PlayEventRecorder.startEvent(
+            videoId = vid,
+            playlistId = playlistId,
+            title = title,
+            playlistTitle = playlistTitle,
+            durationMs = durationMs,
+        )
 
         scope.launch {
             try {
@@ -162,6 +206,42 @@ fun PlaybackScreen(
         val cached = PlaylistRepository.getCachedVideos(db, playlistId)
         playlist = cached
         playlistRef.value = cached
+
+        // Try to get playlist display name from DB
+        try {
+            val entity = withContext(Dispatchers.IO) {
+                db.playlistDao().getByYoutubeId(playlistId)
+            }
+            playlistTitle = entity?.displayName ?: playlistId
+        } catch (_: Exception) {
+            playlistTitle = playlistId
+        }
+    }
+
+    // Collect commands from PlaybackCommandBus
+    LaunchedEffect(Unit) {
+        PlaybackCommandBus.commands.collect { command ->
+            when (command) {
+                PlaybackCommand.Stop -> {
+                    onBack()
+                }
+                PlaybackCommand.SkipNext -> {
+                    controller.advanceToNext?.invoke()
+                }
+                PlaybackCommand.SkipPrev -> {
+                    controller.goToPrev?.invoke()
+                }
+                PlaybackCommand.TogglePause -> {
+                    if (exoPlayer.isPlaying) {
+                        exoPlayer.pause()
+                        PlayEventRecorder.onPause()
+                    } else {
+                        exoPlayer.play()
+                        PlayEventRecorder.onResume()
+                    }
+                }
+            }
+        }
     }
 
     // Player listener
@@ -212,15 +292,52 @@ fun PlaybackScreen(
         controller.extractAndPlay?.invoke(videoId)
     }
 
+    // Request focus for D-pad
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(TvBackground)
+            .focusRequester(focusRequester)
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown) {
+                    val command = DpadKeyHandler.mapKeyToCommand(event.nativeKeyEvent.keyCode)
+                    if (command != null) {
+                        PlaybackCommandBus.send(command)
+                        true
+                    } else false
+                } else false
+            }
+            .focusable()
     ) {
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
-                    player = exoPlayer
+                    player = object : ForwardingPlayer(exoPlayer) {
+                        override fun hasNextMediaItem(): Boolean =
+                            indexRef.intValue < playlistRef.value.size - 1
+
+                        override fun hasPreviousMediaItem(): Boolean = true
+
+                        override fun seekToNextMediaItem() {
+                            controller.advanceToNext?.invoke()
+                        }
+
+                        override fun seekToPreviousMediaItem() {
+                            controller.goToPrev?.invoke()
+                        }
+
+                        override fun seekToNext() {
+                            controller.advanceToNext?.invoke()
+                        }
+
+                        override fun seekToPrevious() {
+                            controller.goToPrev?.invoke()
+                        }
+                    }
                     useController = true
                 }
             },

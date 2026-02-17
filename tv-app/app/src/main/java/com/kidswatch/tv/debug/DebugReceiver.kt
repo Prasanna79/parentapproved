@@ -120,12 +120,12 @@ class DebugReceiver : BroadcastReceiver() {
         }
         scope.launch {
             try {
-                val videos = com.kidswatch.tv.data.PlaylistRepository.resolvePlaylist(playlistId)
+                val resolved = com.kidswatch.tv.data.PlaylistRepository.resolvePlaylist(playlistId)
                 // Cache them
                 com.kidswatch.tv.data.PlaylistRepository.cacheVideos(
-                    ServiceLocator.database, playlistId, videos
+                    ServiceLocator.database, playlistId, resolved.videos
                 )
-                logResult("""{"playlist_id":"$playlistId","video_count":${videos.size}}""")
+                logResult("""{"playlist_id":"$playlistId","title":"${resolved.title}","video_count":${resolved.videos.size}}""")
             } catch (e: Exception) {
                 logResult("""{"error":"${e.message}"}""")
             }
@@ -185,6 +185,7 @@ class DebugReceiver : BroadcastReceiver() {
 
     private fun handleResetPin() {
         val newPin = ServiceLocator.pinManager.resetPin()
+        ServiceLocator.sessionManager.invalidateAll()
         logResult("""{"pin":"$newPin"}""")
     }
 

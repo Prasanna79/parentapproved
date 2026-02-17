@@ -58,6 +58,27 @@ class SessionManagerTest {
     }
 
     @Test
+    fun resetPinFlow_invalidatesAllSessions() {
+        // Simulates what SettingsScreen and DebugReceiver do:
+        // resetPin() + invalidateAll() ensures old tokens stop working
+        val pinManager = PinManager(clock = { currentTime })
+        val token1 = sessionManager.createSession()!!
+        val token2 = sessionManager.createSession()!!
+        assertTrue(sessionManager.validateSession(token1))
+
+        // Reset PIN should clear sessions (call site responsibility)
+        pinManager.resetPin()
+        sessionManager.invalidateAll()
+
+        assertFalse(sessionManager.validateSession(token1))
+        assertFalse(sessionManager.validateSession(token2))
+        // New session can be created after reset
+        val newToken = sessionManager.createSession()
+        assertNotNull(newToken)
+        assertTrue(sessionManager.validateSession(newToken!!))
+    }
+
+    @Test
     fun getActiveSessionCount_tracksCorrectly() {
         assertEquals(0, sessionManager.getActiveSessionCount())
         sessionManager.createSession()

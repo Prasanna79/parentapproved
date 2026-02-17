@@ -1,8 +1,10 @@
 (function() {
     'use strict';
 
-    let sessionToken = null;
+    let sessionToken = localStorage.getItem('kw_token');
     const API_BASE = '';
+    let statusInterval = null;
+    let isCurrentlyPlaying = false;
 
     // DOM refs
     const authScreen = document.getElementById('auth-screen');
@@ -16,7 +18,14 @@
     const playlistList = document.getElementById('playlist-list');
     const recentList = document.getElementById('recent-list');
     const nowPlaying = document.getElementById('now-playing');
-    const nowPlayingId = document.getElementById('now-playing-id');
+    const npTitle = document.getElementById('np-title');
+    const npPlaylistTitle = document.getElementById('np-playlist-title');
+    const npElapsed = document.getElementById('np-elapsed');
+    const npDuration = document.getElementById('np-duration');
+    const npProgressFill = document.getElementById('np-progress-fill');
+    const npStopBtn = document.getElementById('np-stop-btn');
+    const npPauseBtn = document.getElementById('np-pause-btn');
+    const npNextBtn = document.getElementById('np-next-btn');
     const statVideos = document.getElementById('stat-videos');
     const statTime = document.getElementById('stat-time');
 
@@ -25,30 +34,41 @@
     }
 
     async function apiCall(method, path, body) {
-        const opts = { method: method, headers: authHeaders() };
+        var opts = { method: method, headers: authHeaders() };
         if (body) opts.body = JSON.stringify(body);
-        const resp = await fetch(API_BASE + path, opts);
-        const data = await resp.json();
+        var resp = await fetch(API_BASE + path, opts);
+        if (resp.status === 401) {
+            logout();
+            return { status: 401, data: { error: 'Session expired' } };
+        }
+        var data = await resp.json();
         return { status: resp.status, data: data };
+    }
+
+    function formatTime(totalSec) {
+        var mins = Math.floor(totalSec / 60);
+        var secs = totalSec % 60;
+        return mins + ':' + (secs < 10 ? '0' : '') + secs;
     }
 
     // Auth
     pinForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         authError.classList.add('hidden');
-        const pin = pinInput.value.trim();
+        var pin = pinInput.value.trim();
         if (!pin) return;
 
         try {
-            const resp = await fetch(API_BASE + '/auth', {
+            var resp = await fetch(API_BASE + '/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pin: pin })
             });
-            const data = await resp.json();
+            var data = await resp.json();
 
             if (resp.ok && data.token) {
                 sessionToken = data.token;
+                localStorage.setItem('kw_token', sessionToken);
                 authScreen.classList.add('hidden');
                 dashboard.classList.remove('hidden');
                 loadDashboard();
@@ -66,11 +86,11 @@
     playlistForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         playlistError.classList.add('hidden');
-        const url = playlistUrl.value.trim();
+        var url = playlistUrl.value.trim();
         if (!url) return;
 
         try {
-            const result = await apiCall('POST', '/playlists', { url: url });
+            var result = await apiCall('POST', '/playlists', { url: url });
             if (result.status === 201) {
                 playlistUrl.value = '';
                 loadPlaylists();
@@ -92,7 +112,7 @@
 
     async function loadPlaylists() {
         try {
-            const result = await apiCall('GET', '/playlists');
+            var result = await apiCall('GET', '/playlists');
             if (result.status === 200) {
                 playlistList.innerHTML = '';
                 result.data.forEach(function(pl) {
@@ -113,7 +133,7 @@
 
     async function loadStats() {
         try {
-            const result = await apiCall('GET', '/stats');
+            var result = await apiCall('GET', '/stats');
             if (result.status === 200) {
                 statVideos.textContent = result.data.totalEventsToday;
                 var mins = Math.round(result.data.totalWatchTimeToday / 60);
@@ -126,7 +146,7 @@
 
     async function loadRecent() {
         try {
-            const result = await apiCall('GET', '/stats/recent');
+            var result = await apiCall('GET', '/stats/recent');
             if (result.status === 200) {
                 recentList.innerHTML = '';
                 result.data.slice(0, 10).forEach(function(evt) {
@@ -143,16 +163,59 @@
 
     async function loadStatus() {
         try {
-            const result = await apiCall('GET', '/status');
+            var result = await apiCall('GET', '/status');
             if (result.status === 200 && result.data.currentlyPlaying) {
+                var np = result.data.currentlyPlaying;
                 nowPlaying.classList.remove('hidden');
-                nowPlayingId.textContent = result.data.currentlyPlaying.videoId;
+                npTitle.textContent = np.title || np.videoId;
+                npPlaylistTitle.textContent = np.playlistTitle || '';
+                npElapsed.textContent = formatTime(np.elapsedSec || 0);
+                npDuration.textContent = formatTime(np.durationSec || 0);
+                npPauseBtn.textContent = np.playing ? 'Pause' : 'Play';
+
+                var pct = 0;
+                if (np.durationSec > 0) {
+                    pct = Math.min(100, Math.round((np.elapsedSec / np.durationSec) * 100));
+                }
+                npProgressFill.style.width = pct + '%';
+
+                // Switch to fast polling when playing
+                if (!isCurrentlyPlaying) {
+                    isCurrentlyPlaying = true;
+                    setPollingRate(5000);
+                }
             } else {
                 nowPlaying.classList.add('hidden');
+                if (isCurrentlyPlaying) {
+                    isCurrentlyPlaying = false;
+                    setPollingRate(30000);
+                    loadStats();
+                    loadRecent();
+                }
             }
         } catch (err) {
             console.error('Load status failed:', err);
         }
+    }
+
+    // Playback controls
+    npStopBtn.addEventListener('click', function() {
+        apiCall('POST', '/playback/stop');
+    });
+
+    npPauseBtn.addEventListener('click', function() {
+        apiCall('POST', '/playback/pause');
+    });
+
+    npNextBtn.addEventListener('click', function() {
+        apiCall('POST', '/playback/skip');
+    });
+
+    function setPollingRate(ms) {
+        if (statusInterval) clearInterval(statusInterval);
+        statusInterval = setInterval(function() {
+            loadStatus();
+        }, ms);
     }
 
     function loadDashboard() {
@@ -160,17 +223,35 @@
         loadStats();
         loadRecent();
         loadStatus();
-
-        // Auto-refresh every 30s
-        setInterval(function() {
-            loadStats();
-            loadStatus();
-        }, 30000);
+        setPollingRate(30000);
     }
 
     function escapeHtml(str) {
         var div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+    }
+
+    function logout() {
+        sessionToken = null;
+        localStorage.removeItem('kw_token');
+        dashboard.classList.add('hidden');
+        authScreen.classList.remove('hidden');
+        if (statusInterval) clearInterval(statusInterval);
+    }
+
+    // Auto-login if token exists from previous session
+    if (sessionToken) {
+        fetch(API_BASE + '/status', { headers: authHeaders() })
+            .then(function(resp) {
+                if (resp.ok) {
+                    authScreen.classList.add('hidden');
+                    dashboard.classList.remove('hidden');
+                    loadDashboard();
+                } else {
+                    logout();
+                }
+            })
+            .catch(function() { logout(); });
     }
 })();

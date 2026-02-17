@@ -12,21 +12,37 @@ object PlayEventRecorder {
     private var db: CacheDatabase? = null
     private var currentEventId: Long? = null
     private var currentStartTime: Long = 0
+    private var clock: () -> Long = { System.currentTimeMillis() }
+    private var pausedElapsedMs: Long = 0
 
     var currentVideoId: String? = null
         private set
     var currentPlaylistId: String? = null
         private set
+    var currentTitle: String? = null
+        private set
+    var currentPlaylistTitle: String? = null
+        private set
+    var currentDurationMs: Long = 0
+        private set
+    var isPlaying: Boolean = false
+        private set
 
-    fun init(database: CacheDatabase) {
+    fun init(database: CacheDatabase, clock: () -> Long = { System.currentTimeMillis() }) {
         this.db = database
+        this.clock = clock
     }
 
-    fun startEvent(videoId: String, playlistId: String) {
+    fun startEvent(videoId: String, playlistId: String, title: String = "", playlistTitle: String = "", durationMs: Long = 0) {
         val dao = db?.playEventDao() ?: return
-        currentStartTime = System.currentTimeMillis()
+        currentStartTime = clock()
         currentVideoId = videoId
         currentPlaylistId = playlistId
+        currentTitle = title
+        currentPlaylistTitle = playlistTitle
+        currentDurationMs = durationMs
+        isPlaying = true
+        pausedElapsedMs = 0
         scope.launch {
             val event = PlayEventEntity(
                 videoId = videoId,
@@ -35,6 +51,28 @@ object PlayEventRecorder {
             )
             currentEventId = dao.insert(event)
             AppLogger.log("Play event started: $videoId")
+        }
+    }
+
+    fun onPause() {
+        if (isPlaying) {
+            pausedElapsedMs = clock() - currentStartTime
+            isPlaying = false
+        }
+    }
+
+    fun onResume() {
+        if (!isPlaying && currentVideoId != null) {
+            currentStartTime = clock() - pausedElapsedMs
+            isPlaying = true
+        }
+    }
+
+    fun getElapsedMs(): Long {
+        return if (isPlaying) {
+            clock() - currentStartTime
+        } else {
+            pausedElapsedMs
         }
     }
 
@@ -52,6 +90,11 @@ object PlayEventRecorder {
         currentEventId = null
         currentVideoId = null
         currentPlaylistId = null
+        currentTitle = null
+        currentPlaylistTitle = null
+        currentDurationMs = 0
+        isPlaying = false
+        pausedElapsedMs = 0
     }
 
     fun clearAll() {

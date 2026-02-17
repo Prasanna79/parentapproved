@@ -18,6 +18,8 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.*
@@ -26,18 +28,26 @@ import org.junit.Test
 
 class StatusRoutesTest {
 
+    private lateinit var mockDb: CacheDatabase
+    private var fakeTime = 10_000L
+
     @Before
     fun setup() {
-        val mockDb = mockk<CacheDatabase>()
+        mockDb = mockk<CacheDatabase>()
         val mockPlaylistDao = mockk<PlaylistDao>()
         coEvery { mockPlaylistDao.count() } returns 3
         every { mockDb.playlistDao() } returns mockPlaylistDao
+
+        val mockPlayEventDao = mockk<com.kidswatch.tv.data.events.PlayEventDao>(relaxed = true)
+        coEvery { mockPlayEventDao.insert(any()) } returns 1L
+        every { mockDb.playEventDao() } returns mockPlayEventDao
 
         ServiceLocator.initForTest(
             db = mockDb,
             pin = PinManager(),
             session = SessionManager(),
         )
+        PlayEventRecorder.init(mockDb, clock = { fakeTime })
     }
 
     private fun testApp(block: suspend ApplicationTestBuilder.() -> Unit) = testApplication {
@@ -63,11 +73,48 @@ class StatusRoutesTest {
 
     @Test
     fun getStatus_includesNowPlaying() = testApp {
-        // No current playback
+        // No current playback — endEvent to ensure clean state
+        PlayEventRecorder.endEvent(0, 0)
         val response = client.get("/status")
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         // currentlyPlaying should be null when nothing is playing
-        assertTrue(body["currentlyPlaying"]?.jsonPrimitive?.content == null ||
-                   body.containsKey("currentlyPlaying"))
+        assertTrue(body.containsKey("currentlyPlaying"))
+        assertTrue(body["currentlyPlaying"] is kotlinx.serialization.json.JsonNull)
+    }
+
+    @Test
+    fun getStatus_nowPlaying_includesTitle() = testApp {
+        fakeTime = 10_000L
+        PlayEventRecorder.startEvent("vid1", "pl1", title = "Cool Video", playlistTitle = "Fun Playlist", durationMs = 120_000)
+        val response = client.get("/status")
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val np = body["currentlyPlaying"]!!.jsonObject
+        assertEquals("Cool Video", np["title"]!!.jsonPrimitive.content)
+        assertEquals("Fun Playlist", np["playlistTitle"]!!.jsonPrimitive.content)
+        PlayEventRecorder.endEvent(0, 0)
+    }
+
+    @Test
+    fun getStatus_nowPlaying_includesElapsedAndDuration() = testApp {
+        fakeTime = 10_000L
+        PlayEventRecorder.startEvent("vid1", "pl1", title = "Vid", playlistTitle = "PL", durationMs = 120_000)
+        fakeTime = 15_000L // 5 seconds elapsed
+        val response = client.get("/status")
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val np = body["currentlyPlaying"]!!.jsonObject
+        assertEquals(5, np["elapsedSec"]!!.jsonPrimitive.int)
+        assertEquals(120, np["durationSec"]!!.jsonPrimitive.int)
+        PlayEventRecorder.endEvent(0, 0)
+    }
+
+    @Test
+    fun getStatus_nowPlaying_includesPlayingState() = testApp {
+        fakeTime = 10_000L
+        PlayEventRecorder.startEvent("vid1", "pl1", title = "Vid", playlistTitle = "PL", durationMs = 60_000)
+        val response = client.get("/status")
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val np = body["currentlyPlaying"]!!.jsonObject
+        assertTrue(np["playing"]!!.jsonPrimitive.boolean)
+        PlayEventRecorder.endEvent(0, 0)
     }
 }

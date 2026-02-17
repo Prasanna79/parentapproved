@@ -21,6 +21,11 @@ data class StatusResponse(
 data class NowPlayingResponse(
     val videoId: String,
     val playlistId: String,
+    val title: String = "",
+    val playlistTitle: String = "",
+    val elapsedSec: Int = 0,
+    val durationSec: Int = 0,
+    val playing: Boolean = false,
 )
 
 fun Route.statusRoutes() {
@@ -35,6 +40,11 @@ fun Route.statusRoutes() {
             NowPlayingResponse(
                 videoId = vid,
                 playlistId = PlayEventRecorder.currentPlaylistId ?: "",
+                title = PlayEventRecorder.currentTitle ?: "",
+                playlistTitle = PlayEventRecorder.currentPlaylistTitle ?: "",
+                elapsedSec = (PlayEventRecorder.getElapsedMs() / 1000).toInt(),
+                durationSec = (PlayEventRecorder.currentDurationMs / 1000).toInt(),
+                playing = PlayEventRecorder.isPlaying,
             )
         }
 

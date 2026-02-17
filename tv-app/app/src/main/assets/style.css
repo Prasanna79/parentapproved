@@ -183,6 +183,97 @@ section {
     margin-top: 4px;
 }
 
+/* Now Playing Card */
+.now-playing-card {
+    background: #16213e;
+    border: 1px solid #00d4aa;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.np-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.np-playlist {
+    font-size: 0.8em;
+    color: #888;
+}
+
+.np-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+.np-progress-container {
+    margin-bottom: 12px;
+}
+
+.np-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.np-progress-fill {
+    height: 100%;
+    background: #00d4aa;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+.np-time {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75em;
+    color: #888;
+}
+
+.np-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.np-btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.np-btn-stop {
+    background: #e74c3c;
+    color: #fff;
+}
+
+.np-btn-pause {
+    background: #00d4aa;
+    color: #1a1a2e;
+}
+
+.np-btn-next {
+    background: #2980b9;
+    color: #fff;
+}
+
+.np-btn:active {
+    opacity: 0.8;
+}
+
 /* Utilities */
 .hidden {
     display: none !important;

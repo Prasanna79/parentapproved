@@ -18,7 +18,7 @@
         android:label="KidsWatch"
         android:supportsRtl="true"
         android:theme="@style/Theme.KidsWatchTV"
-        android:banner="@drawable/ic_launcher_background"
+        android:banner="@drawable/banner"
         android:usesCleartextTraffic="true">
 
         <activity

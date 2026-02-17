@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kidswatch.tv.BuildConfig
 import com.kidswatch.tv.ServiceLocator
+import com.kidswatch.tv.ui.theme.OverscanPadding
 import com.kidswatch.tv.ui.theme.TvAccent
 import com.kidswatch.tv.ui.theme.TvPrimary
 import com.kidswatch.tv.ui.theme.TvBackground
@@ -56,7 +59,9 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(TvBackground),
+            .background(TvBackground)
+            .padding(OverscanPadding)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -66,15 +71,15 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
             color = TvText,
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (qrBitmap != null) {
             Image(
                 bitmap = qrBitmap!!.asImageBitmap(),
                 contentDescription = "QR code to connect",
-                modifier = Modifier.size(200.dp),
+                modifier = Modifier.size(160.dp),
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = ip?.let { NetworkUtils.buildConnectUrl(it) } ?: "",
                 style = MaterialTheme.typography.bodyMedium,
@@ -88,7 +93,7 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "PIN:",
@@ -96,18 +101,18 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
             color = TvTextDim,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
             text = pin,
-            fontSize = 48.sp,
+            fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
             color = TvAccent,
             letterSpacing = 8.sp,
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = "Scan the QR code or visit the URL above",
@@ -115,18 +120,17 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
             color = TvTextDim,
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = onBack,
             colors = ButtonDefaults.buttonColors(containerColor = TvPrimary),
-            modifier = Modifier.padding(8.dp),
         ) {
             Text("Back", color = TvText)
         }
 
         if (BuildConfig.IS_DEBUG) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "v${BuildConfig.VERSION_NAME}-debug",
                 style = MaterialTheme.typography.bodySmall,

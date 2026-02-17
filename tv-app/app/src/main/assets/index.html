@@ -21,11 +21,29 @@
         <div id="dashboard" class="hidden">
             <header>
                 <h1>KidsWatch</h1>
-                <div id="now-playing" class="hidden">
-                    <span class="badge">Now Playing</span>
-                    <span id="now-playing-id"></span>
-                </div>
             </header>
+
+            <div id="now-playing" class="now-playing-card hidden">
+                <div class="np-header">
+                    <span class="badge">Now Playing</span>
+                    <span id="np-playlist-title" class="np-playlist"></span>
+                </div>
+                <div id="np-title" class="np-title"></div>
+                <div class="np-progress-container">
+                    <div class="np-progress-bar">
+                        <div id="np-progress-fill" class="np-progress-fill"></div>
+                    </div>
+                    <div class="np-time">
+                        <span id="np-elapsed">0:00</span>
+                        <span id="np-duration">0:00</span>
+                    </div>
+                </div>
+                <div class="np-controls">
+                    <button id="np-stop-btn" class="np-btn np-btn-stop">Stop</button>
+                    <button id="np-pause-btn" class="np-btn np-btn-pause">Pause</button>
+                    <button id="np-next-btn" class="np-btn np-btn-next">Next</button>
+                </div>
+            </div>
 
             <section id="playlists-section">
                 <h2>Playlists</h2>

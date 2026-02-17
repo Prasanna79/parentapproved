@@ -18,14 +18,23 @@ data class PlaylistMeta(
     val displayName: String,
 )
 
+data class ResolvedPlaylist(
+    val title: String,
+    val videos: List<VideoItem>,
+)
+
 object PlaylistRepository {
 
-    suspend fun resolvePlaylist(playlistId: String): List<VideoItem> = withContext(Dispatchers.IO) {
+    suspend fun resolvePlaylist(playlistId: String): ResolvedPlaylist = withContext(Dispatchers.IO) {
         if (OfflineSimulator.isOffline) throw java.io.IOException("Simulated offline")
 
         val url = "https://www.youtube.com/playlist?list=$playlistId"
         val extractor = ServiceList.YouTube.getPlaylistExtractor(url)
         extractor.fetchPage()
+
+        val playlistTitle = try {
+            extractor.name?.takeIf { it.isNotBlank() } ?: playlistId
+        } catch (_: Exception) { playlistId }
 
         val videos = mutableListOf<VideoItem>()
 
@@ -63,8 +72,8 @@ object PlaylistRepository {
             nextPage = page.nextPage
         }
 
-        AppLogger.success("Resolved $playlistId: ${videos.size} videos")
-        videos
+        AppLogger.success("Resolved $playlistId: ${videos.size} videos, title: $playlistTitle")
+        ResolvedPlaylist(title = playlistTitle, videos = videos)
     }
 
     suspend fun resolveAllPlaylists(
@@ -74,9 +83,16 @@ object PlaylistRepository {
         playlists.map { meta ->
             async {
                 meta.youtubePlaylistId to try {
-                    val videos = resolvePlaylist(meta.youtubePlaylistId)
-                    cacheVideos(db, meta.youtubePlaylistId, videos)
-                    PlaylistResult.Success(videos)
+                    val resolved = resolvePlaylist(meta.youtubePlaylistId)
+                    cacheVideos(db, meta.youtubePlaylistId, resolved.videos)
+
+                    // Update display name if title has changed
+                    val entity = db.playlistDao().getByYoutubeId(meta.youtubePlaylistId)
+                    if (entity != null) {
+                        updatePlaylistTitle(db, entity, resolved.title)
+                    }
+
+                    PlaylistResult.Success(resolved.videos)
                 } catch (e: Exception) {
                     AppLogger.error("Resolve ${meta.youtubePlaylistId} failed: ${e.message}")
                     val cached = getCachedVideos(db, meta.youtubePlaylistId)
@@ -88,6 +104,12 @@ object PlaylistRepository {
                 }
             }
         }.awaitAll().toMap()
+    }
+
+    suspend fun updatePlaylistTitle(db: CacheDatabase, entity: com.kidswatch.tv.data.cache.PlaylistEntity, newTitle: String) {
+        if (entity.displayName != newTitle && newTitle.isNotBlank()) {
+            db.playlistDao().updateDisplayName(entity.id, newTitle)
+        }
     }
 
     suspend fun cacheVideos(db: CacheDatabase, playlistId: String, videos: List<VideoItem>) {

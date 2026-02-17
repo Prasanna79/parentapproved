@@ -29,6 +29,7 @@ import com.kidswatch.tv.BuildConfig
 import com.kidswatch.tv.ServiceLocator
 import com.kidswatch.tv.data.events.PlayEventRecorder
 import com.kidswatch.tv.ui.components.LogPanel
+import com.kidswatch.tv.ui.theme.OverscanPadding
 import com.kidswatch.tv.ui.theme.TvBackground
 import com.kidswatch.tv.ui.theme.TvPrimary
 import com.kidswatch.tv.ui.theme.TvText
@@ -44,12 +45,14 @@ fun SettingsScreen(
     onRefresh: () -> Unit,
 ) {
     var showLog by remember { mutableStateOf(false) }
+    var displayPin by remember { mutableStateOf(ServiceLocator.pinManager.getCurrentPin()) }
+    var sessionCount by remember { mutableStateOf(ServiceLocator.sessionManager.getActiveSessionCount()) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(TvBackground)
-            .padding(24.dp)
+            .padding(OverscanPadding)
             .verticalScroll(rememberScrollState()),
     ) {
         Row(
@@ -82,8 +85,8 @@ fun SettingsScreen(
         // --- Connection ---
         Text("Connection", style = MaterialTheme.typography.titleMedium, color = TvText)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("PIN: ${ServiceLocator.pinManager.getCurrentPin()}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
-        Text("Active sessions: ${ServiceLocator.sessionManager.getActiveSessionCount()}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
+        Text("PIN: $displayPin", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
+        Text("Active sessions: $sessionCount", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -96,8 +99,16 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SettingsBtn("Reset PIN") { ServiceLocator.pinManager.resetPin() }
-            SettingsBtn("Clear Sessions") { ServiceLocator.sessionManager.invalidateAll() }
+            SettingsBtn("Reset PIN") {
+                val newPin = ServiceLocator.pinManager.resetPin()
+                ServiceLocator.sessionManager.invalidateAll()
+                displayPin = newPin
+                sessionCount = 0
+            }
+            SettingsBtn("Clear Sessions") {
+                ServiceLocator.sessionManager.invalidateAll()
+                sessionCount = 0
+            }
             SettingsBtn("Clear Events") { PlayEventRecorder.clearAll() }
             SettingsBtn(if (OfflineSimulator.isOffline) "Go Online" else "Simulate Offline") {
                 OfflineSimulator.toggle()

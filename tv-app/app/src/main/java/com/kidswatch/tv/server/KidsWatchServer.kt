@@ -59,6 +59,7 @@ class KidsWatchServer(private val context: Context, private val port: Int = 8080
                 routing {
                     authRoutes(ServiceLocator.pinManager, ServiceLocator.sessionManager)
                     playlistRoutes(ServiceLocator.sessionManager, ServiceLocator.database)
+                    playbackRoutes(ServiceLocator.sessionManager)
                     statsRoutes(ServiceLocator.sessionManager, ServiceLocator.database)
                     statusRoutes()
                     dashboardRoutes()
