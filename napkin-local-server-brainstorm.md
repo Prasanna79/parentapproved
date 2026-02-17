@@ -347,26 +347,16 @@ It's the only option that's:
 - Fully under your control
 - Cheap enough to run forever
 
-### How the "Charityware Upsell" Works
+### Charityware Model (Honor System)
 
 ```
-FREE (local only):
-  - TV app with embedded server
-  - Parent connects on local WiFi
-  - QR code + PIN
-  - Full playlist management + playback
-  - All data stays local
-
-DONATE (remote access):
-  - Parent donates to [charity] → gets a "remote code"
-  - Enters code in TV's settings → TV connects to relay
-  - Parent gets a URL: relay.kidswatch.app/tv/[slug]
-  - Works from anywhere, same dashboard
-  - TV still the source of truth, relay is just a pipe
-  - Analytics viewable remotely too
+The app includes remote relay support for everyone.
+Settings screen has a "Enable Remote Access" toggle.
+Below it: "If you find KidsWatch useful, please donate to [charity]."
+That's it. No codes, no gates, no verification. Honor system.
 ```
 
-The "remote code" could be as simple as a token you generate and hand out. No payment processing, no account system. Honor-based. Someone could share their code — who cares, it's charityware.
+No remote codes. No tokens to hand out. No gating. The relay is open to any TV running the app. The parent taps "Enable Remote Access" on the TV, the TV connects to the relay, done.
 
 ### Architecture: V0.2 Local → V0.3 Relay Add-on
 
@@ -430,7 +420,8 @@ V0.2  Local-only TV app (21-25 days)
 V0.3  Remote relay add-on (6-9 days, whenever demand warrants)
       └── Tiny relay server on fly.io or Hetzner
       └── WebSocket tunnel from TV
-      └── Remote code / charityware donation gate
+      └── Honor-system charityware (donate prompt, no gates)
+      └── Relay rate-limits by counting 401s per slug
       └── Analytics endpoints
 
 V0.4  Polish based on feedback
@@ -445,173 +436,141 @@ V0.2 is shippable and complete on its own. V0.3 is a clean add-on that doesn't c
 
 ### The Nightmare Scenario
 
-An attacker guesses or brute-forces their way into the TV's management interface and adds a playlist full of inappropriate content. The kid navigates to it and watches. Parent has no idea.
+An attacker adds a playlist of inappropriate content to a kid's TV. The kid watches it. Parent has no idea. This is the only threat that matters. Data exfiltration is irrelevant (there's no data). DoS is irrelevant (reboot the TV).
 
-This is the only threat that really matters. Everything else (DoS, data exfiltration) is irrelevant — there's no valuable data and the TV can be rebooted.
+### V0.2 (Local Only) — Easy
 
-### Attack Surfaces by Version
+**Threat:** Someone on the same WiFi guesses the PIN.
 
-#### V0.2 (Local Only)
-
-**Threat:** Someone on the same WiFi network hits the TV's IP and guesses the PIN.
-
-**Who can attack:** Only someone on your home network. A neighbor on their own WiFi can't reach you. An attacker on the internet can't reach you (no port forwarding).
-
-**Risk level: Very low.** The attacker has to be:
-1. On your WiFi (so: in your house, or on a shared network like an apartment building)
-2. Scanning for HTTP servers on unusual ports
-3. Willing to brute-force a PIN
-
-**Mitigations (cheap, do all of these):**
-- 6-digit PIN (1,000,000 combinations, not 10,000)
-- Rate limit: 5 wrong attempts → 5 minute lockout, exponential backoff
-- PIN displayed only on TV screen (not transmitted, not stored remotely)
-- Lockout notification on TV screen: "Someone tried the wrong PIN 5 times"
-- Optional: PIN rotation — new PIN every 24h, shown on TV
-
-**Is this enough for local?** Yes. An attacker on your home WiFi who is brute-forcing HTTP services on random ports has bigger problems (and so do you). The PIN is a speed bump, not a fortress, and that's appropriate for the threat model.
-
-#### V0.3 (Relay — Internet-Exposed)
-
-This is where it gets real. Now the TV's management interface is reachable from anywhere on the internet, through the relay.
-
-**Threat model changes completely:**
-- Attacker doesn't need to be on your WiFi
-- Attacker can script brute-force attempts from anywhere
-- The relay slug is the first gate — if guessable, attacker can find TVs to target
-- The PIN is the second gate — if brute-forceable, attacker is in
-
-### Relay Security Deep Dive
-
-#### Layer 1: The Slug (Finding the TV)
-
-The slug is in the URL: `relay.kidswatch.app/tv/{slug}`
-
-**Bad: short sequential slugs** (`/tv/001`, `/tv/002`)
-- Enumerable. An attacker can scan all of them.
-
-**Bad: short random slugs** (`/tv/abc`, `/tv/x7q`)
-- Small keyspace. With 3 chars alphanumeric = 46,656 combinations. Trivially scannable.
-
-**Good: long random slugs** (`/tv/f7k2-m9p4-x3n8`)
-- 12 chars alphanumeric = 4.7 × 10^18 combinations. Unguessable.
-- But long slugs are hard to type. Parent needs to enter this somewhere.
-
-**Better: TV-generated, parent never types it.**
-- The TV connects to the relay with its remote code (see below)
-- The relay assigns a slug and tells the TV
-- The TV displays the full URL (or QR code) on screen
-- The parent scans the QR code — never types the slug
-- The slug can be arbitrarily long because humans don't enter it
-
-**Recommendation:**
-- Slug = 24-char random base62 string (e.g., `f7k2m9p4x3n8q5w2j8r6t4v1`)
-- ~143 bits of entropy. Not guessable. Not enumerable.
-- Parent gets it via QR code on the TV screen. Never types it.
-
-#### Layer 2: The PIN (Authenticating the Parent)
-
-Even if an attacker somehow has the slug, they still need the PIN.
-
-**Problem:** Over the internet, brute-force is faster. An attacker can throw thousands of requests at the relay.
+**Who can attack:** Only someone on your home network. Internet attackers can't reach the TV (no port forwarding).
 
 **Mitigations:**
+- 6-digit PIN (1M combinations)
+- Rate limit: 5 wrong attempts → 5 min lockout, exponential backoff
+- Lockout alert on TV screen
+- All enforced by the TV's Ktor server — simple, self-contained
 
-| Mitigation | Where | Effect |
-|------------|-------|--------|
-| Rate limit on relay | Relay server | Max 5 PIN attempts per slug per 15 minutes. Relay enforces, not TV. |
-| Rate limit on TV | TV app | Same limits locally, in case relay is bypassed somehow. Defense in depth. |
-| 6-digit PIN | TV app | 1M combinations. At 5 per 15 min = 20 per hour = 480 per day. Average crack time: ~1,042 days. |
-| Lockout + alert | TV app | After 10 failed attempts, disable remote access until parent re-enables on TV. Show alert on TV screen. |
-| PIN rotation | TV app | New PIN every 24h. Resets any brute-force progress. |
-| HTTPS only | Relay | PIN transmitted encrypted. No sniffing. |
+**Verdict:** Fine. If someone on your WiFi is brute-forcing random HTTP ports, you have bigger problems.
 
-**With all mitigations: 6-digit PIN + 5/15min rate limit + 24h rotation = effectively uncrackable via brute force.**
+### V0.3 (Relay) — The Hard Questions
 
-#### Layer 3: The Remote Code (Authorizing the TV to Use the Relay)
+With no remote codes (honor-system charityware), any TV can connect to the relay. This changes the security model.
 
-This is the "donate to charity" token. The TV enters it in settings to connect to the relay.
+#### Question 1: "Does the relay have the PIN?"
 
-**What is it?** A pre-generated secret token, like `KW-7f8a9b2c-4d3e-1f6g`. You generate a batch, hand them out to people who donate.
-
-**Security properties:**
-- The relay only accepts WebSocket connections from TVs that present a valid remote code
-- Each code is single-use (binds to one TV's anonymous UID on first connection)
-- If leaked, it can be revoked (relay maintains a small allowlist — the only state it stores)
-- Codes don't expire (charityware — don't hassle people)
-
-**What the relay stores (minimal state):**
+**No.** The relay never sees or stores the PIN. Here's the flow:
 
 ```
-remote_codes:
-  KW-7f8a9b2c: { tv_uid: "abc123", slug: "f7k2m9p4...", active: true }
-  KW-3e4f5a6b: { tv_uid: null, slug: null, active: true }  // unused, available
+Parent                    Relay                      TV (Ktor)
+  |                         |                           |
+  |-- POST /tv/{slug}/auth  |                           |
+  |   body: { pin: "1234" } |                           |
+  |                         |-- forward over WS ------> |
+  |                         |   (raw HTTP request)      |
+  |                         |                           |-- check PIN
+  |                         |                           |-- return 200 or 401
+  |                         |<-- forward response ----- |
+  |<-- 200 + session cookie |                           |
 ```
 
-This is the only state on the relay. A JSON file or SQLite DB. No user data, no playlists, no viewing history.
+The relay forwards the raw request. The TV checks the PIN and responds. The relay doesn't parse the body — it's just bytes.
 
-#### Layer 4: The Relay Itself (What Can It See?)
+**But wait:** The relay *could* read the request body (it's forwarding it). It would see `{ pin: "1234" }` in plaintext in the WebSocket message. So the relay *technically* has access to the PIN.
 
-The relay forwards HTTP traffic. It can see:
-- The slug (which TV)
-- The URL paths being requested (`/playlists`, `/auth`, `/stats`)
-- Request/response bodies (including the PIN on `/auth`)
+**Is this a problem?** No — you run the relay. It's your server. If your relay is compromised, the attacker has bigger power (they can MITM everything). The PIN-in-transit concern is only relevant if you don't trust your own infrastructure, which is a different problem.
 
-**Mitigation options:**
+#### Question 2: "How does the relay rate-limit if it's a dumb pipe?"
 
-**Option A: Trust the relay (pragmatic).** You run it. You're the developer. The relay sees PIN attempts and playlist management requests. This is fine for charityware where the operator and the developer are the same person.
+This is the real design question. Three options:
 
-**Option B: End-to-end encryption (overkill).** The parent and TV establish a shared secret (the PIN itself, or a key derived from it), and encrypt the payload before the relay sees it. The relay forwards opaque blobs.
+**Option A: Relay inspects HTTP response status codes**
 
-**Recommendation:** Option A for V0.3. The relay operator is you. If the project grows to the point where trust is a concern, revisit. E2E encryption adds significant complexity for a threat that requires compromising your own server.
+The relay is *almost* a dumb pipe — but it peeks at one thing: the response status code from the TV.
 
-### Email Collection?
+```
+POST /tv/{slug}/auth → forward to TV → TV returns 401 → relay counts a failure
+POST /tv/{slug}/auth → forward to TV → TV returns 200 → relay doesn't count it
+```
 
-**Do we need to collect email for the remote code?**
+- Relay keeps: `{ slug → { fail_count, last_fail_time } }` in memory
+- After 5 failures in 15 min → relay stops forwarding `/auth` requests for that slug
+- Returns 429 (Too Many Requests) directly, never reaches the TV
+- Successful auth (200) doesn't count toward the limit
+- Counter resets after 15 min of no failures
 
-**Arguments for:**
-- Can notify if their code is compromised/revoked
-- Can contact them for critical security updates
-- Creates a minimal record of who has access
+**How it differentiates right from wrong:** It reads the HTTP status code from the TV's response. `200` = correct PIN (don't count). `401` = wrong PIN (count it). The relay never reads the PIN itself — just the success/failure signal the TV already returns.
 
-**Arguments against:**
-- It's charityware. Don't collect data you don't need.
-- GDPR/privacy overhead for storing emails
-- The "donate to charity" model is honor-based anyway
-- If you need to reach people, do it through the charity or GitHub
+**This is the right answer.** Minimal intelligence. The relay is still nearly a dumb pipe — it doesn't parse request bodies, doesn't store PINs, doesn't know what a playlist is. It just counts 401s per slug.
 
-**Recommendation: Don't collect email.** Keep it zero-data. Hand out codes, codes work. If a code is compromised, revoke it. The person can request a new one through whatever channel they used to get the first one (GitHub issue, email to you, etc.).
+**Option B: TV signals the relay out-of-band**
 
-If you want *optional* email for security notifications: fine. But don't require it.
+After a failed PIN attempt, the TV sends a separate WebSocket message: `{ "event": "auth_failed" }`. Relay counts these.
 
-### Summary: Security by Layer
+- Cleaner separation (relay doesn't inspect HTTP at all)
+- But adds a protocol layer (TV has to speak WebSocket control messages *and* HTTP tunneling)
+- More complex for no real benefit
+
+**Option C: TV does all rate limiting, relay does nothing**
+
+- Simplest relay (truly a dumb pipe)
+- But: attacker can flood the TV with thousands of requests per second
+- The TV is an Android device — it can't absorb a brute-force flood the way a server can
+- The relay *should* protect the TV from request volume
+
+**Verdict: Option A.** Relay peeks at response codes, counts failures, blocks after threshold. Simple, effective, protects the TV.
+
+#### Question 3: "How does the relay handle open access without remote codes?"
+
+No remote codes means any TV can connect. This raises:
+
+**Abuse risk:** Someone could connect 10,000 fake "TVs" to the relay, exhausting resources.
+
+**Mitigations:**
+- Rate limit WebSocket connections per IP (e.g., 3 per hour)
+- Each TV must maintain a heartbeat or get disconnected after 60s
+- Max concurrent connections on the relay (e.g., 500 — way more than charityware needs)
+- If abuse becomes a problem (unlikely for charityware), add a simple proof-of-work or CAPTCHA to the "Enable Remote Access" flow on the TV
+
+**Realistically:** No one is going to DDoS a charityware relay for kids' YouTube playlists. The mitigations above are backstops, not daily necessities.
+
+#### The Full Security Picture (Revised)
 
 ```
 LOCAL (V0.2):
-  WiFi boundary         → attacker must be on your network
-  6-digit PIN           → rate-limited, lockout after 10 fails
-  ✓ Sufficient for home use
+  WiFi boundary          → attacker must be on your network
+  6-digit PIN            → 1M combinations
+  Rate limit on TV       → 5 fails / 5 min lockout
+  ✓ Sufficient
 
 REMOTE (V0.3):
-  Layer 1: Slug         → 24-char random, unguessable, QR-code delivered
-  Layer 2: PIN          → 6-digit, rate-limited at relay (5/15min), rotates daily
-  Layer 3: Remote code  → pre-generated, single-use, revocable
-  Layer 4: HTTPS        → encrypted transit, relay is trusted (you run it)
-  Lockout: 10 fails     → remote access disabled until parent re-enables on TV
-  ✓ Strong enough for charityware. Attacker can't find you, can't brute-force you.
+  Layer 1: Slug          → 24-char random (143 bits), QR-code delivered
+                           Unguessable. Attacker can't find any TV to attack.
+  Layer 2: Relay gate    → counts 401s per slug, blocks after 5 fails / 15 min
+                           Attacker who has slug gets 5 guesses per 15 min.
+  Layer 3: TV gate       → also rate-limits locally (defense in depth)
+                           10 total fails → disable remote until re-enabled on TV.
+  Layer 4: PIN           → 6-digit, rotates daily
+                           At 5/15min: avg crack time ~1,042 days. Daily rotation
+                           resets progress. Effectively uncrackable.
+  Layer 5: HTTPS         → encrypted transit. PIN not sniffable.
+  ✓ Sufficient for charityware
 ```
 
-**The key insight:** The 24-char slug is the real security gate, not the PIN. The slug has 143 bits of entropy and is never typed — it's scanned via QR code. An attacker who doesn't have the slug can't even attempt the PIN. The PIN is a second factor for the (astronomically unlikely) case that someone has the slug.
+**The key insight remains:** The 24-char slug is the real security. An attacker who doesn't have the slug can't even find a TV to attempt the PIN against. The slug has 143 bits of entropy and is delivered via QR code on the physical TV screen. The PIN + rate limiting is a belt-and-suspenders second factor.
 
-### What Could Still Go Wrong
+### What About Abuse of the Relay Itself?
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Attacker on home WiFi brute-forces PIN | Very low | Kid sees bad playlist | Rate limit + lockout + TV alert |
-| Relay server compromised | Very low | Attacker gets slugs + can MITM | Rotate slugs, revoke codes, bring relay back on clean server |
-| Remote code leaked/shared | Low | Unauthorized TV on relay | Codes are single-bind; leaked unused code → revoke |
-| Someone scans QR code off the TV screen | Near zero | Needs physical access to your living room | If they're in your house, you have bigger problems |
-| YouTube serves harmful content in a "safe" playlist | Medium | Kid sees something bad | Out of scope — this is the parent's curation problem, not a security issue |
+| Concern | Mitigation |
+|---------|------------|
+| Flood of fake TV connections | Rate limit per IP, heartbeat timeout, max connections |
+| Attacker enumerates slugs | 24-char = 10^43 possibilities. Scanning at 1000/sec = heat death of universe |
+| Attacker has slug, brute-forces PIN | 5 attempts / 15 min at relay. 10 total fails = remote disabled on TV |
+| Relay compromised | Attacker can MITM. Rotate slugs. Rebuild. No persistent data lost (TV has everything) |
+| Parent's QR code photo shared/leaked | Slug + PIN exposed. Mitigate: PIN rotation daily. Worst case: parent re-enables remote on TV, gets new slug |
+
+### Email Collection?
+
+**Don't.** No remote codes means no reason to track who's using the relay. Zero data on the relay (just in-memory slug→WebSocket mappings). No GDPR concerns. No breach risk (nothing to breach). If you need to communicate with users: GitHub issues, README, or the charity's channels.
 
 ---
 
@@ -622,5 +581,5 @@ REMOTE (V0.3):
 3. **Can we skip the PIN entirely for local network?** If someone is on your WiFi, they're already in your house. Counter-argument: guest WiFi, shared apartment buildings. PIN is cheap insurance — keep it.
 4. **Charityware distribution:** GitHub releases with APK? F-Droid? Sideload instructions?
 5. **Multiple TVs (local version):** Each TV is its own island. Is that a problem? For charityware, probably not — most families have one TV the kids use. Relay (V0.3) could let the parent see all TVs in one dashboard.
-6. **Relay auth:** How does the relay know which TVs are authorized? Simple: TV presents a token (the "remote code") when connecting. Relay just matches parent requests to TV connections by slug. No user accounts on the relay.
+6. **Relay abuse:** Open relay (no codes) means anyone can connect a TV. Is per-IP rate limiting + heartbeat + max connections enough? For charityware scale, almost certainly yes.
 7. **Relay latency:** WebSocket round-trip adds ~50-100ms. For a dashboard serving HTML, imperceptible. For video playback, doesn't matter — the TV still streams directly from YouTube.
