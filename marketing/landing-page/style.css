@@ -108,6 +108,33 @@ a:hover {
   display: none;
 }
 
+/* --- Site Header --- */
+.site-header {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+.site-brand:hover {
+  text-decoration: none;
+}
+
+.site-logo {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
 /* --- Layout --- */
 .container {
   max-width: var(--max-width);
