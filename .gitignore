@@ -27,5 +27,11 @@ firebase-debug.log
 *.iml
 .vscode/
 
+# Wrangler (Cloudflare build artifacts)
+.wrangler/
+
+# Debug screenshots (local only)
+debug-images/
+
 # Claude Code
 .claude/
