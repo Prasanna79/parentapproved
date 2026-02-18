@@ -6,6 +6,12 @@
     let statusInterval = null;
     let isCurrentlyPlaying = false;
 
+    // Extract PIN from query param: ?pin=123456
+    function extractPin() {
+        var params = new URLSearchParams(window.location.search);
+        return params.get('pin');
+    }
+
     // DOM refs
     const authScreen = document.getElementById('auth-screen');
     const dashboard = document.getElementById('dashboard');
@@ -52,12 +58,8 @@
     }
 
     // Auth
-    pinForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
+    async function submitPin(pin) {
         authError.classList.add('hidden');
-        var pin = pinInput.value.trim();
-        if (!pin) return;
-
         try {
             var resp = await fetch(API_BASE + '/auth', {
                 method: 'POST',
@@ -80,6 +82,13 @@
             authError.textContent = 'Connection failed';
             authError.classList.remove('hidden');
         }
+    }
+
+    pinForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var pin = pinInput.value.trim();
+        if (!pin) return;
+        submitPin(pin);
     });
 
     // Add playlist
@@ -240,8 +249,13 @@
         if (statusInterval) clearInterval(statusInterval);
     }
 
-    // Auto-login if token exists from previous session
-    if (sessionToken) {
+    // Auto-PIN from URL query param (QR code scan)
+    var autoPin = extractPin();
+    if (autoPin && !sessionToken) {
+        pinInput.value = autoPin;
+        submitPin(autoPin);
+    } else if (sessionToken) {
+        // Auto-login if token exists from previous session
         fetch(API_BASE + '/status', { headers: authHeaders() })
             .then(function(resp) {
                 if (resp.ok) {

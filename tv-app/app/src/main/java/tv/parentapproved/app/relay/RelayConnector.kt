@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import tv.parentapproved.app.util.AppLogger
 import java.util.concurrent.TimeUnit
 
 enum class RelayConnectionState {
@@ -49,6 +50,7 @@ class RelayConnector(
         shouldReconnect = true
         startTime = clock()
         scope = CoroutineScope(dispatcher + SupervisorJob())
+        AppLogger.log("Relay connecting to ${config.relayUrl}")
         doConnect()
     }
 
@@ -80,15 +82,17 @@ class RelayConnector(
 
         webSocket = webSocketFactory.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
+                AppLogger.log("Relay WebSocket opened")
                 val connectMsg = ConnectMessage(
                     tvId = config.tvId,
                     tvSecret = config.tvSecret,
-                    appVersion = "0.4.0",
+                    appVersion = "0.5.0",
                 )
                 ws.send(RelayJson.serializeConnect(connectMsg))
                 state = RelayConnectionState.CONNECTED
                 currentBackoffMs = 1000 // reset backoff on successful connect
                 startHeartbeat(ws)
+                AppLogger.success("Relay connected to ${config.relayUrl}")
             }
 
             override fun onMessage(ws: WebSocket, text: String) {
@@ -96,6 +100,7 @@ class RelayConnector(
             }
 
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
+                AppLogger.log("Relay WebSocket failure: ${t.message}")
                 state = RelayConnectionState.DISCONNECTED
                 webSocket = null
                 heartbeatJob?.cancel()
@@ -107,6 +112,7 @@ class RelayConnector(
             }
 
             override fun onClosed(ws: WebSocket, code: Int, reason: String) {
+                AppLogger.log("Relay WebSocket closed: $code $reason")
                 state = RelayConnectionState.DISCONNECTED
                 webSocket = null
                 heartbeatJob?.cancel()
@@ -194,6 +200,7 @@ class RelayConnector(
         val delayMs = currentBackoffMs
         currentBackoffMs = (currentBackoffMs * 2).coerceAtMost(maxBackoffMs)
         reconnectJob = scope?.launch {
+            AppLogger.log("Relay reconnecting in ${delayMs}ms")
             delay(delayMs)
             doConnect()
         }
