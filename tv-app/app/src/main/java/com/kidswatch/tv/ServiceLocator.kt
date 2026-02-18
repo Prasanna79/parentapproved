@@ -1,6 +1,7 @@
 package com.kidswatch.tv
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.kidswatch.tv.auth.PinManager
 import com.kidswatch.tv.auth.SessionManager
 import com.kidswatch.tv.auth.SharedPrefsSessionPersistence
@@ -17,6 +18,9 @@ object ServiceLocator {
     lateinit var relayConnector: RelayConnector
 
     private var initialized = false
+    private lateinit var relayPrefs: SharedPreferences
+
+    private const val KEY_RELAY_ENABLED = "relay_enabled"
 
     fun init(context: Context) {
         if (initialized) return
@@ -27,7 +31,7 @@ object ServiceLocator {
         sessionManager = SessionManager(persistence = persistence)
 
         // Relay config
-        val relayPrefs = context.getSharedPreferences("kidswatch_relay", Context.MODE_PRIVATE)
+        relayPrefs = context.getSharedPreferences("kidswatch_relay", Context.MODE_PRIVATE)
         relayConfig = RelayConfig(
             prefs = relayPrefs,
             relayUrl = BuildConfig.RELAY_URL,
@@ -41,6 +45,21 @@ object ServiceLocator {
         )
         PlayEventRecorder.init(database)
         initialized = true
+    }
+
+    fun isRelayEnabled(): Boolean {
+        return if (::relayPrefs.isInitialized) {
+            relayPrefs.getBoolean(KEY_RELAY_ENABLED, false)
+        } else false
+    }
+
+    fun setRelayEnabled(enabled: Boolean) {
+        relayPrefs.edit().putBoolean(KEY_RELAY_ENABLED, enabled).apply()
+        if (enabled) {
+            relayConnector.connect()
+        } else {
+            relayConnector.disconnect()
+        }
     }
 
     fun initForTest(db: CacheDatabase, pin: PinManager, session: SessionManager) {

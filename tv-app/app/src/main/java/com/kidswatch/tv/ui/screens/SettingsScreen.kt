@@ -90,26 +90,56 @@ fun SettingsScreen(
         Text("PIN: $displayPin", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
         Text("Active sessions: $sessionCount", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
 
-        // Relay status
-        val relayInfo = remember {
-            try {
-                val state = ServiceLocator.relayConnector.state
-                state to when (state) {
-                    RelayConnectionState.CONNECTED -> "Connected"
-                    RelayConnectionState.CONNECTING -> "Connecting..."
-                    RelayConnectionState.DISCONNECTED -> "Disconnected"
-                }
-            } catch (_: Exception) {
-                null
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- Remote Access ---
+        Text("Remote Access", style = MaterialTheme.typography.titleMedium, color = TvText)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        var relayEnabled by remember { mutableStateOf(ServiceLocator.isRelayEnabled()) }
+
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SettingsBtn(if (relayEnabled) "Disable Remote" else "Enable Remote") {
+                relayEnabled = !relayEnabled
+                ServiceLocator.setRelayEnabled(relayEnabled)
             }
         }
-        relayInfo?.let { (state, statusText) ->
-            val relayColor = when (state) {
-                RelayConnectionState.CONNECTED -> TvAccent
-                RelayConnectionState.CONNECTING -> TvWarning
-                RelayConnectionState.DISCONNECTED -> TvTextDim
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        if (relayEnabled) {
+            // Relay status
+            val relayInfo = remember {
+                try {
+                    val state = ServiceLocator.relayConnector.state
+                    state to when (state) {
+                        RelayConnectionState.CONNECTED -> "Connected"
+                        RelayConnectionState.CONNECTING -> "Connecting..."
+                        RelayConnectionState.DISCONNECTED -> "Disconnected"
+                    }
+                } catch (_: Exception) {
+                    null
+                }
             }
-            Text("Relay: $statusText", style = MaterialTheme.typography.bodySmall, color = relayColor)
+            relayInfo?.let { (state, statusText) ->
+                val relayColor = when (state) {
+                    RelayConnectionState.CONNECTED -> TvAccent
+                    RelayConnectionState.CONNECTING -> TvWarning
+                    RelayConnectionState.DISCONNECTED -> TvTextDim
+                }
+                Text("Relay: $statusText", style = MaterialTheme.typography.bodySmall, color = relayColor)
+            }
+            Text(
+                "Dashboard works from anywhere when enabled.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TvTextDim,
+            )
+        } else {
+            Text(
+                "Dashboard only works on same WiFi.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TvTextDim,
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -129,7 +159,9 @@ fun SettingsScreen(
                 // Rotate tv-secret on PIN reset (invalidates all remote access)
                 try {
                     ServiceLocator.relayConfig.rotateTvSecret()
-                    ServiceLocator.relayConnector.reconnectNow()
+                    if (relayEnabled) {
+                        ServiceLocator.relayConnector.reconnectNow()
+                    }
                 } catch (_: Exception) {}
                 displayPin = newPin
                 sessionCount = 0

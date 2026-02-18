@@ -9,7 +9,7 @@ bindings = [
 
 [[migrations]]
 tag = "v1"
-new_classes = ["RelayDurableObject"]
+new_sqlite_classes = ["RelayDurableObject"]
 
 # Assets (dashboard HTML/JS/CSS)
 [site]

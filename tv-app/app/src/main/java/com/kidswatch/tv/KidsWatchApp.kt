@@ -9,7 +9,9 @@ class KidsWatchApp : Application() {
         super.onCreate()
         NewPipe.init(NewPipeDownloader.instance)
         ServiceLocator.init(this)
-        // Start relay connection to enable remote access
-        ServiceLocator.relayConnector.connect()
+        // Only connect relay if user has enabled remote access
+        if (ServiceLocator.isRelayEnabled()) {
+            ServiceLocator.relayConnector.connect()
+        }
     }
 }

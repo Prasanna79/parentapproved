@@ -997,3 +997,173 @@ No access control on the gear — simple tap. It's a family project, developer-o
 ### Session Token Persistence (critical v4 fix)
 
 Persist session tokens in SharedPreferences (not just in-memory). Survives app restart/update. Without this, every APK update forces all parents to re-pair.
+
+---
+
+## Round 10 — Remote Default & Charityware Specifics
+
+*Post-implementation council session. Relay is deployed, code is written. Two open questions: (1) Should remote be on or off by default? (2) What are the specific charityware donation targets?*
+
+### Remote Access: Opt-In vs Default-On
+
+> **Dev:** The spec says "Enable Remote Access" toggle in Settings, off by default. But now that v4 is built and the relay is deployed, I'm questioning that. The relay is the whole point of v4. If it's buried in Settings as an opt-in checkbox, most users will never find it. The QR code on ConnectScreen already points to the relay URL. Are we shipping a feature and then hiding it?
+
+> **Architect:** Let's think about what "off by default" actually means in the current implementation. Right now, `RelayConnector.connect()` is called in `KidsWatchApp.onCreate()` — it's always on. The QR code on ConnectScreen encodes the relay URL. There IS no toggle. We built it always-on. The spec said opt-in, but the code says always-on. Which one is wrong?
+
+> **Dev:** The code is wrong per the spec. But I think the spec might be wrong per the product intent.
+
+> **Skeptic:** Hold on. Let me argue both sides.
+>
+> **Case for opt-in (spec's position):**
+> - Privacy-first brand promise. "No data leaves your home" is the headline. If remote is on by default, that's not true from moment one.
+> - Attack surface. Every connected TV is reachable via the relay. Opt-in means only TVs whose owners explicitly chose remote are exposed.
+> - The landing page says "local-first by default, remote only if you choose." Changing this changes the pitch.
+>
+> **Case for default-on:**
+> - The QR code IS the onboarding. If scanning the QR code on the TV gives a URL that doesn't work because remote isn't enabled, that's confusing.
+> - Parents don't read Settings. If remote requires finding a toggle, most parents will only use the app on the same WiFi. They'll never discover the killer feature.
+> - The relay sees zero user data — it's a dumb pipe with an allowlist. There's no privacy cost to being connected. The TV initiates the outbound WebSocket; no ports are opened.
+> - "Local-first" can mean "works without internet" rather than "never connects to internet." The TV still works fully offline if the relay is down.
+
+> **Architect:** The Skeptic's last point is key. "Local-first" doesn't have to mean "air-gapped." It means the TV is the source of truth, the local server works without internet, and the relay is a convenience layer. The TV doesn't depend on the relay — it degrades gracefully.
+>
+> Here's my proposal: **Remote on by default, with a toggle to disable it in Settings.**
+>
+> Reasoning:
+> 1. The QR code flow only makes sense if remote is on. Otherwise scan → broken URL → confused parent.
+> 2. Same-WiFi still works (local IP shown as secondary on ConnectScreen). Parents on the same network can use either path.
+> 3. Settings gets a "Remote Access" toggle (on by default) with clear labeling: "Your TV connects to a relay so your dashboard works from anywhere. Turn off to restrict access to your home WiFi only."
+> 4. Turning it off calls `relayConnector.disconnect()` and hides the relay QR code. Only shows the local IP QR code.
+> 5. The privacy story becomes: "Works from anywhere by default. Want to lock it to your WiFi? One toggle."
+
+> **Dev:** I like that better. It's honest — the app connects to a relay, here's why, here's how to turn it off. Hiding the feature behind opt-in is security theater for a charityware app that doesn't collect data.
+
+> **Skeptic:** Agreed, but one condition: the ConnectScreen should clearly state "Connected via relay at parentapproved.tv" so parents know their TV is reachable remotely. Informed default, not hidden default.
+
+> **Architect:** Yes. And the Settings toggle should show relay status — connected/disconnected/disabled.
+
+**Decision: Remote on by default. Toggle in Settings to disable. ConnectScreen shows relay status. Landing page updated from "opt-in" to "on by default, one toggle to disable."**
+
+Implementation:
+- `RelayConnector.connect()` stays in `KidsWatchApp.onCreate()` (current behavior — already correct)
+- Settings: add "Remote Access" toggle (SharedPreferences, default true)
+- When toggled off: `relayConnector.disconnect()`, ConnectScreen shows only local IP QR
+- When toggled on: `relayConnector.connect()`, ConnectScreen shows relay QR as primary
+- ConnectScreen subtitle: "Connected via parentapproved.tv" or "Local only (same WiFi)"
+
+---
+
+### Charityware: Specific Donation Targets
+
+> **Dev:** The spec has `[Charity Name]` and `[charity-url]` placeholders everywhere. We need to decide. The ask is:
+> - India users → donate to MettaVipassana.org
+> - Global users → donate to dhammasukha.in
+>
+> Both teach Metta (loving-kindness) meditation in the Theravada Buddhist tradition. The idea is: an app about mindful parenting suggests a practice about cultivating kindness. There's a thematic link.
+
+> **Skeptic:** Wait — India users donate to the US-adjacent org, and global users donate to the India org? That's cross-border on purpose?
+
+> **Dev:** Yes. Each organization can use international donations more — they're less likely to get them organically. Indian donors can easily give to a US nonprofit via their website; international donors can support the Indian center. It's a cross-pollination model.
+
+> **Architect:** I like the intentionality. Let's nail down the specifics:
+>
+> - **India users**: [MettaVipassana.org](https://mettavipassana.org) — they don't have a dedicated /donate page, but the site has donation info.
+> - **Global users**: [dhammasukha.in/donation](https://www.dhammasukha.in/donation) — dedicated donation page.
+>
+> How do we detect "India user"? Options:
+> 1. Device locale (`Locale.getDefault().country == "IN"`)
+> 2. IP geolocation via relay (adds complexity)
+> 3. Don't detect — show both, let the user choose
+>
+> Option 1 is simplest and good enough. Locale is already on the device, no network call needed.
+
+> **Skeptic:** Option 3 is more honest. "Here are two organizations we admire. Pick whichever resonates." Geolocation or locale detection feels like targeting, which conflicts with the "we don't track you" message.
+
+> **Dev:** Fair point. But showing two options means more UI, more decision fatigue. The parent is on the ConnectScreen or Settings — they want to set up the app, not choose a charity. One clear suggestion is better UX.
+
+> **Architect:** Compromise: **Locale-based default suggestion, with "or see other options" link.** The main message shows one charity based on locale. Below it, smaller text: "or donate to [other org]." Both are always visible, but there's a clear primary suggestion.
+
+> **Skeptic:** That works. And the wording should be warm, not transactional. Not "pay us" but "if this was useful, here's a way to spread kindness."
+
+**Decision: Region-specific suggestion, no detection logic.**
+
+```
+KidsWatch is free, forever. If it's been useful to your family,
+consider supporting loving-kindness meditation.
+
+India: mettavipassana.org/donate
+Worldwide: donate to a Buddhist charity near you.
+```
+
+Placement:
+- **ConnectScreen**: Below the QR code, small text, always visible
+- **Settings**: In an "About" section
+- **Landing page**: In the "No business model" section (replace `[charity]` placeholder)
+- **GitHub README**: In project description
+
+Wording tone: warm, brief, no guilt. No locale detection — just text with one link and an open suggestion.
+
+---
+
+### Remote Access: Revised — Local by Default (Opt-In Relay)
+
+*Revised after further discussion. Original decision was "on by default." Changed to local-first default to match the project's privacy-first brand. Can revisit based on real user behavior.*
+
+**Decision: Local by default. Relay opt-in via Settings toggle.**
+
+QR code behavior:
+- **Default (relay off)**: ConnectScreen shows local IP QR code (`http://<tv-ip>:8080/?pin=...`). Works on same WiFi.
+- **Relay enabled**: ConnectScreen shows relay QR code (`https://parentapproved.tv/tv/{tvId}/?pin=...`). Settings page shows local IP QR as secondary.
+- Toggle in Settings: "Enable Remote Access" — when turned on, `relayConnector.connect()` is called. When off, `relayConnector.disconnect()`. Persisted in SharedPreferences.
+
+Implementation:
+- `RelayConnector.connect()` moves OUT of `KidsWatchApp.onCreate()`
+- Settings: new "Enable Remote Access" toggle (default: false)
+- When toggled on: connect relay, ConnectScreen switches to relay QR, Settings shows local IP QR
+- When toggled off: disconnect relay, ConnectScreen shows local IP QR only
+- SharedPreferences key: `relay_enabled` (boolean, default false)
+
+Rationale: Let's see what parents prefer. If most parents turn it on, we can flip the default in a future version. Data-driven, not assumption-driven.
+
+---
+
+### How the Relay Knows About TVs (Architecture Note)
+
+Q: *When the TV app starts, it registers with the relay. The relay has to store a list of TVs and their slugs/pins right? Otherwise how will the QR code take the parent to the right TV?*
+
+A: The relay does NOT maintain a central list of TVs. Here's how it works:
+
+1. **tvId is pre-generated on the TV** — `RelayConfig` creates a UUID on first launch, persists it in SharedPreferences. This is permanent for the life of the app install.
+
+2. **The QR code contains the tvId** — e.g., `https://parentapproved.tv/tv/a1b2c3d4/connect?pin=123456`. The tvId is baked into the URL path.
+
+3. **Durable Objects are addressed by name** — when any request hits `/tv/{tvId}/...`, the Worker calls `env.RELAY.idFromName(tvId)` to get a Durable Object instance. Cloudflare creates a unique DO per tvId automatically. No registration needed.
+
+4. **TV connects via WebSocket** — on connect, the TV sends a `ConnectMessage` with tvId + tvSecret. The DO stores the tvSecret (first-connect-wins) and holds the WebSocket reference in memory.
+
+5. **Parent hits the relay** — browser loads `https://parentapproved.tv/tv/{tvId}/`. The Worker routes API calls to the same DO (by tvId). The DO checks if a TV WebSocket is connected — if yes, bridges the request; if no, returns 503 "TV offline."
+
+```
+Parent scans QR → browser hits relay → Worker routes by tvId → DO for that tvId
+                                                                    ↕ WebSocket
+                                                              TV (connected earlier)
+```
+
+So the relay is stateless at the Worker level. Each Durable Object is an isolated room for one TV. No central registry, no list of TVs. The tvId in the URL IS the addressing mechanism. If the TV hasn't connected yet (or relay is disabled), the parent sees "TV offline."
+
+The PIN and session tokens are NOT stored on the relay — they're on the TV. The relay just forwards the auth request to the TV via WebSocket. The relay only stores the tvSecret (for authenticating the TV's WebSocket connection).
+
+---
+
+### Updated Decisions Table
+
+| Question | Decision |
+|----------|----------|
+| Remote default | Local by default. Opt-in toggle in Settings. |
+| QR code (relay off) | Local IP QR on ConnectScreen |
+| QR code (relay on) | Relay QR on ConnectScreen, local IP QR in Settings |
+| Charityware (India) | mettavipassana.org/donate |
+| Charityware (worldwide) | "donate to a Buddhist charity near you" |
+| Donation placement | ConnectScreen (subtle), Settings, landing page, README |
+| Donation tone | Warm, brief, no guilt. |
+| Relay TV registration | None — Durable Objects addressed by tvId in URL, no central list |

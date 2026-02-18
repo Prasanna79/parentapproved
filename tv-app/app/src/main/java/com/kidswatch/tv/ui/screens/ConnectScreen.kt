@@ -49,9 +49,11 @@ import com.kidswatch.tv.util.QrCodeGenerator
 fun ConnectScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     var ip by remember { mutableStateOf<String?>(null) }
+    var localQrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var relayQrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var showSettings by remember { mutableStateOf(false) }
     val pin = remember { ServiceLocator.pinManager.getCurrentPin() }
+    val relayEnabled = remember { ServiceLocator.isRelayEnabled() }
 
     // Relay info
     val relayConfig = remember {
@@ -64,10 +66,18 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
     LaunchedEffect(Unit) {
         ip = NetworkUtils.getDeviceIp(context)
 
-        // Generate relay QR code (primary)
-        relayConfig?.let { config ->
-            val relayUrl = "${config.relayUrl}/tv/${config.tvId}/connect?secret=${config.tvSecret}&pin=$pin"
-            relayQrBitmap = QrCodeGenerator.generate(relayUrl)
+        // Generate local QR code
+        ip?.let { address ->
+            val localUrl = NetworkUtils.buildConnectUrl(address) + "?pin=$pin"
+            localQrBitmap = QrCodeGenerator.generate(localUrl)
+        }
+
+        // Generate relay QR code (only if relay is enabled)
+        if (relayEnabled) {
+            relayConfig?.let { config ->
+                val relayUrl = "${config.relayUrl}/tv/${config.tvId}/connect?secret=${config.tvSecret}&pin=$pin"
+                relayQrBitmap = QrCodeGenerator.generate(relayUrl)
+            }
         }
     }
 
@@ -80,6 +90,8 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
             ConnectSettingsPanel(
                 ip = ip,
                 pin = pin,
+                relayEnabled = relayEnabled,
+                localQrBitmap = localQrBitmap,
                 relayConfig = relayConfig,
                 relayConnector = relayConnector,
                 onClose = { showSettings = false },
@@ -101,8 +113,8 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Primary: Relay QR code
-                if (relayQrBitmap != null) {
+                if (relayEnabled && relayQrBitmap != null) {
+                    // Relay is enabled — show relay QR as primary
                     Image(
                         bitmap = relayQrBitmap!!.asImageBitmap(),
                         contentDescription = "QR code to connect via relay",
@@ -114,9 +126,22 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = TvText,
                     )
+                } else if (localQrBitmap != null) {
+                    // Local only — show local QR as primary
+                    Image(
+                        bitmap = localQrBitmap!!.asImageBitmap(),
+                        contentDescription = "QR code to connect on same WiFi",
+                        modifier = Modifier.size(200.dp),
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Scan to connect (same WiFi)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TvText,
+                    )
                 } else {
                     Text(
-                        text = "Setting up remote connection...",
+                        text = "Looking for network...",
                         style = MaterialTheme.typography.bodyLarge,
                         color = TvTextDim,
                     )
@@ -143,14 +168,48 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Secondary: Local IP (small, dim)
-                ip?.let { address ->
+                // Secondary info
+                if (relayEnabled) {
+                    // Relay mode: show local IP as secondary
+                    ip?.let { address ->
+                        Text(
+                            text = "Local: ${NetworkUtils.buildConnectUrl(address)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TvTextDim,
+                        )
+                    }
+                } else {
+                    // Local mode: hint about remote access
                     Text(
-                        text = "Local: ${NetworkUtils.buildConnectUrl(address)}",
+                        text = "Enable Remote Access in Settings for anywhere access",
                         style = MaterialTheme.typography.bodySmall,
                         color = TvTextDim,
                     )
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Charityware note
+                Text(
+                    text = "KidsWatch is free, forever. If it\u2019s been useful to your family,",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TvTextDim,
+                )
+                Text(
+                    text = "consider supporting loving-kindness meditation.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TvTextDim,
+                )
+                Text(
+                    text = "India: mettavipassana.org/donate",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TvTextDim,
+                )
+                Text(
+                    text = "Worldwide: donate to a Buddhist charity near you.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TvTextDim,
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -192,6 +251,8 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
 private fun ConnectSettingsPanel(
     ip: String?,
     pin: String,
+    relayEnabled: Boolean,
+    localQrBitmap: Bitmap?,
     relayConfig: com.kidswatch.tv.relay.RelayConfig?,
     relayConnector: com.kidswatch.tv.relay.RelayConnector?,
     onClose: () -> Unit,
@@ -235,23 +296,57 @@ private fun ConnectSettingsPanel(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Relay status
-        Text("Relay", style = MaterialTheme.typography.titleMedium, color = TvText)
+        Text("Remote Access", style = MaterialTheme.typography.titleMedium, color = TvText)
         Spacer(modifier = Modifier.height(4.dp))
-        relayConfig?.let {
-            Text("URL: ${it.relayUrl}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
-        }
-        relayConnector?.let {
-            val statusText = when (it.state) {
-                RelayConnectionState.CONNECTED -> "Connected"
-                RelayConnectionState.CONNECTING -> "Connecting..."
-                RelayConnectionState.DISCONNECTED -> "Disconnected"
+        if (relayEnabled) {
+            relayConfig?.let {
+                Text("Relay: ${it.relayUrl}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
             }
-            val statusColor = when (it.state) {
-                RelayConnectionState.CONNECTED -> TvAccent
-                RelayConnectionState.CONNECTING -> TvWarning
-                RelayConnectionState.DISCONNECTED -> TvTextDim
+            relayConnector?.let {
+                val statusText = when (it.state) {
+                    RelayConnectionState.CONNECTED -> "Connected"
+                    RelayConnectionState.CONNECTING -> "Connecting..."
+                    RelayConnectionState.DISCONNECTED -> "Disconnected"
+                }
+                val statusColor = when (it.state) {
+                    RelayConnectionState.CONNECTED -> TvAccent
+                    RelayConnectionState.CONNECTING -> TvWarning
+                    RelayConnectionState.DISCONNECTED -> TvTextDim
+                }
+                Text("Status: $statusText", style = MaterialTheme.typography.bodySmall, color = statusColor)
             }
-            Text("Status: $statusText", style = MaterialTheme.typography.bodySmall, color = statusColor)
+
+            // When relay is on, show local QR here as secondary
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Local connection (same WiFi):", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
+            if (localQrBitmap != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Image(
+                    bitmap = localQrBitmap.asImageBitmap(),
+                    contentDescription = "Local QR code (same WiFi)",
+                    modifier = Modifier.size(120.dp),
+                )
+            }
+            ip?.let {
+                Text(
+                    NetworkUtils.buildConnectUrl(it),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TvTextDim,
+                )
+            }
+        } else {
+            Text(
+                "Remote access is off. Enable it to connect from anywhere.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TvTextDim,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { ServiceLocator.setRelayEnabled(true) },
+                colors = ButtonDefaults.buttonColors(containerColor = TvAccent),
+            ) {
+                Text("Enable Remote Access", color = TvText)
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
