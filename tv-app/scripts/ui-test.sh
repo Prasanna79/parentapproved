@@ -1,5 +1,5 @@
 #!/bin/bash
-# KidsWatch V0.2.1 — Automated UI Tests
+# ParentApproved V0.2.1 — Automated UI Tests
 # Uses: uiautomator dump, adb input keyevent, logcat verification
 # Requires: app installed and running on connected emulator/device
 set -euo pipefail
@@ -7,8 +7,8 @@ set -euo pipefail
 export ANDROID_HOME="${ANDROID_HOME:-/opt/homebrew/share/android-commandlinetools}"
 export ANDROID_USER_HOME="${ANDROID_USER_HOME:-/Users/prasanna/.android}"
 ADB="${ADB:-$ANDROID_HOME/platform-tools/adb}"
-PKG="com.kidswatch.tv"
-TAG="KidsWatch-Intent"
+PKG="tv.parentapproved.app"
+TAG="ParentApproved-Intent"
 PASS=0
 FAIL=0
 TMPDIR=$(mktemp -d)
@@ -108,7 +108,7 @@ KEY_HOME=3
 
 # --- Setup ---
 
-echo "=== KidsWatch Automated UI Tests ==="
+echo "=== ParentApproved Automated UI Tests ==="
 echo ""
 
 # Force-stop and restart the app for a clean state
@@ -130,7 +130,7 @@ $ADB logcat -c
 # --- Test 1: Home screen shows on launch (no playlists yet) ---
 echo ""
 echo "--- Test 1: Home Screen (empty state) ---"
-assert_ui_text "Home screen shows app title" "KidsWatch"
+assert_ui_text "Home screen shows app title" "ParentApproved"
 assert_ui_text "Empty state shows 'No playlists' message" "No playlists"
 assert_ui_text "Connect Phone button visible" "Connect Phone"
 assert_ui_text "Settings button visible" "Settings"
@@ -189,7 +189,7 @@ if [ -n "$BACK_BOUNDS" ]; then
     CY=$(( (Y1 + Y2) / 2 ))
     $ADB shell input tap $CX $CY
     sleep 3
-    assert_ui_text "Back button returns to home screen" "KidsWatch"
+    assert_ui_text "Back button returns to home screen" "ParentApproved"
     assert_ui_text "Back button shows home buttons" "Refresh Videos"
     assert_ui_not_text "Back button left connect screen" "Scan the QR"
 else
@@ -309,7 +309,7 @@ if [ -n "$TOKEN" ] && [ "$TOKEN" != "" ] && [ "$TOKEN" != "None" ]; then
 
     # Dashboard HTML
     DASH=$(curl -sf http://localhost:8080/ 2>/dev/null || echo "")
-    if echo "$DASH" | grep -q "KidsWatch Dashboard"; then
+    if echo "$DASH" | grep -q "ParentApproved Dashboard"; then
         echo -e "${GREEN}PASS${NC}: HTTP / serves dashboard HTML"
         PASS=$((PASS + 1))
     else

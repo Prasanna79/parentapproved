@@ -1,18 +1,18 @@
 #!/bin/bash
-# KidsWatch Relay — E2E Smoke Test
+# ParentApproved Relay — E2E Smoke Test
 # Run against a deployed staging relay to verify basic functionality.
 #
 # Usage: bash relay/test/e2e-smoke.sh [RELAY_URL]
-# Default: https://kidswatch-relay-staging.workers.dev
+# Default: https://parentapproved-relay-staging.workers.dev
 
 set -euo pipefail
 
-RELAY_URL="${1:-https://kidswatch-relay-staging.workers.dev}"
+RELAY_URL="${1:-https://parentapproved-relay-staging.workers.dev}"
 TV_ID="e2e-test-$(date +%s)"
 PASS=0
 FAIL=0
 
-echo "=== KidsWatch Relay E2E Smoke Test ==="
+echo "=== ParentApproved Relay E2E Smoke Test ==="
 echo "Relay: $RELAY_URL"
 echo "TV ID: $TV_ID"
 echo ""

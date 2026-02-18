@@ -16,5 +16,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "KidsWatchTV"
+rootProject.name = "ParentApprovedTV"
 include(":app")

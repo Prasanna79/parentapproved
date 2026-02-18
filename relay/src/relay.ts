@@ -1,5 +1,5 @@
 /**
- * KidsWatch Relay Durable Object.
+ * ParentApproved Relay Durable Object.
  * Holds WebSocket connection to TV, bridges HTTPS requests from phones.
  *
  * Lifecycle:
@@ -67,6 +67,18 @@ async function timingSafeEqual(a: string, b: string): Promise<boolean> {
   return crypto.subtle.timingSafeEqual(bufA, bufB);
 }
 
+/**
+ * Determine whether to accept a new secret or validate against stored.
+ * Extracted as pure function for testability (Bug 3: secret rotation after disconnect).
+ */
+export function shouldAcceptSecret(
+  storedSecret: string | null,
+  authenticated: boolean,
+): "accept_new" | "validate_stored" {
+  if (!storedSecret || !authenticated) return "accept_new";
+  return "validate_stored";
+}
+
 /** Pending request waiting for a response from the TV */
 interface PendingRequest {
   resolve: (response: RelayResponse) => void;
@@ -86,11 +98,21 @@ export class RelayDurableObject implements DurableObject {
     private state: DurableObjectState,
     private env: Env
   ) {
-    // Restore tvSecret from storage if set
+    // Restore state on wake-up from hibernation
     this.state.blockConcurrencyWhile(async () => {
+      // Restore tvSecret from storage
       const secret = await this.state.storage.get<string>("tvSecret");
       if (secret) {
         this.tvSecret = secret;
+      }
+
+      // Restore WebSocket from hibernation
+      // The Hibernation API preserves accepted WebSockets across sleep/wake cycles
+      const websockets = this.state.getWebSockets();
+      if (websockets.length > 0) {
+        this.tvSocket = websockets[0];
+        this.authenticated = true;
+        this.lastHeartbeat = Date.now();
       }
     });
   }
@@ -191,19 +213,23 @@ export class RelayDurableObject implements DurableObject {
 
   /**
    * Handle ConnectMessage: validate secret, accept or reject.
+   * If no active connection exists, accept the secret (handles TV secret rotation).
+   * If an active connection exists, validate against the stored secret.
    */
   private async handleConnect(ws: WebSocket, msg: ConnectMessage): Promise<void> {
-    // If we don't have a stored secret yet, store the first one
-    // (In production, the secret would be provisioned out-of-band)
-    if (!this.tvSecret) {
+    const decision = shouldAcceptSecret(this.tvSecret, this.authenticated);
+    console.log(`[relay] secret: ${decision}`);
+
+    if (decision === "accept_new") {
       this.tvSecret = msg.tvSecret;
       await this.state.storage.put("tvSecret", this.tvSecret);
-    }
-
-    const valid = await timingSafeEqual(msg.tvSecret, this.tvSecret);
-    if (!valid) {
-      ws.close(WS_CLOSE_INVALID_SECRET, "invalid secret");
-      return;
+    } else {
+      const valid = await timingSafeEqual(msg.tvSecret, this.tvSecret);
+      if (!valid) {
+        console.log(`[relay] connect: tvId=${msg.tvId}, accepted=false`);
+        ws.close(WS_CLOSE_INVALID_SECRET, "invalid secret");
+        return;
+      }
     }
 
     // Protocol version check
@@ -222,6 +248,7 @@ export class RelayDurableObject implements DurableObject {
     this.tvId = msg.tvId;
     this.authenticated = true;
     this.lastHeartbeat = Date.now();
+    console.log(`[relay] connect: tvId=${msg.tvId}, accepted=true`);
 
     // Schedule heartbeat alarm
     await this.state.storage.setAlarm(Date.now() + ALARM_INTERVAL_MS);
@@ -232,6 +259,7 @@ export class RelayDurableObject implements DurableObject {
    */
   private handleHeartbeat(): void {
     this.lastHeartbeat = Date.now();
+    console.log(`[relay] heartbeat: tvId=${this.tvId}`);
   }
 
   /**
@@ -243,6 +271,7 @@ export class RelayDurableObject implements DurableObject {
       clearTimeout(pending.timer);
       this.pendingRequests.delete(msg.id);
       pending.resolve(msg);
+      console.log(`[relay] response: id=${msg.id}, status=${msg.status}`);
     }
   }
 
@@ -307,6 +336,8 @@ export class RelayDurableObject implements DurableObject {
       this.pendingRequests.set(correlationId, { resolve, reject, timer });
     });
 
+    console.log(`[relay] bridge: ${relayRequest.method} ${apiPath} → waiting`);
+
     // Send to TV
     try {
       this.tvSocket.send(serializeRequest(relayRequest));
@@ -343,6 +374,7 @@ export class RelayDurableObject implements DurableObject {
    * Disconnect the TV socket and clean up.
    */
   private disconnectTv(code: number, reason: string): void {
+    console.log(`[relay] disconnect: tvId=${this.tvId}, code=${code}, reason=${reason}`);
     if (this.tvSocket) {
       try {
         this.tvSocket.close(code, reason);

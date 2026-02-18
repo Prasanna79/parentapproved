@@ -1,5 +1,5 @@
 #!/bin/bash
-# KidsWatch V0.2.1 — Full CI runner
+# ParentApproved V0.2.1 — Full CI runner
 # Usage: ./scripts/ci-run.sh
 set -euo pipefail
 
@@ -14,7 +14,7 @@ RED='\033[0;31m'
 YELLOW='\033[0;33m'
 NC='\033[0m'
 
-echo "=== KidsWatch V0.2.1 CI ==="
+echo "=== ParentApproved V0.2.1 CI ==="
 echo "Project dir: $PROJECT_DIR"
 echo ""
 
@@ -52,7 +52,7 @@ ANDROID_HOME=/opt/homebrew/share/android-commandlinetools \
 ./gradlew installDebug --no-daemon
 echo -e "${GREEN}APK installed.${NC}"
 
-$ADB shell am start -n com.kidswatch.tv/.MainActivity
+$ADB shell am start -n tv.parentapproved.app/.MainActivity
 sleep 5
 echo "App launched."
 
@@ -66,7 +66,7 @@ ANDROID_HOME=/opt/homebrew/share/android-commandlinetools \
 echo -e "${GREEN}Instrumented tests passed!${NC}"
 
 # Relaunch app after instrumented tests
-$ADB shell am start -n com.kidswatch.tv/.MainActivity
+$ADB shell am start -n tv.parentapproved.app/.MainActivity
 sleep 5
 
 # Step 5: ADB intent + HTTP tests
@@ -75,7 +75,7 @@ echo -e "${YELLOW}--- Step 5: Intent + HTTP Tests ---${NC}"
 "$SCRIPT_DIR/test-suite.sh"
 
 # Relaunch app
-$ADB shell am start -n com.kidswatch.tv/.MainActivity
+$ADB shell am start -n tv.parentapproved.app/.MainActivity
 sleep 5
 
 # Step 6: Automated UI tests

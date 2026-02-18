@@ -1,5 +1,5 @@
 /**
- * KidsWatch Relay — Cloudflare Worker entry point.
+ * ParentApproved Relay — Cloudflare Worker entry point.
  * Routes requests to static assets, API forwarding, or WebSocket upgrade.
  *
  * URL pattern: /tv/{tvId}/...
@@ -14,6 +14,8 @@ export { RelayDurableObject } from "./relay";
 
 import { isAllowed } from "./allowlist";
 import { RateLimiter, PHONE_LIMIT, REFRESH_LIMIT } from "./ratelimit";
+// @ts-expect-error — Workers Sites manifest is a virtual module
+import manifestJSON from "__STATIC_CONTENT_MANIFEST";
 
 export interface Env {
   RELAY: DurableObjectNamespace;
@@ -88,6 +90,18 @@ function trackIpConnection(ip: string, tvId: string): boolean {
 }
 
 /**
+ * Resolve asset name to content-hashed KV key using Workers Sites manifest.
+ */
+function resolveAssetKey(assetName: string): string | null {
+  try {
+    const manifest = JSON.parse(manifestJSON);
+    return manifest[assetName] || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Serve a static asset from KV or return a placeholder.
  */
 async function serveStaticAsset(
@@ -99,9 +113,10 @@ async function serveStaticAsset(
     return new Response("Not found", { status: 404 });
   }
 
-  // Try KV first
+  // Resolve content-hashed key from Workers Sites manifest
   try {
-    const content = await env.__STATIC_CONTENT.get(assetName, "text");
+    const kvKey = resolveAssetKey(assetName) || assetName;
+    const content = await env.__STATIC_CONTENT.get(kvKey, "text");
     if (content) {
       return new Response(content, {
         headers: {
@@ -114,10 +129,10 @@ async function serveStaticAsset(
     // KV not available — fall through to placeholder
   }
 
-  // Placeholder responses when KV is not available
+  // Placeholder responses when KV is not available (tests, local dev)
   if (assetName === "index.html") {
     return new Response(
-      "<!DOCTYPE html><html><head><title>KidsWatch</title></head><body><p>KidsWatch Relay — dashboard coming soon.</p></body></html>",
+      "<!DOCTYPE html><html><head><title>ParentApproved</title></head><body><p>ParentApproved Relay — dashboard coming soon.</p></body></html>",
       { headers: { "Content-Type": contentType } }
     );
   }

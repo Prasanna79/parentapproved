@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.KidsWatchTV" parent="@style/Theme.Leanback">
+    <style name="Theme.ParentApprovedTV" parent="@style/Theme.Leanback">
         <item name="android:windowNoTitle">true</item>
     </style>
 </resources>

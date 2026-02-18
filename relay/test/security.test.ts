@@ -1,10 +1,11 @@
 /**
- * Security tests for the KidsWatch relay.
+ * Security tests for the ParentApproved relay.
  * Verifies Raj's security controls: path allowlist, method blocking,
  * payload limits, timing-safe comparison, frame size limits.
  */
 import { describe, it, expect } from "vitest";
 import { isAllowed } from "../src/allowlist";
+import { shouldAcceptSecret } from "../src/relay";
 
 describe("security", () => {
   describe("path traversal blocked", () => {
@@ -108,6 +109,31 @@ describe("security", () => {
     it("max frame size is 100KB", () => {
       const MAX_FRAME_BYTES = 100 * 1024;
       expect(MAX_FRAME_BYTES).toBe(102400);
+    });
+  });
+
+  describe("secret rotation", () => {
+    it("no stored secret → accept new", () => {
+      expect(shouldAcceptSecret(null, false)).toBe("accept_new");
+    });
+
+    it("stored secret + not authenticated (disconnected) → accept new", () => {
+      expect(shouldAcceptSecret("abc123secret", false)).toBe("accept_new");
+    });
+
+    it("stored secret + authenticated (active connection) → validate stored", () => {
+      expect(shouldAcceptSecret("abc123secret", true)).toBe("validate_stored");
+    });
+
+    it("after disconnect (authenticated=false) → accept new (Bug 3 scenario)", () => {
+      // Simulates: TV connected, disconnected, reconnects with rotated secret
+      const storedSecret = "old-secret-from-previous-connection";
+      const authenticated = false; // cleanupConnection sets this to false
+      expect(shouldAcceptSecret(storedSecret, authenticated)).toBe("accept_new");
+    });
+
+    it("fresh DO (both null/false) → accept new", () => {
+      expect(shouldAcceptSecret(null, false)).toBe("accept_new");
     });
   });
 

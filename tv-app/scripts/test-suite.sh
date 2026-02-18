@@ -1,13 +1,13 @@
 #!/bin/bash
-# KidsWatch V0.2.1 — ADB Intent + HTTP API Test Suite
+# ParentApproved V0.2.1 — ADB Intent + HTTP API Test Suite
 # Requires: adb connected device/emulator with app installed and running
 set -euo pipefail
 
 export ANDROID_HOME="${ANDROID_HOME:-/opt/homebrew/share/android-commandlinetools}"
 export ANDROID_USER_HOME="${ANDROID_USER_HOME:-/Users/prasanna/.android}"
 ADB="${ADB:-$ANDROID_HOME/platform-tools/adb}"
-PKG="com.kidswatch.tv"
-TAG="KidsWatch-Intent"
+PKG="tv.parentapproved.app"
+TAG="ParentApproved-Intent"
 PASS=0
 FAIL=0
 
@@ -53,7 +53,7 @@ assert_json_exists() {
     fi
 }
 
-echo "=== KidsWatch ADB Intent Test Suite ==="
+echo "=== ParentApproved ADB Intent Test Suite ==="
 echo ""
 
 # Clear logcat

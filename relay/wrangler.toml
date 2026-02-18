@@ -1,4 +1,4 @@
-name = "kidswatch-relay"
+name = "parentapproved-relay"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
@@ -17,11 +17,11 @@ bucket = "./assets"
 
 # Production: relay.parentapproved.tv
 [[routes]]
-pattern = "relay.parentapproved.tv/*"
+pattern = "relay.parentapproved.tv"
 custom_domain = true
 
 [env.staging]
-name = "kidswatch-relay-staging"
+name = "parentapproved-relay-staging"
 
 [env.staging.durable_objects]
 bindings = [
@@ -29,5 +29,5 @@ bindings = [
 ]
 
 [[env.staging.routes]]
-pattern = "staging-relay.parentapproved.tv/*"
+pattern = "staging-relay.parentapproved.tv"
 custom_domain = true

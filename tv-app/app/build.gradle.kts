@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kidswatch.tv"
+    namespace = "tv.parentapproved.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.kidswatch.tv"
+        applicationId = "tv.parentapproved.app"
         minSdk = 24
         targetSdk = 34
         versionCode = 4

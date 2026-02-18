@@ -13,11 +13,11 @@
         android:required="false" />
 
     <application
-        android:name=".KidsWatchApp"
+        android:name=".ParentApprovedApp"
         android:allowBackup="true"
-        android:label="KidsWatch"
+        android:label="ParentApproved"
         android:supportsRtl="true"
-        android:theme="@style/Theme.KidsWatchTV"
+        android:theme="@style/Theme.ParentApprovedTV"
         android:banner="@drawable/banner"
         android:usesCleartextTraffic="true">
 
@@ -36,26 +36,26 @@
             android:exported="true">
             <intent-filter>
                 <!-- Server/Playlists -->
-                <action android:name="com.kidswatch.tv.DEBUG_ADD_PLAYLIST" />
-                <action android:name="com.kidswatch.tv.DEBUG_REMOVE_PLAYLIST" />
-                <action android:name="com.kidswatch.tv.DEBUG_RESOLVE_PLAYLIST" />
-                <action android:name="com.kidswatch.tv.DEBUG_REFRESH_PLAYLISTS" />
-                <action android:name="com.kidswatch.tv.DEBUG_GET_PLAYLISTS" />
-                <action android:name="com.kidswatch.tv.DEBUG_GET_SERVER_STATUS" />
+                <action android:name="tv.parentapproved.app.DEBUG_ADD_PLAYLIST" />
+                <action android:name="tv.parentapproved.app.DEBUG_REMOVE_PLAYLIST" />
+                <action android:name="tv.parentapproved.app.DEBUG_RESOLVE_PLAYLIST" />
+                <action android:name="tv.parentapproved.app.DEBUG_REFRESH_PLAYLISTS" />
+                <action android:name="tv.parentapproved.app.DEBUG_GET_PLAYLISTS" />
+                <action android:name="tv.parentapproved.app.DEBUG_GET_SERVER_STATUS" />
                 <!-- PIN/Auth -->
-                <action android:name="com.kidswatch.tv.DEBUG_GET_PIN" />
-                <action android:name="com.kidswatch.tv.DEBUG_RESET_PIN" />
-                <action android:name="com.kidswatch.tv.DEBUG_SIMULATE_AUTH" />
-                <action android:name="com.kidswatch.tv.DEBUG_GET_AUTH_STATE" />
+                <action android:name="tv.parentapproved.app.DEBUG_GET_PIN" />
+                <action android:name="tv.parentapproved.app.DEBUG_RESET_PIN" />
+                <action android:name="tv.parentapproved.app.DEBUG_SIMULATE_AUTH" />
+                <action android:name="tv.parentapproved.app.DEBUG_GET_AUTH_STATE" />
                 <!-- Playback -->
-                <action android:name="com.kidswatch.tv.DEBUG_PLAY_VIDEO" />
-                <action android:name="com.kidswatch.tv.DEBUG_STOP_PLAYBACK" />
-                <action android:name="com.kidswatch.tv.DEBUG_GET_NOW_PLAYING" />
+                <action android:name="tv.parentapproved.app.DEBUG_PLAY_VIDEO" />
+                <action android:name="tv.parentapproved.app.DEBUG_STOP_PLAYBACK" />
+                <action android:name="tv.parentapproved.app.DEBUG_GET_NOW_PLAYING" />
                 <!-- Lifecycle -->
-                <action android:name="com.kidswatch.tv.DEBUG_FULL_RESET" />
-                <action android:name="com.kidswatch.tv.DEBUG_SIMULATE_OFFLINE" />
-                <action android:name="com.kidswatch.tv.DEBUG_GET_STATE_DUMP" />
-                <action android:name="com.kidswatch.tv.DEBUG_CLEAR_PLAY_EVENTS" />
+                <action android:name="tv.parentapproved.app.DEBUG_FULL_RESET" />
+                <action android:name="tv.parentapproved.app.DEBUG_SIMULATE_OFFLINE" />
+                <action android:name="tv.parentapproved.app.DEBUG_GET_STATE_DUMP" />
+                <action android:name="tv.parentapproved.app.DEBUG_CLEAR_PLAY_EVENTS" />
             </intent-filter>
         </receiver>
     </application>

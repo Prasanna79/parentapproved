@@ -1,6 +1,6 @@
 /**
  * Application-aware path/method allowlist.
- * Only KidsWatch API paths are forwarded — prevents generic proxy abuse.
+ * Only ParentApproved API paths are forwarded — prevents generic proxy abuse.
  */
 
 interface AllowlistEntry {
