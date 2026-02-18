@@ -19,7 +19,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "RELAY_URL", "\"https://kidswatch-relay.workers.dev\"")
+        buildConfigField("String", "RELAY_URL", "\"https://relay.parentapproved.tv\"")
         buildConfigField("int", "PROTOCOL_VERSION", "1")
     }
 

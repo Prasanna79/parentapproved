@@ -81,7 +81,7 @@ class RelayConfigTest {
         every { prefs.getString("relay_tv_id", null) } returns "id"
         every { prefs.getString("relay_tv_secret", null) } returns "secret"
         val config = RelayConfig(prefs)
-        assertEquals("https://kidswatch-relay.workers.dev", config.relayUrl)
+        assertEquals("https://relay.parentapproved.tv", config.relayUrl)
     }
 
     @Test

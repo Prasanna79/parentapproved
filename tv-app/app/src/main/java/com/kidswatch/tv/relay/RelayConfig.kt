@@ -9,7 +9,7 @@ class RelayConfig(
     val relayUrl: String = DEFAULT_RELAY_URL,
 ) {
     companion object {
-        const val DEFAULT_RELAY_URL = "https://kidswatch-relay.workers.dev"
+        const val DEFAULT_RELAY_URL = "https://relay.parentapproved.tv"
         private const val KEY_TV_ID = "relay_tv_id"
         private const val KEY_TV_SECRET = "relay_tv_secret"
     }

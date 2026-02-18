@@ -65,7 +65,7 @@ class RelayConnectorTest {
         val url = fakeWsFactory.lastRequest?.url?.toString()
         assertNotNull(url)
         assertTrue("URL should contain relay host and TV path, got: $url",
-            url!!.contains("kidswatch-relay.workers.dev/tv/test-tv-id/ws"))
+            url!!.contains("relay.parentapproved.tv/tv/test-tv-id/ws"))
     }
 
     @Test

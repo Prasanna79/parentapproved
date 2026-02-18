@@ -15,6 +15,11 @@ new_sqlite_classes = ["RelayDurableObject"]
 [site]
 bucket = "./assets"
 
+# Production: relay.parentapproved.tv
+[[routes]]
+pattern = "relay.parentapproved.tv/*"
+custom_domain = true
+
 [env.staging]
 name = "kidswatch-relay-staging"
 
@@ -22,3 +27,7 @@ name = "kidswatch-relay-staging"
 bindings = [
   { name = "RELAY", class_name = "RelayDurableObject" }
 ]
+
+[[env.staging.routes]]
+pattern = "staging-relay.parentapproved.tv/*"
+custom_domain = true
