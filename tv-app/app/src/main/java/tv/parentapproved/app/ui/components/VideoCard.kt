@@ -2,6 +2,7 @@ package tv.parentapproved.app.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -33,9 +33,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import tv.parentapproved.app.data.models.VideoItem
-import tv.parentapproved.app.ui.theme.TvSurface
-import tv.parentapproved.app.ui.theme.TvText
-import tv.parentapproved.app.ui.theme.TvTextDim
+import tv.parentapproved.app.ui.theme.KidFocusRing
+import tv.parentapproved.app.ui.theme.KidSurface
+import tv.parentapproved.app.ui.theme.KidText
+import tv.parentapproved.app.ui.theme.KidTextDim
+
+private val CardShape = RoundedCornerShape(12.dp)
 
 @Composable
 fun VideoCard(
@@ -50,8 +53,12 @@ fun VideoCard(
         modifier = modifier
             .width(200.dp)
             .scale(scale)
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (isFocused) TvSurface.copy(alpha = 0.9f) else TvSurface.copy(alpha = 0.5f))
+            .clip(CardShape)
+            .background(if (isFocused) KidSurface.copy(alpha = 0.9f) else KidSurface.copy(alpha = 0.5f))
+            .then(
+                if (isFocused) Modifier.border(2.dp, KidFocusRing, CardShape)
+                else Modifier
+            )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
             .onKeyEvent { event ->
@@ -68,18 +75,18 @@ fun VideoCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
             )
             // Duration badge
             if (video.durationSeconds > 0) {
                 Text(
                     text = formatDuration(video.durationSeconds),
                     fontSize = 11.sp,
-                    color = TvText,
+                    color = KidText,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(4.dp)
-                        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                        .background(KidSurface.copy(alpha = 0.85f), RoundedCornerShape(4.dp))
                         .padding(horizontal = 4.dp, vertical = 2.dp),
                 )
             }
@@ -87,7 +94,7 @@ fun VideoCard(
         Text(
             text = video.title,
             style = MaterialTheme.typography.bodySmall,
-            color = if (isFocused) TvText else TvTextDim,
+            color = if (isFocused) KidText else KidTextDim,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(8.dp),

@@ -24,6 +24,7 @@ fun Route.dashboardRoutes() {
             val contentType = when {
                 path.endsWith(".css") -> ContentType.Text.CSS
                 path.endsWith(".js") -> ContentType("application", "javascript")
+                path.endsWith(".svg") -> ContentType("image", "svg+xml")
                 else -> ContentType.Text.Plain
             }
             call.respondText(content, contentType)

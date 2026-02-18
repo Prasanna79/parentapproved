@@ -86,3 +86,56 @@ describe("protocol contract — relay side", () => {
     expect(PROTOCOL_VERSION).toBe(1);
   });
 });
+
+/**
+ * Path convention contract tests.
+ * Relay allowlist uses /api/* paths (e.g. /api/auth, /api/playlists).
+ * TV Ktor routes use bare paths (e.g. /auth, /playlists).
+ * TV's RelayConnector strips /api prefix when bridging to localhost.
+ *
+ * These tests document the convention so drift is caught immediately.
+ */
+describe("path convention — relay sends /api/*, TV strips /api prefix", () => {
+  const RELAY_PATHS = [
+    "/api/auth",
+    "/api/auth/refresh",
+    "/api/playlists",
+    "/api/playlists/some-id",
+    "/api/playback/pause",
+    "/api/playback/stop",
+    "/api/playback/next",
+    "/api/playback/prev",
+    "/api/status",
+    "/api/stats",
+    "/api/stats/recent",
+  ];
+
+  /** Simulates TV-side path stripping (must match Kotlin mapRelayPathToLocal) */
+  function stripApiPrefix(path: string): string {
+    return path.startsWith("/api") ? path.slice(4) : path;
+  }
+
+  for (const relayPath of RELAY_PATHS) {
+    const tvPath = stripApiPrefix(relayPath);
+    it(`relay ${relayPath} → TV ${tvPath}`, () => {
+      // TV path must start with / but NOT /api
+      expect(tvPath).toMatch(/^\//);
+      expect(tvPath).not.toMatch(/^\/api/);
+      // Relay path must start with /api/
+      expect(relayPath).toMatch(/^\/api\//);
+    });
+  }
+
+  it("all relay paths use /api/ prefix", () => {
+    for (const path of RELAY_PATHS) {
+      expect(path.startsWith("/api/")).toBe(true);
+    }
+  });
+
+  it("stripped paths are valid Ktor routes (no double slashes)", () => {
+    for (const path of RELAY_PATHS) {
+      const tvPath = stripApiPrefix(path);
+      expect(tvPath).not.toContain("//");
+    }
+  });
+});

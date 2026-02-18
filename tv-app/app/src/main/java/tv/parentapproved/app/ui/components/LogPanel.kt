@@ -20,10 +20,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tv.parentapproved.app.ui.theme.TvError
-import tv.parentapproved.app.ui.theme.TvSuccess
-import tv.parentapproved.app.ui.theme.TvText
-import tv.parentapproved.app.ui.theme.TvWarning
+import tv.parentapproved.app.ui.theme.StatusError
+import tv.parentapproved.app.ui.theme.StatusSuccess
+import tv.parentapproved.app.ui.theme.StatusWarning
 import tv.parentapproved.app.util.AppLogger
 import tv.parentapproved.app.util.LogLine
 
@@ -48,10 +47,10 @@ fun LogPanel(modifier: Modifier = Modifier) {
             text = buildAnnotatedString {
                 logs.forEach { line ->
                     val color = when (line.level) {
-                        "OK" -> TvSuccess
-                        "WARN" -> TvWarning
-                        "ERROR" -> TvError
-                        else -> TvText
+                        "OK" -> StatusSuccess
+                        "WARN" -> StatusWarning
+                        "ERROR" -> StatusError
+                        else -> MaterialTheme.colorScheme.onSurface
                     }
                     withStyle(SpanStyle(color = color)) {
                         append("[${line.level}] ${line.message}\n")

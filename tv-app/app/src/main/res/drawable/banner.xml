@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Warm dark background -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#1A1A2E" />
+            <solid android:color="#1C1917" />
             <size android:width="320dp" android:height="180dp" />
         </shape>
     </item>
+    <!-- Green checkmark circle -->
     <item
         android:gravity="center"
-        android:top="50dp">
+        android:top="40dp">
         <shape android:shape="oval">
-            <solid android:color="#E94560" />
-            <size android:width="60dp" android:height="60dp" />
-        </shape>
-    </item>
-    <item
-        android:gravity="center"
-        android:top="50dp"
-        android:left="20dp">
-        <shape android:shape="rectangle">
-            <solid android:color="#1A1A2E" />
-            <size android:width="0dp" android:height="0dp" />
+            <solid android:color="#22A559" />
+            <size android:width="64dp" android:height="64dp" />
         </shape>
     </item>
 </layer-list>

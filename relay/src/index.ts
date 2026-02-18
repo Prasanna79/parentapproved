@@ -46,6 +46,7 @@ const CONTENT_TYPES: Record<string, string> = {
   "index.html": "text/html; charset=utf-8",
   "app.js": "application/javascript; charset=utf-8",
   "style.css": "text/css; charset=utf-8",
+  "favicon.svg": "image/svg+xml",
 };
 
 /**
@@ -200,6 +201,9 @@ export default {
       }
       if (rest === "/style.css") {
         return serveStaticAsset(env, "style.css");
+      }
+      if (rest === "/favicon.svg") {
+        return serveStaticAsset(env, "favicon.svg");
       }
     }
 

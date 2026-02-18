@@ -11,14 +11,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,13 +37,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tv.parentapproved.app.BuildConfig
 import tv.parentapproved.app.ui.components.VideoCard
+import tv.parentapproved.app.ui.theme.KidAccent
+import tv.parentapproved.app.ui.theme.KidBackground
+import tv.parentapproved.app.ui.theme.KidSurface
+import tv.parentapproved.app.ui.theme.KidText
+import tv.parentapproved.app.ui.theme.KidTextDim
 import tv.parentapproved.app.ui.theme.OverscanPadding
-import tv.parentapproved.app.ui.theme.TvAccent
-import tv.parentapproved.app.ui.theme.TvBackground
-import tv.parentapproved.app.ui.theme.TvPrimary
-import tv.parentapproved.app.ui.theme.TvText
-import tv.parentapproved.app.ui.theme.TvTextDim
-import tv.parentapproved.app.ui.theme.TvWarning
+import tv.parentapproved.app.ui.theme.StatusError
+import tv.parentapproved.app.ui.theme.StatusWarning
 
 @Composable
 fun HomeScreen(
@@ -55,7 +62,7 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(TvBackground)
+            .background(KidBackground)
             .padding(OverscanPadding)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -67,28 +74,45 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("ParentApproved", style = MaterialTheme.typography.headlineMedium, color = TvText)
+                Text("ParentApproved", style = MaterialTheme.typography.headlineMedium, color = KidText)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = { viewModel.refresh() },
-                        colors = ButtonDefaults.buttonColors(containerColor = TvPrimary),
+                        colors = ButtonDefaults.buttonColors(containerColor = KidSurface),
                         shape = RoundedCornerShape(8.dp),
                     ) {
-                        Text("Refresh Videos", color = TvText)
+                        Icon(
+                            imageVector = Icons.Rounded.Sync,
+                            contentDescription = "Refresh Videos",
+                            tint = KidText,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                     Button(
                         onClick = onConnect,
-                        colors = ButtonDefaults.buttonColors(containerColor = TvAccent),
+                        colors = ButtonDefaults.buttonColors(containerColor = KidSurface),
                         shape = RoundedCornerShape(8.dp),
                     ) {
-                        Text("Connect Phone", color = TvBackground)
+                        Icon(
+                            imageVector = Icons.Rounded.PhoneAndroid,
+                            contentDescription = null,
+                            tint = KidText,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Connect Phone", color = KidText)
                     }
                     Button(
                         onClick = onSettings,
-                        colors = ButtonDefaults.buttonColors(containerColor = TvPrimary.copy(alpha = 0.7f)),
+                        colors = ButtonDefaults.buttonColors(containerColor = KidSurface),
                         shape = RoundedCornerShape(8.dp),
                     ) {
-                        Text("Settings", color = TvText)
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = "Settings",
+                            tint = KidText,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                 }
             }
@@ -103,13 +127,13 @@ fun HomeScreen(
                             Text(
                                 text = "No playlists yet!",
                                 style = MaterialTheme.typography.headlineSmall,
-                                color = TvText,
+                                color = KidText,
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Connect your phone to add YouTube playlists",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = TvTextDim,
+                                color = KidTextDim,
                             )
                         }
                     }
@@ -120,9 +144,9 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = TvAccent)
+                            CircularProgressIndicator(color = KidAccent)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("Loading playlists...", color = TvTextDim)
+                            Text("Loading playlists...", color = KidTextDim)
                         }
                     }
                 }
@@ -148,7 +172,7 @@ fun HomeScreen(
             Text(
                 text = "v${BuildConfig.VERSION_NAME}-debug",
                 style = MaterialTheme.typography.bodySmall,
-                color = TvTextDim,
+                color = KidTextDim,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(8.dp),
@@ -170,14 +194,14 @@ private fun PlaylistRowSection(
             Text(
                 text = row.displayName,
                 style = MaterialTheme.typography.titleMedium,
-                color = TvText,
+                color = KidText,
             )
             if (row.isOffline) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Offline",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TvWarning,
+                    color = StatusWarning,
                 )
             }
             if (row.isLoading) {
@@ -185,7 +209,7 @@ private fun PlaylistRowSection(
                 CircularProgressIndicator(
                     modifier = Modifier.height(14.dp).width(14.dp),
                     strokeWidth = 2.dp,
-                    color = TvAccent,
+                    color = KidAccent,
                 )
             }
         }
@@ -197,7 +221,7 @@ private fun PlaylistRowSection(
                 Text(
                     text = "Playlist no longer available",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TvAccent,
+                    color = StatusError,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
@@ -205,7 +229,7 @@ private fun PlaylistRowSection(
                 Text(
                     text = "No videos found",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TvTextDim,
+                    color = KidTextDim,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }

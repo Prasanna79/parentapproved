@@ -46,9 +46,9 @@ import tv.parentapproved.app.playback.DpadKeyHandler
 import tv.parentapproved.app.playback.PlaybackCommand
 import tv.parentapproved.app.playback.PlaybackCommandBus
 import tv.parentapproved.app.playback.StreamSelector
-import tv.parentapproved.app.ui.theme.TvAccent
-import tv.parentapproved.app.ui.theme.TvBackground
-import tv.parentapproved.app.ui.theme.TvTextDim
+import tv.parentapproved.app.ui.theme.KidBackground
+import tv.parentapproved.app.ui.theme.KidTextDim
+import tv.parentapproved.app.ui.theme.StatusError
 import tv.parentapproved.app.util.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -300,7 +300,7 @@ fun PlaybackScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(TvBackground)
+            .background(KidBackground)
             .focusRequester(focusRequester)
             .onKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown) {
@@ -348,20 +348,20 @@ fun PlaybackScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(TvBackground.copy(alpha = 0.85f)),
+                    .background(KidBackground.copy(alpha = 0.85f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = errorMessage!!,
                         style = MaterialTheme.typography.headlineMedium,
-                        color = TvAccent,
+                        color = StatusError,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Skipping in 3 seconds...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TvTextDim,
+                        color = KidTextDim,
                     )
                 }
             }
