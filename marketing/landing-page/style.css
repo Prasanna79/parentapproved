@@ -327,23 +327,10 @@ h3 {
   padding: 28px;
 }
 
-.problem-card .card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  margin-bottom: 16px;
-}
-
-.card-icon-infinite { background: #FEF3C7; }
-.card-icon-algorithm { background: #FEE2E2; }
-.card-icon-ui { background: #E0E7FF; }
-
 .problem-card h3 {
   margin-bottom: 10px;
+  font-style: italic;
+  color: var(--text);
 }
 
 .problem-card p {
@@ -744,6 +731,38 @@ h3 {
     grid-template-columns: 1fr;
     gap: 24px;
   }
+}
+
+/* --- Charityware --- */
+.charityware-section {
+  padding: 40px 24px;
+  text-align: center;
+  background: var(--sage);
+  border-top: 1px solid #D1FAE5;
+  border-bottom: 1px solid #D1FAE5;
+}
+
+.charityware-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.8;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.charityware-text a {
+  color: var(--green);
+  font-weight: 500;
+}
+
+.footer-charityware {
+  margin-top: 12px;
+  font-size: 0.85em;
+  color: #6B7280;
+}
+
+.footer-charityware a {
+  color: var(--green);
 }
 
 /* --- Download Section --- */
