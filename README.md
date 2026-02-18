@@ -1,64 +1,97 @@
-# KidsWatch
+# ParentApproved.tv
 
-A kid-safe YouTube player for Android TV. Parents pick the playlists, kids watch the videos. No ads, no algorithm, no rabbit holes.
+A free, open-source Android TV app that plays only parent-approved videos. No algorithm, no ads, no surprises. Manage everything from your phone.
+
+**Website:** [parentapproved.tv](https://parentapproved.tv)
 
 ## How It Works
 
-1. **Install** the app on your Android TV (Mi Box, Shield, Chromecast with Google TV, etc.)
-2. **Open** the app and scan the QR code with your phone
-3. **Enter** the 6-digit PIN shown on the TV
-4. **Add** YouTube playlist URLs from your phone
-5. **Kids watch** — only the videos you chose, with full D-pad remote control
-
-## Why?
-
-The YouTube Kids app still surfaces unexpected content. The regular YouTube app has ads, autoplay, and an algorithm designed to keep watching. KidsWatch gives parents full control: you pick the playlists, the TV plays them, nothing else.
+1. Install the APK on any Android TV (Mi Box, Shield, Chromecast with Google TV)
+2. Scan the QR code on the TV with your phone
+3. Enter the 6-digit PIN, paste any YouTube URL — video, playlist, or channel
+4. Kids see only what you added. No search, no browse, no algorithm.
 
 ## Architecture
 
 ```
-┌──────────────┐         WiFi          ┌──────────────┐
-│    Phone     │ ◄──── HTTP/8080 ────► │  Android TV  │
-│  (browser)   │                       │  (KidsWatch)  │
-│              │   PIN auth + REST     │              │
-│  Dashboard:  │   ─────────────►      │  Ktor server │
-│  • Add/remove│                       │  Room DB     │
-│    playlists │   ◄─────────────      │  ExoPlayer   │
-│  • View stats│   JSON responses      │  NewPipe     │
-└──────────────┘                       └──────────────┘
+┌──────────────┐                              ┌──────────────┐
+│    Phone     │ ◄──── WiFi (HTTP/8080) ────► │  Android TV  │
+│  (browser)   │                              │              │
+│  Dashboard   │ ◄── or via Cloudflare ─────► │  Ktor server │
+│              │     relay (WebSocket)        │  Room DB     │
+└──────────────┘                              │  ExoPlayer   │
+                                              │  NewPipe     │
+                                              └──────────────┘
 ```
 
-Everything runs locally on your network. No cloud, no accounts, no data leaves your home.
+**Local mode:** Phone and TV on same WiFi. Ktor embedded server on port 8080 serves the dashboard and REST API.
 
-## Features
+**Remote mode:** TV opens outbound WebSocket to a Cloudflare Workers relay. Phone sends HTTPS to the relay, relay forwards to TV. Dashboard served from the edge. TV's Ktor routes don't know about the relay.
 
-- **Playlist management** from your phone browser
-- **NewPipe extraction** — no YouTube API key needed
-- **ExoPlayer playback** — native Android media player
-- **PIN + session auth** — rate-limited, no cloud accounts
-- **Watch activity tracking** — see what was watched and for how long
-- **QR code pairing** — point your phone camera at the TV
-- **D-pad remote control** — designed for TV remotes
-- **Offline resilient** — cached videos play without internet
+## Tech Stack
 
-## Compatibility
+| Component | Tech |
+|-----------|------|
+| TV app | Kotlin, Jetpack Compose, ExoPlayer, Ktor 2.3.7, Room |
+| Video extraction | NewPipeExtractor (no API key, no sign-in) |
+| Parent dashboard | Vanilla HTML/CSS/JS served from TV or relay |
+| Relay | TypeScript, Cloudflare Workers + Durable Objects |
+| Auth | 6-digit PIN + session tokens, rate-limited |
+| DI | ServiceLocator (no Hilt) |
 
-- Android TV devices running Android 7.0+ (API 24)
-- Tested on: Xiaomi Mi Box 4 (Android 9), Android TV emulator (API 34)
+## Project Structure
+
+```
+├── tv-app/                    # Android TV app
+│   ├── app/src/main/java/     # Kotlin source
+│   ├── app/src/main/assets/   # Dashboard (HTML/CSS/JS)
+│   ├── app/src/test/          # Unit tests
+│   └── app/src/androidTest/   # Instrumented tests
+├── relay/                     # Cloudflare Workers relay
+│   ├── src/                   # TypeScript source
+│   ├── assets/                # Dashboard (relay copy)
+│   └── test/                  # Vitest tests
+├── marketing/landing-page/    # parentapproved.tv website
+└── docs/                      # Specs, release notes, retros
+```
 
 ## Development
 
-Built with Kotlin, Jetpack Compose, ExoPlayer, Ktor, Room, and NewPipeExtractor.
+**Prerequisites:** Java 17, Android SDK, Node.js (for relay)
 
 ```bash
-# Prerequisites: Java 17, Android SDK
-cd tv-app
-./gradlew assembleDebug
+# Build TV app
+cd tv-app && ./gradlew assembleDebug
+
+# Run unit tests
+./gradlew testDebugUnitTest
+
+# Run relay tests
+cd relay && npx vitest run
+
+# Install on device
 adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# Deploy relay
+cd relay && npx wrangler deploy
 ```
 
-See [CLAUDE.md](CLAUDE.md) for full development setup and conventions.
+See [CLAUDE.md](CLAUDE.md) for full environment setup, device configs, and conventions.
+
+## Key Design Decisions
+
+- **No cloud dependency.** Everything works on local WiFi. Remote access is opt-in.
+- **No YouTube API key.** NewPipeExtractor does client-side extraction.
+- **No algorithm.** Videos play in playlist order and stop.
+- **No account.** PIN auth, session tokens, all local.
+- **Charityware.** Free forever. If useful, donate to [mettavipassana.org](https://mettavipassana.org/donate).
+
+## Compatibility
+
+- Android TV 7.0+ (API 24)
+- Tested: Xiaomi Mi Box 4 (Android 9), Android TV emulator (API 34)
+- Dashboard: any mobile or desktop browser
 
 ## License
 
-Private project — not yet open source.
+Open source. Code on GitHub for anyone to read and verify.
