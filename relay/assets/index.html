@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KidsWatch Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="offline-banner" class="offline-banner hidden">
+            <span>TV is offline. Check that your TV is powered on and connected to WiFi.</span>
+        </div>
+
+        <div id="version-banner" class="version-banner hidden">
+            <span>Your TV app needs updating. Please update KidsWatch on your TV.</span>
+        </div>
+
+        <div id="auth-screen">
+            <h1>KidsWatch</h1>
+            <p>Enter the PIN shown on your TV</p>
+            <form id="pin-form">
+                <input type="text" id="pin-input" maxlength="6" pattern="[0-9]{6}" placeholder="000000" inputmode="numeric" autocomplete="off">
+                <button type="submit">Connect</button>
+            </form>
+            <p id="auth-error" class="error hidden"></p>
+        </div>
+
+        <div id="dashboard" class="hidden">
+            <header>
+                <h1>KidsWatch</h1>
+            </header>
+
+            <div id="now-playing" class="now-playing-card hidden">
+                <div class="np-header">
+                    <span class="badge">Now Playing</span>
+                    <span id="np-playlist-title" class="np-playlist"></span>
+                </div>
+                <div id="np-title" class="np-title"></div>
+                <div class="np-progress-container">
+                    <div class="np-progress-bar">
+                        <div id="np-progress-fill" class="np-progress-fill"></div>
+                    </div>
+                    <div class="np-time">
+                        <span id="np-elapsed">0:00</span>
+                        <span id="np-duration">0:00</span>
+                    </div>
+                </div>
+                <div class="np-controls">
+                    <button id="np-stop-btn" class="np-btn np-btn-stop">Stop</button>
+                    <button id="np-pause-btn" class="np-btn np-btn-pause">Pause</button>
+                    <button id="np-next-btn" class="np-btn np-btn-next">Next</button>
+                </div>
+            </div>
+
+            <section id="playlists-section">
+                <h2>Playlists</h2>
+                <form id="playlist-form">
+                    <input type="url" id="playlist-url" placeholder="Paste YouTube playlist URL" required>
+                    <button type="submit">Add Playlist</button>
+                </form>
+                <p id="playlist-error" class="error hidden"></p>
+                <ul id="playlist-list"></ul>
+            </section>
+
+            <section id="stats-section">
+                <h2>Today's Activity</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-videos">0</span>
+                        <span class="stat-label">Videos</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-time">0m</span>
+                        <span class="stat-label">Watch Time</span>
+                    </div>
+                </div>
+            </section>
+
+            <section id="recent-section">
+                <h2>Recent Activity</h2>
+                <ul id="recent-list"></ul>
+            </section>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

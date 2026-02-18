@@ -14,10 +14,13 @@ android {
         applicationId = "com.kidswatch.tv"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "0.3"
+        versionCode = 4
+        versionName = "0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "RELAY_URL", "\"https://kidswatch-relay.workers.dev\"")
+        buildConfigField("int", "PROTOCOL_VERSION", "1")
     }
 
     buildTypes {

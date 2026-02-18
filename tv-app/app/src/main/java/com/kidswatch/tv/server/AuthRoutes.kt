@@ -24,6 +24,21 @@ data class AuthResponse(
 )
 
 fun Route.authRoutes(pinManager: PinManager, sessionManager: SessionManager) {
+    post("/auth/refresh") {
+        val authHeader = call.request.header("Authorization")
+        val token = authHeader?.removePrefix("Bearer ")
+        if (token == null) {
+            call.respond(HttpStatusCode.Unauthorized, AuthResponse(success = false, error = "Missing token"))
+            return@post
+        }
+        val newToken = sessionManager.refreshSession(token)
+        if (newToken == null) {
+            call.respond(HttpStatusCode.Unauthorized, AuthResponse(success = false, error = "Invalid or expired token"))
+            return@post
+        }
+        call.respond(HttpStatusCode.OK, AuthResponse(success = true, token = newToken))
+    }
+
     post("/auth") {
         val body = try {
             call.receive<AuthRequest>()

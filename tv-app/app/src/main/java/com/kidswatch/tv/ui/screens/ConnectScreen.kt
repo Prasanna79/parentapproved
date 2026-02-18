@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,12 +34,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kidswatch.tv.BuildConfig
 import com.kidswatch.tv.ServiceLocator
+import com.kidswatch.tv.relay.RelayConnectionState
 import com.kidswatch.tv.ui.theme.OverscanPadding
 import com.kidswatch.tv.ui.theme.TvAccent
 import com.kidswatch.tv.ui.theme.TvPrimary
 import com.kidswatch.tv.ui.theme.TvBackground
 import com.kidswatch.tv.ui.theme.TvText
 import com.kidswatch.tv.ui.theme.TvTextDim
+import com.kidswatch.tv.ui.theme.TvWarning
 import com.kidswatch.tv.util.NetworkUtils
 import com.kidswatch.tv.util.QrCodeGenerator
 
@@ -45,14 +49,159 @@ import com.kidswatch.tv.util.QrCodeGenerator
 fun ConnectScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     var ip by remember { mutableStateOf<String?>(null) }
-    var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var relayQrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var showSettings by remember { mutableStateOf(false) }
     val pin = remember { ServiceLocator.pinManager.getCurrentPin() }
+
+    // Relay info
+    val relayConfig = remember {
+        if (ServiceLocator.isInitialized()) ServiceLocator.relayConfig else null
+    }
+    val relayConnector = remember {
+        if (ServiceLocator.isInitialized()) try { ServiceLocator.relayConnector } catch (e: Exception) { null } else null
+    }
 
     LaunchedEffect(Unit) {
         ip = NetworkUtils.getDeviceIp(context)
+
+        // Generate relay QR code (primary)
+        relayConfig?.let { config ->
+            val relayUrl = "${config.relayUrl}/tv/${config.tvId}/connect?secret=${config.tvSecret}&pin=$pin"
+            relayQrBitmap = QrCodeGenerator.generate(relayUrl)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(TvBackground)
+    ) {
+        if (showSettings) {
+            ConnectSettingsPanel(
+                ip = ip,
+                pin = pin,
+                relayConfig = relayConfig,
+                relayConnector = relayConnector,
+                onClose = { showSettings = false },
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(OverscanPadding)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = "Connect Your Phone",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = TvText,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Primary: Relay QR code
+                if (relayQrBitmap != null) {
+                    Image(
+                        bitmap = relayQrBitmap!!.asImageBitmap(),
+                        contentDescription = "QR code to connect via relay",
+                        modifier = Modifier.size(200.dp),
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Scan to connect from anywhere",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TvText,
+                    )
+                } else {
+                    Text(
+                        text = "Setting up remote connection...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = TvTextDim,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "PIN:",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = TvTextDim,
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = pin,
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    color = TvAccent,
+                    letterSpacing = 8.sp,
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Secondary: Local IP (small, dim)
+                ip?.let { address ->
+                    Text(
+                        text = "Local: ${NetworkUtils.buildConnectUrl(address)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TvTextDim,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onBack,
+                    colors = ButtonDefaults.buttonColors(containerColor = TvPrimary),
+                ) {
+                    Text("Back", color = TvText)
+                }
+
+                if (BuildConfig.IS_DEBUG) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "v${BuildConfig.VERSION_NAME}-debug",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TvTextDim,
+                    )
+                }
+            }
+
+            // Settings gear icon (bottom-right)
+            IconButton(
+                onClick = { showSettings = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(OverscanPadding),
+            ) {
+                Text(
+                    text = "\u2699",
+                    fontSize = 24.sp,
+                    color = TvTextDim,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConnectSettingsPanel(
+    ip: String?,
+    pin: String,
+    relayConfig: com.kidswatch.tv.relay.RelayConfig?,
+    relayConnector: com.kidswatch.tv.relay.RelayConnector?,
+    onClose: () -> Unit,
+) {
+    var debugQrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(ip) {
         ip?.let { address ->
-            val url = NetworkUtils.buildConnectUrl(address)
-            qrBitmap = QrCodeGenerator.generate(url)
+            val debugUrl = "http://$address:8080/debug/"
+            debugQrBitmap = QrCodeGenerator.generate(debugUrl)
         }
     }
 
@@ -62,80 +211,83 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
             .background(TvBackground)
             .padding(OverscanPadding)
             .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "Connect Your Phone",
+            text = "Settings",
             style = MaterialTheme.typography.headlineMedium,
             color = TvText,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (qrBitmap != null) {
-            Image(
-                bitmap = qrBitmap!!.asImageBitmap(),
-                contentDescription = "QR code to connect",
-                modifier = Modifier.size(160.dp),
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = ip?.let { NetworkUtils.buildConnectUrl(it) } ?: "",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TvTextDim,
-            )
-        } else {
-            Text(
-                text = "Connect to WiFi to get started",
-                style = MaterialTheme.typography.bodyLarge,
-                color = TvTextDim,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "PIN:",
-            style = MaterialTheme.typography.bodyLarge,
-            color = TvTextDim,
-        )
-
+        // TV Info
+        Text("TV Info", style = MaterialTheme.typography.titleMedium, color = TvText)
         Spacer(modifier = Modifier.height(4.dp))
-
+        relayConfig?.let {
+            Text("TV ID: ${it.tvId}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
+        }
         Text(
-            text = pin,
-            fontSize = 40.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace,
-            color = TvAccent,
-            letterSpacing = 8.sp,
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = "Scan the QR code or visit the URL above",
+            "Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
             style = MaterialTheme.typography.bodySmall,
             color = TvTextDim,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = onBack,
-            colors = ButtonDefaults.buttonColors(containerColor = TvPrimary),
-        ) {
-            Text("Back", color = TvText)
+        // Relay status
+        Text("Relay", style = MaterialTheme.typography.titleMedium, color = TvText)
+        Spacer(modifier = Modifier.height(4.dp))
+        relayConfig?.let {
+            Text("URL: ${it.relayUrl}", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
+        }
+        relayConnector?.let {
+            val statusText = when (it.state) {
+                RelayConnectionState.CONNECTED -> "Connected"
+                RelayConnectionState.CONNECTING -> "Connecting..."
+                RelayConnectionState.DISCONNECTED -> "Disconnected"
+            }
+            val statusColor = when (it.state) {
+                RelayConnectionState.CONNECTED -> TvAccent
+                RelayConnectionState.CONNECTING -> TvWarning
+                RelayConnectionState.DISCONNECTED -> TvTextDim
+            }
+            Text("Status: $statusText", style = MaterialTheme.typography.bodySmall, color = statusColor)
         }
 
-        if (BuildConfig.IS_DEBUG) {
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Current PIN
+        Text("Current PIN", style = MaterialTheme.typography.titleMedium, color = TvText)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(pin, style = MaterialTheme.typography.bodyLarge, color = TvAccent, fontFamily = FontFamily.Monospace)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Debug QR code
+        if (debugQrBitmap != null) {
+            Text("Debug (local only)", style = MaterialTheme.typography.titleMedium, color = TvWarning)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "v${BuildConfig.VERSION_NAME}-debug",
-                style = MaterialTheme.typography.bodySmall,
-                color = TvTextDim,
+            Image(
+                bitmap = debugQrBitmap!!.asImageBitmap(),
+                contentDescription = "Debug QR code (local network)",
+                modifier = Modifier.size(120.dp),
             )
+            ip?.let {
+                Text(
+                    "http://$it:8080/debug/",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TvTextDim,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = onClose,
+            colors = ButtonDefaults.buttonColors(containerColor = TvPrimary),
+        ) {
+            Text("Close", color = TvText)
         }
     }
 }

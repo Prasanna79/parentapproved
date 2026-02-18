@@ -60,8 +60,8 @@ class AuthMiddlewareTest {
 
     @Test
     fun protectedRoute_expiredSession_returns401() = testApp { token ->
-        // Advance past 30 days
-        currentTime += 31L * 24 * 60 * 60 * 1000
+        // Advance past 90 days
+        currentTime += 91L * 24 * 60 * 60 * 1000
         val response = client.get("/protected") {
             header("Authorization", "Bearer $token")
         }

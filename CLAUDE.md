@@ -82,6 +82,14 @@ bash scripts/ci-run.sh
 - Use `/adb` slash command or full path: `/opt/homebrew/share/android-commandlinetools/platform-tools/adb`
 - Mi Box: `-s 192.168.0.101:5555` | Emulator: `-s emulator-5554`
 
+## Moldable Development — Friction-Driven
+- **Friction log**: `docs/friction-log.md` — updated during every bug fix or investigation
+- **Before reading code** for a bug/question, note what question you're answering
+- **After resolving**, append an entry: question, files read, trace length, root cause, what would have helped
+- **3-strike rule**: when a friction pattern appears 3 times, build the domain object/view for it
+- **Reference designs**: `v031-MOLDABLE-DEV-SPEC.md` has pre-designed domain objects (ResolutionAttempt, PlaybackSession, ParentAction, WatchableContent) — pull from this menu when friction justifies it
+- **Don't pre-build** — let real debugging pain drive what gets built
+
 ## What NOT to Do
 - Don't add Firebase or any cloud dependencies — this is local-first by design
 - Don't use YouTube embed URLs (Error 152 in WebView)

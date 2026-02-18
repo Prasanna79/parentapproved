@@ -57,6 +57,10 @@ class DebugReceiver : BroadcastReceiver() {
             "$PKG.DEBUG_STOP_PLAYBACK" -> handleStopPlayback()
             "$PKG.DEBUG_GET_NOW_PLAYING" -> handleGetNowPlaying()
 
+            // --- Relay ---
+            "$PKG.DEBUG_GET_RELAY_STATUS" -> handleGetRelayStatus()
+            "$PKG.DEBUG_RESET_TV_SECRET" -> handleResetTvSecret()
+
             // --- Lifecycle ---
             "$PKG.DEBUG_FULL_RESET" -> handleFullReset(context)
             "$PKG.DEBUG_SIMULATE_OFFLINE" -> handleSimulateOffline()
@@ -186,6 +190,13 @@ class DebugReceiver : BroadcastReceiver() {
     private fun handleResetPin() {
         val newPin = ServiceLocator.pinManager.resetPin()
         ServiceLocator.sessionManager.invalidateAll()
+        // Rotate tv-secret on PIN reset (security: invalidates all remote access)
+        try {
+            ServiceLocator.relayConfig.rotateTvSecret()
+            ServiceLocator.relayConnector.reconnectNow()
+        } catch (e: Exception) {
+            // Relay may not be initialized in tests
+        }
         logResult("""{"pin":"$newPin"}""")
     }
 
@@ -233,6 +244,29 @@ class DebugReceiver : BroadcastReceiver() {
             logResult("""{"video_id":"$videoId","playlist_id":"${playlistId ?: ""}","playing":true}""")
         } else {
             logResult("""{"playing":false}""")
+        }
+    }
+
+    // --- Relay ---
+
+    private fun handleGetRelayStatus() {
+        try {
+            val config = ServiceLocator.relayConfig
+            val connector = ServiceLocator.relayConnector
+            logResult("""{"tvId":"${config.tvId}","connected":${connector.state == com.kidswatch.tv.relay.RelayConnectionState.CONNECTED},"relayUrl":"${config.relayUrl}","state":"${connector.state}"}""")
+        } catch (e: Exception) {
+            logResult("""{"error":"relay not initialized"}""")
+        }
+    }
+
+    private fun handleResetTvSecret() {
+        try {
+            ServiceLocator.relayConfig.rotateTvSecret()
+            ServiceLocator.sessionManager.invalidateAll()
+            ServiceLocator.relayConnector.reconnectNow()
+            logResult("""{"success":true,"tvId":"${ServiceLocator.relayConfig.tvId}"}""")
+        } catch (e: Exception) {
+            logResult("""{"error":"${e.message}"}""")
         }
     }
 

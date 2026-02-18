@@ -1,0 +1,24 @@
+name = "kidswatch-relay"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[durable_objects]
+bindings = [
+  { name = "RELAY", class_name = "RelayDurableObject" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RelayDurableObject"]
+
+# Assets (dashboard HTML/JS/CSS)
+[site]
+bucket = "./assets"
+
+[env.staging]
+name = "kidswatch-relay-staging"
+
+[env.staging.durable_objects]
+bindings = [
+  { name = "RELAY", class_name = "RelayDurableObject" }
+]

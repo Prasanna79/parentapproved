@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kidswatch.tv.BuildConfig
 import com.kidswatch.tv.ServiceLocator
+import com.kidswatch.tv.relay.RelayConnectionState
 import com.kidswatch.tv.data.events.PlayEventRecorder
 import com.kidswatch.tv.ui.components.LogPanel
 import com.kidswatch.tv.ui.theme.OverscanPadding
@@ -34,6 +35,7 @@ import com.kidswatch.tv.ui.theme.TvBackground
 import com.kidswatch.tv.ui.theme.TvPrimary
 import com.kidswatch.tv.ui.theme.TvText
 import com.kidswatch.tv.ui.theme.TvTextDim
+import com.kidswatch.tv.ui.theme.TvAccent
 import com.kidswatch.tv.ui.theme.TvWarning
 import com.kidswatch.tv.util.AppLogger
 import com.kidswatch.tv.util.OfflineSimulator
@@ -88,6 +90,28 @@ fun SettingsScreen(
         Text("PIN: $displayPin", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
         Text("Active sessions: $sessionCount", style = MaterialTheme.typography.bodySmall, color = TvTextDim)
 
+        // Relay status
+        val relayInfo = remember {
+            try {
+                val state = ServiceLocator.relayConnector.state
+                state to when (state) {
+                    RelayConnectionState.CONNECTED -> "Connected"
+                    RelayConnectionState.CONNECTING -> "Connecting..."
+                    RelayConnectionState.DISCONNECTED -> "Disconnected"
+                }
+            } catch (_: Exception) {
+                null
+            }
+        }
+        relayInfo?.let { (state, statusText) ->
+            val relayColor = when (state) {
+                RelayConnectionState.CONNECTED -> TvAccent
+                RelayConnectionState.CONNECTING -> TvWarning
+                RelayConnectionState.DISCONNECTED -> TvTextDim
+            }
+            Text("Relay: $statusText", style = MaterialTheme.typography.bodySmall, color = relayColor)
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         // --- Debug ---
@@ -102,6 +126,11 @@ fun SettingsScreen(
             SettingsBtn("Reset PIN") {
                 val newPin = ServiceLocator.pinManager.resetPin()
                 ServiceLocator.sessionManager.invalidateAll()
+                // Rotate tv-secret on PIN reset (invalidates all remote access)
+                try {
+                    ServiceLocator.relayConfig.rotateTvSecret()
+                    ServiceLocator.relayConnector.reconnectNow()
+                } catch (_: Exception) {}
                 displayPin = newPin
                 sessionCount = 0
             }

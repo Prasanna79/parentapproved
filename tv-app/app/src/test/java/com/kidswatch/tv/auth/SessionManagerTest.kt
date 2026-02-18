@@ -37,8 +37,8 @@ class SessionManagerTest {
     @Test
     fun sessionExpiry_expiredSessionInvalid() {
         val token = sessionManager.createSession()!!
-        // Advance past 30 days
-        currentTime += 30L * 24 * 60 * 60 * 1000 + 1
+        // Advance past 90 days
+        currentTime += 90L * 24 * 60 * 60 * 1000 + 1
         assertFalse(sessionManager.validateSession(token))
     }
 
@@ -87,5 +87,108 @@ class SessionManagerTest {
         assertEquals(2, sessionManager.getActiveSessionCount())
         sessionManager.invalidateAll()
         assertEquals(0, sessionManager.getActiveSessionCount())
+    }
+
+    @Test
+    fun refreshSession_validToken_returnsNewToken() {
+        val token = sessionManager.createSession()!!
+        val newToken = sessionManager.refreshSession(token)
+        assertNotNull(newToken)
+        assertNotEquals(token, newToken)
+        // Old token should be invalid
+        assertFalse(sessionManager.validateSession(token))
+        // New token should be valid
+        assertTrue(sessionManager.validateSession(newToken!!))
+    }
+
+    @Test
+    fun refreshSession_invalidToken_returnsNull() {
+        val result = sessionManager.refreshSession("nonexistent")
+        assertNull(result)
+    }
+
+    @Test
+    fun refreshSession_expiredToken_returnsNull() {
+        val token = sessionManager.createSession()!!
+        currentTime += 91L * 24 * 60 * 60 * 1000 // past 90-day TTL
+        val result = sessionManager.refreshSession(token)
+        assertNull(result)
+    }
+
+    @Test
+    fun refreshSession_preservesSessionCount() {
+        val token = sessionManager.createSession()!!
+        sessionManager.createSession()
+        assertEquals(2, sessionManager.getActiveSessionCount())
+        sessionManager.refreshSession(token)
+        assertEquals(2, sessionManager.getActiveSessionCount())
+    }
+
+    @Test
+    fun sessionExpiry_90dayTtl() {
+        val token = sessionManager.createSession()!!
+        // At 89 days, still valid
+        currentTime += 89L * 24 * 60 * 60 * 1000
+        assertTrue(sessionManager.validateSession(token))
+        // At 91 days, expired
+        currentTime += 2L * 24 * 60 * 60 * 1000
+        assertFalse(sessionManager.validateSession(token))
+    }
+
+    @Test
+    fun persistence_savesOnCreate() {
+        val fakePersistence = FakeSessionPersistence()
+        val sm = SessionManager(clock = { currentTime }, persistence = fakePersistence)
+        sm.createSession()
+        assertEquals(1, fakePersistence.savedSessions.size)
+    }
+
+    @Test
+    fun persistence_loadsOnInit() {
+        val fakePersistence = FakeSessionPersistence()
+        // Pre-seed with a session
+        fakePersistence.savedSessions["existing-token"] = currentTime
+        val sm = SessionManager(clock = { currentTime }, persistence = fakePersistence)
+        assertTrue(sm.validateSession("existing-token"))
+    }
+
+    @Test
+    fun persistence_savesOnInvalidateAll() {
+        val fakePersistence = FakeSessionPersistence()
+        val sm = SessionManager(clock = { currentTime }, persistence = fakePersistence)
+        sm.createSession()
+        sm.invalidateAll()
+        assertTrue(fakePersistence.savedSessions.isEmpty())
+    }
+
+    @Test
+    fun persistence_savesOnRefresh() {
+        val fakePersistence = FakeSessionPersistence()
+        val sm = SessionManager(clock = { currentTime }, persistence = fakePersistence)
+        val token = sm.createSession()!!
+        val newToken = sm.refreshSession(token)!!
+        assertFalse(fakePersistence.savedSessions.containsKey(token))
+        assertTrue(fakePersistence.savedSessions.containsKey(newToken))
+    }
+
+    @Test
+    fun persistence_null_doesNotCrash() {
+        // Default constructor with no persistence should work fine
+        val sm = SessionManager(clock = { currentTime })
+        val token = sm.createSession()!!
+        assertTrue(sm.validateSession(token))
+        sm.refreshSession(token)
+        sm.invalidateAll()
+    }
+
+    private class FakeSessionPersistence : SessionPersistence {
+        val savedSessions = HashMap<String, Long>()
+
+        override fun save(sessions: Map<String, Long>) {
+            savedSessions.clear()
+            savedSessions.putAll(sessions)
+        }
+
+        override fun load(): Map<String, Long> = HashMap(savedSessions)
     }
 }
