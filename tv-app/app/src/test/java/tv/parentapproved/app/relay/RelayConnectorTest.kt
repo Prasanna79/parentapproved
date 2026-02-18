@@ -202,6 +202,21 @@ class RelayConnectorTest {
         assertSame(firstWs, fakeWsFactory.lastWebSocket)
     }
 
+    @Test
+    fun connect_sendsAppVersionFromConstructor() {
+        val connector = RelayConnector(
+            config = config,
+            clock = { currentTime },
+            webSocketFactory = fakeWsFactory,
+            dispatcher = StandardTestDispatcher(),
+            appVersion = "1.2.3",
+        )
+        connector.connect()
+        fakeWsFactory.lastListener?.onOpen(fakeWsFactory.lastWebSocket!!, mockk(relaxed = true))
+        val sent = fakeWsFactory.lastWebSocket!!.sentMessages
+        assertTrue("ConnectMessage should contain injected version", sent[0].contains("1.2.3"))
+    }
+
     // --- Path mapping tests ---
 
     @Test

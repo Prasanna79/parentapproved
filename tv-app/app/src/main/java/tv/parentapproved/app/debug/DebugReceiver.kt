@@ -6,13 +6,14 @@ import android.content.Intent
 import android.util.Log
 import tv.parentapproved.app.ServiceLocator
 import tv.parentapproved.app.auth.PinResult
-import tv.parentapproved.app.data.cache.CacheDatabase
-import tv.parentapproved.app.data.cache.PlaylistEntity
+import tv.parentapproved.app.data.ContentSourceRepository
+import tv.parentapproved.app.data.cache.ChannelEntity
 import tv.parentapproved.app.data.events.PlayEventRecorder
 import tv.parentapproved.app.util.AppLogger
+import tv.parentapproved.app.util.ContentSourceParser
 import tv.parentapproved.app.util.NetworkUtils
 import tv.parentapproved.app.util.OfflineSimulator
-import tv.parentapproved.app.util.PlaylistUrlParser
+import tv.parentapproved.app.util.ParseResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -81,20 +82,27 @@ class DebugReceiver : BroadcastReceiver() {
             logResult("""{"error":"missing url extra"}""")
             return
         }
-        val playlistId = PlaylistUrlParser.parse(url) ?: run {
-            logResult("""{"error":"invalid playlist url"}""")
+        val parseResult = ContentSourceParser.parse(url)
+        if (parseResult is ParseResult.Rejected) {
+            logResult("""{"error":"${parseResult.message}"}""")
             return
         }
+        val source = (parseResult as ParseResult.Success).source
         scope.launch {
             try {
-                val dao = ServiceLocator.database.playlistDao()
-                if (dao.getByYoutubeId(playlistId) != null) {
-                    logResult("""{"error":"duplicate playlist"}""")
+                val dao = ServiceLocator.database.channelDao()
+                if (dao.getBySourceId(source.id) != null) {
+                    logResult("""{"error":"duplicate source"}""")
                     return@launch
                 }
-                val entity = PlaylistEntity(youtubePlaylistId = playlistId, displayName = playlistId)
+                val entity = ChannelEntity(
+                    sourceType = source.type.name.lowercase(),
+                    sourceId = source.id,
+                    sourceUrl = source.canonicalUrl,
+                    displayName = source.id,
+                )
                 val id = dao.insert(entity)
-                logResult("""{"id":$id,"youtubePlaylistId":"$playlistId"}""")
+                logResult("""{"id":$id,"sourceId":"${source.id}","sourceType":"${source.type.name.lowercase()}"}""")
             } catch (e: Exception) {
                 logResult("""{"error":"${e.message}"}""")
             }
@@ -109,7 +117,7 @@ class DebugReceiver : BroadcastReceiver() {
         }
         scope.launch {
             try {
-                ServiceLocator.database.playlistDao().deleteById(id)
+                ServiceLocator.database.channelDao().deleteById(id)
                 logResult("""{"removed":$id}""")
             } catch (e: Exception) {
                 logResult("""{"error":"${e.message}"}""")
@@ -118,18 +126,18 @@ class DebugReceiver : BroadcastReceiver() {
     }
 
     private fun handleResolvePlaylist(intent: Intent) {
-        val playlistId = intent.getStringExtra("playlist_id") ?: run {
+        val sourceId = intent.getStringExtra("playlist_id") ?: run {
             logResult("""{"error":"missing playlist_id extra"}""")
             return
         }
         scope.launch {
             try {
-                val resolved = tv.parentapproved.app.data.PlaylistRepository.resolvePlaylist(playlistId)
-                // Cache them
-                tv.parentapproved.app.data.PlaylistRepository.cacheVideos(
-                    ServiceLocator.database, playlistId, resolved.videos
-                )
-                logResult("""{"playlist_id":"$playlistId","title":"${resolved.title}","video_count":${resolved.videos.size}}""")
+                // Determine source type from DB or default to playlist
+                val entity = ServiceLocator.database.channelDao().getBySourceId(sourceId)
+                val sourceType = entity?.sourceType ?: "yt_playlist"
+                val resolved = ContentSourceRepository.resolve(sourceType, sourceId)
+                ContentSourceRepository.cacheVideos(ServiceLocator.database, sourceId, resolved.videos)
+                logResult("""{"source_id":"$sourceId","title":"${resolved.title}","video_count":${resolved.videos.size}}""")
             } catch (e: Exception) {
                 logResult("""{"error":"${e.message}"}""")
             }
@@ -139,8 +147,8 @@ class DebugReceiver : BroadcastReceiver() {
     private fun handleRefreshPlaylists() {
         scope.launch {
             try {
-                val playlists = ServiceLocator.database.playlistDao().getAll()
-                logResult("""{"playlist_count":${playlists.size}}""")
+                val channels = ServiceLocator.database.channelDao().getAll()
+                logResult("""{"source_count":${channels.size}}""")
             } catch (e: Exception) {
                 logResult("""{"error":"${e.message}"}""")
             }
@@ -150,13 +158,15 @@ class DebugReceiver : BroadcastReceiver() {
     private fun handleGetPlaylists() {
         scope.launch {
             try {
-                val playlists = ServiceLocator.database.playlistDao().getAll()
+                val channels = ServiceLocator.database.channelDao().getAll()
                 val arr = buildJsonArray {
-                    playlists.forEach { pl ->
+                    channels.forEach { ch ->
                         add(buildJsonObject {
-                            put("id", pl.id)
-                            put("youtubePlaylistId", pl.youtubePlaylistId)
-                            put("displayName", pl.displayName)
+                            put("id", ch.id)
+                            put("sourceType", ch.sourceType)
+                            put("sourceId", ch.sourceId)
+                            put("displayName", ch.displayName)
+                            put("videoCount", ch.videoCount)
                         })
                     }
                 }
@@ -171,9 +181,9 @@ class DebugReceiver : BroadcastReceiver() {
         scope.launch {
             try {
                 val ip = NetworkUtils.getDeviceIp(context) ?: "unknown"
-                val playlistCount = ServiceLocator.database.playlistDao().count()
+                val sourceCount = ServiceLocator.database.channelDao().count()
                 val sessions = ServiceLocator.sessionManager.getActiveSessionCount()
-                logResult("""{"running":true,"port":8080,"ip":"$ip","playlists":$playlistCount,"sessions":$sessions}""")
+                logResult("""{"running":true,"port":8080,"ip":"$ip","sources":$sourceCount,"sessions":$sessions}""")
             } catch (e: Exception) {
                 logResult("""{"error":"${e.message}"}""")
             }
@@ -275,7 +285,7 @@ class DebugReceiver : BroadcastReceiver() {
     private fun handleFullReset(context: Context) {
         scope.launch {
             try {
-                ServiceLocator.database.playlistDao().deleteAll()
+                ServiceLocator.database.channelDao().deleteAll()
                 ServiceLocator.database.playEventDao().deleteAll()
                 ServiceLocator.database.videoDao().deleteByPlaylist("%") // won't match, need deleteAll
                 ServiceLocator.pinManager.resetPin()
@@ -295,7 +305,7 @@ class DebugReceiver : BroadcastReceiver() {
     private fun handleGetStateDump(context: Context) {
         scope.launch {
             try {
-                val playlists = ServiceLocator.database.playlistDao().count()
+                val sources = ServiceLocator.database.channelDao().count()
                 val events = ServiceLocator.database.playEventDao().count()
                 val videos = ServiceLocator.database.videoDao().count()
                 val sessions = ServiceLocator.sessionManager.getActiveSessionCount()
@@ -304,7 +314,7 @@ class DebugReceiver : BroadcastReceiver() {
                 val offline = OfflineSimulator.isOffline
                 val nowPlaying = PlayEventRecorder.currentVideoId
 
-                logResult("""{"playlists":$playlists,"events":$events,"videos":$videos,"sessions":$sessions,"pin":"$pin","ip":"$ip","offline":$offline,"nowPlaying":${if (nowPlaying != null) "\"$nowPlaying\"" else "null"}}""")
+                logResult("""{"sources":$sources,"events":$events,"videos":$videos,"sessions":$sessions,"pin":"$pin","ip":"$ip","offline":$offline,"nowPlaying":${if (nowPlaying != null) "\"$nowPlaying\"" else "null"}}""")
             } catch (e: Exception) {
                 logResult("""{"error":"${e.message}"}""")
             }

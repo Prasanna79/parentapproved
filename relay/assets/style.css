@@ -22,6 +22,15 @@ h1 {
     color: #1A1A1A;
     font-size: 1.8em;
     margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo {
+    width: 1.2em;
+    height: 1.2em;
+    flex-shrink: 0;
 }
 
 h2 {
@@ -310,6 +319,67 @@ section {
     color: #DC2626;
     font-size: 0.9em;
     margin-top: 8px;
+}
+
+/* Now Playing Thumbnail */
+.np-thumbnail {
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+/* Charityware Footer */
+.charityware {
+    margin-top: 32px;
+    padding: 16px;
+    text-align: center;
+    color: #6B7280;
+    font-size: 0.8em;
+    line-height: 1.6;
+    border-top: 1px solid #E5E7EB;
+}
+
+.charityware a {
+    color: #22A559;
+    text-decoration: none;
+}
+
+.charityware a:hover {
+    text-decoration: underline;
+}
+
+/* Homescreen Banner */
+.homescreen-banner {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85em;
+    color: #15803D;
+}
+
+.homescreen-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.homescreen-btn {
+    padding: 6px 16px;
+    font-size: 0.85em;
+}
+
+.homescreen-dismiss {
+    background: none;
+    border: none;
+    color: #6B7280;
+    font-size: 1.4em;
+    cursor: pointer;
+    padding: 4px 8px;
 }
 
 .local-notice {

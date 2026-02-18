@@ -4,7 +4,7 @@ import tv.parentapproved.app.ServiceLocator
 import tv.parentapproved.app.auth.PinManager
 import tv.parentapproved.app.auth.SessionManager
 import tv.parentapproved.app.data.cache.CacheDatabase
-import tv.parentapproved.app.data.cache.PlaylistDao
+import tv.parentapproved.app.data.cache.ChannelDao
 import tv.parentapproved.app.data.events.PlayEventRecorder
 import tv.parentapproved.app.server.ParentApprovedServer
 import io.ktor.server.engine.*
@@ -46,10 +46,10 @@ class RelayBridgeIntegrationTest {
         @BeforeClass
         fun startServer() {
             val mockDb = mockk<CacheDatabase>()
-            val mockPlaylistDao = mockk<PlaylistDao>()
-            coEvery { mockPlaylistDao.count() } returns 2
-            coEvery { mockPlaylistDao.getAll() } returns emptyList()
-            every { mockDb.playlistDao() } returns mockPlaylistDao
+            val mockChannelDao = mockk<ChannelDao>()
+            coEvery { mockChannelDao.count() } returns 2
+            coEvery { mockChannelDao.getAll() } returns emptyList()
+            every { mockDb.channelDao() } returns mockChannelDao
 
             val mockPlayEventDao = mockk<tv.parentapproved.app.data.events.PlayEventDao>(relaxed = true)
             every { mockDb.playEventDao() } returns mockPlayEventDao

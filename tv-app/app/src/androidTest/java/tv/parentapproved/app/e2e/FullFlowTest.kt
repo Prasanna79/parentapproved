@@ -7,7 +7,7 @@ import tv.parentapproved.app.auth.PinManager
 import tv.parentapproved.app.auth.PinResult
 import tv.parentapproved.app.auth.SessionManager
 import tv.parentapproved.app.data.cache.CacheDatabase
-import tv.parentapproved.app.data.cache.PlaylistEntity
+import tv.parentapproved.app.data.cache.ChannelEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
@@ -27,7 +27,7 @@ class FullFlowTest {
     }
 
     @Test
-    fun e2e_authThenAddPlaylist_fullCycle() = runBlocking {
+    fun e2e_authThenAddSource_fullCycle() = runBlocking {
         // Authenticate
         val pin = ServiceLocator.pinManager.getCurrentPin()
         val result = ServiceLocator.pinManager.validate(pin)
@@ -38,30 +38,30 @@ class FullFlowTest {
         assertNotNull(token)
         assertTrue(ServiceLocator.sessionManager.validateSession(token!!))
 
-        // Add playlist
-        val entity = PlaylistEntity(youtubePlaylistId = "PLtest123", displayName = "Test Playlist")
-        val id = db.playlistDao().insert(entity)
+        // Add source
+        val entity = ChannelEntity(sourceType = "yt_playlist", sourceId = "PLtest123", sourceUrl = "https://www.youtube.com/playlist?list=PLtest123", displayName = "Test Playlist")
+        val id = db.channelDao().insert(entity)
         assertTrue(id > 0)
 
-        // List playlists
-        val playlists = db.playlistDao().getAll()
-        assertEquals(1, playlists.size)
-        assertEquals("PLtest123", playlists[0].youtubePlaylistId)
+        // List sources
+        val channels = db.channelDao().getAll()
+        assertEquals(1, channels.size)
+        assertEquals("PLtest123", channels[0].sourceId)
 
-        // Delete playlist
-        db.playlistDao().deleteById(id)
-        assertEquals(0, db.playlistDao().count())
+        // Delete source
+        db.channelDao().deleteById(id)
+        assertEquals(0, db.channelDao().count())
     }
 
     @Test
-    fun e2e_addPlaylistViaDao_verifyInDb() = runBlocking {
-        db.playlistDao().insert(PlaylistEntity(youtubePlaylistId = "PLabc", displayName = "ABC"))
-        db.playlistDao().insert(PlaylistEntity(youtubePlaylistId = "PLdef", displayName = "DEF"))
+    fun e2e_addSourceViaDao_verifyInDb() = runBlocking {
+        db.channelDao().insert(ChannelEntity(sourceType = "yt_playlist", sourceId = "PLabc", sourceUrl = "url1", displayName = "ABC"))
+        db.channelDao().insert(ChannelEntity(sourceType = "yt_video", sourceId = "vid1", sourceUrl = "url2", displayName = "DEF"))
 
-        val all = db.playlistDao().getAll()
+        val all = db.channelDao().getAll()
         assertEquals(2, all.size)
 
-        val found = db.playlistDao().getByYoutubeId("PLabc")
+        val found = db.channelDao().getBySourceId("PLabc")
         assertNotNull(found)
         assertEquals("ABC", found!!.displayName)
     }
@@ -69,20 +69,20 @@ class FullFlowTest {
     @Test
     fun e2e_fullReset_clearsEverything() = runBlocking {
         // Add some data
-        db.playlistDao().insert(PlaylistEntity(youtubePlaylistId = "PL1", displayName = "P1"))
-        db.playlistDao().insert(PlaylistEntity(youtubePlaylistId = "PL2", displayName = "P2"))
+        db.channelDao().insert(ChannelEntity(sourceType = "yt_playlist", sourceId = "PL1", sourceUrl = "url1", displayName = "P1"))
+        db.channelDao().insert(ChannelEntity(sourceType = "yt_playlist", sourceId = "PL2", sourceUrl = "url2", displayName = "P2"))
         tv.parentapproved.app.data.events.PlayEventRecorder.init(db)
         db.playEventDao().insert(tv.parentapproved.app.data.events.PlayEventEntity(
             videoId = "v1", playlistId = "PL1", startedAt = System.currentTimeMillis()
         ))
 
         // Full reset
-        db.playlistDao().deleteAll()
+        db.channelDao().deleteAll()
         db.playEventDao().deleteAll()
         ServiceLocator.pinManager.resetPin()
         ServiceLocator.sessionManager.invalidateAll()
 
-        assertEquals(0, db.playlistDao().count())
+        assertEquals(0, db.channelDao().count())
         assertEquals(0, db.playEventDao().count())
         assertEquals(0, ServiceLocator.sessionManager.getActiveSessionCount())
     }

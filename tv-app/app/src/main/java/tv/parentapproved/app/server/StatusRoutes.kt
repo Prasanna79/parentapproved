@@ -31,7 +31,7 @@ data class NowPlayingResponse(
 fun Route.statusRoutes() {
     get("/status") {
         val playlistCount = try {
-            ServiceLocator.database.playlistDao().count()
+            ServiceLocator.database.channelDao().count()
         } catch (e: Exception) { 0 }
 
         val activeSessions = ServiceLocator.sessionManager.getActiveSessionCount()

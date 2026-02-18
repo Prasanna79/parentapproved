@@ -48,9 +48,22 @@ object PlayEventRecorder {
                 videoId = videoId,
                 playlistId = playlistId,
                 startedAt = currentStartTime,
+                title = title,
             )
             currentEventId = dao.insert(event)
             AppLogger.log("Play event started: $videoId")
+        }
+    }
+
+    fun updateTitle(title: String) {
+        currentTitle = title
+        val dao = db?.playEventDao() ?: return
+        val eventId = currentEventId ?: return
+        scope.launch {
+            val event = dao.getById(eventId) ?: return@launch
+            if (event.title.isBlank() || event.title == event.videoId) {
+                dao.update(event.copy(title = title))
+            }
         }
     }
 

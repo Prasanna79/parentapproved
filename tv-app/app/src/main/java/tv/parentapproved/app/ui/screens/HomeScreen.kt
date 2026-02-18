@@ -125,13 +125,13 @@ fun HomeScreen(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "No playlists yet!",
+                                text = "No videos yet!",
                                 style = MaterialTheme.typography.headlineSmall,
                                 color = KidText,
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Connect your phone to add YouTube playlists",
+                                text = "Connect your phone to add YouTube videos, playlists, or channels",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = KidTextDim,
                             )
@@ -192,7 +192,7 @@ private fun PlaylistRowSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = row.displayName,
+                text = if (row.videoCount > 0) "${row.displayName} \u2014 ${row.videoCount} videos" else row.displayName,
                 style = MaterialTheme.typography.titleMedium,
                 color = KidText,
             )

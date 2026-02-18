@@ -33,6 +33,7 @@ class RelayConnector(
         .build(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val webSocketFactory: WebSocketFactory = OkHttpWebSocketFactory(okHttpClient),
+    private val appVersion: String = "0.6.0",
 ) {
     var state: RelayConnectionState = RelayConnectionState.DISCONNECTED
         private set
@@ -86,7 +87,7 @@ class RelayConnector(
                 val connectMsg = ConnectMessage(
                     tvId = config.tvId,
                     tvSecret = config.tvSecret,
-                    appVersion = "0.5.0",
+                    appVersion = this@RelayConnector.appVersion,
                 )
                 ws.send(RelayJson.serializeConnect(connectMsg))
                 state = RelayConnectionState.CONNECTED

@@ -1,9 +1,9 @@
 package tv.parentapproved.app.server
 
 import tv.parentapproved.app.auth.SessionManager
-import tv.parentapproved.app.data.FakePlaylistDao
+import tv.parentapproved.app.data.FakeChannelDao
 import tv.parentapproved.app.data.cache.CacheDatabase
-import tv.parentapproved.app.data.cache.PlaylistDao
+import tv.parentapproved.app.data.cache.ChannelEntity
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -27,15 +27,15 @@ class PlaylistRoutesTest {
     private var currentTime = 1000000L
 
     private fun testApp(
-        setupDao: FakePlaylistDao.() -> Unit = {},
+        setupDao: FakeChannelDao.() -> Unit = {},
         block: suspend ApplicationTestBuilder.(token: String) -> Unit,
     ) = testApplication {
         val sessionManager = SessionManager(clock = { currentTime })
-        val fakeDao = FakePlaylistDao()
+        val fakeDao = FakeChannelDao()
         fakeDao.setupDao()
 
         val mockDb = mockk<CacheDatabase>()
-        every { mockDb.playlistDao() } returns fakeDao
+        every { mockDb.channelDao() } returns fakeDao
         val mockVideoDao = mockk<tv.parentapproved.app.data.cache.PlaylistCacheDao>()
         every { mockDb.videoDao() } returns mockVideoDao
         coEvery { mockVideoDao.deleteByPlaylist(any()) } returns Unit
@@ -62,7 +62,7 @@ class PlaylistRoutesTest {
     }
 
     @Test
-    fun postPlaylist_validUrl_returns201() = testApp { token ->
+    fun postPlaylist_validPlaylistUrl_returns201() = testApp { token ->
         val response = client.post("/playlists") {
             header("Authorization", "Bearer $token")
             contentType(ContentType.Application.Json)
@@ -70,7 +70,47 @@ class PlaylistRoutesTest {
         }
         assertEquals(HttpStatusCode.Created, response.status)
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
-        assertEquals("PLtest123", body["youtubePlaylistId"]?.jsonPrimitive?.content)
+        assertEquals("PLtest123", body["sourceId"]?.jsonPrimitive?.content)
+        assertEquals("yt_playlist", body["sourceType"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun postPlaylist_validVideoUrl_returns201() = testApp { token ->
+        val response = client.post("/playlists") {
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
+            setBody("""{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}""")
+        }
+        assertEquals(HttpStatusCode.Created, response.status)
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        assertEquals("dQw4w9WgXcQ", body["sourceId"]?.jsonPrimitive?.content)
+        assertEquals("yt_video", body["sourceType"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun postPlaylist_validChannelUrl_returns201() = testApp { token ->
+        val response = client.post("/playlists") {
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
+            setBody("""{"url":"https://www.youtube.com/@PBSKids"}""")
+        }
+        assertEquals(HttpStatusCode.Created, response.status)
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        assertEquals("@PBSKids", body["sourceId"]?.jsonPrimitive?.content)
+        assertEquals("yt_channel", body["sourceType"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun postPlaylist_vimeoUrl_returns400WithCta() = testApp { token ->
+        val response = client.post("/playlists") {
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
+            setBody("""{"url":"https://vimeo.com/12345"}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        assertTrue(body["error"]!!.jsonPrimitive.content.contains("Vimeo"))
+        assertNotNull(body["cta"])
     }
 
     @Test
@@ -78,27 +118,16 @@ class PlaylistRoutesTest {
         val response = client.post("/playlists") {
             header("Authorization", "Bearer $token")
             contentType(ContentType.Application.Json)
-            setBody("""{"url":"https://vimeo.com/12345"}""")
+            setBody("""{"url":"https://www.google.com"}""")
         }
         assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
-    fun postPlaylist_nonPlaylistUrl_returns400() = testApp { token ->
-        val response = client.post("/playlists") {
-            header("Authorization", "Bearer $token")
-            contentType(ContentType.Application.Json)
-            setBody("""{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}""")
-        }
-        assertEquals(HttpStatusCode.BadRequest, response.status)
-    }
-
-    @Test
-    fun postPlaylist_duplicateUrl_returns409() = testApp(
+    fun postPlaylist_duplicateSource_returns409() = testApp(
         setupDao = {
-            // Pre-populate with a playlist
             kotlinx.coroutines.runBlocking {
-                insert(tv.parentapproved.app.data.cache.PlaylistEntity(youtubePlaylistId = "PLexisting", displayName = "Existing"))
+                insert(ChannelEntity(sourceType = "yt_playlist", sourceId = "PLexisting", sourceUrl = "url", displayName = "Existing"))
             }
         }
     ) { token ->
@@ -111,11 +140,11 @@ class PlaylistRoutesTest {
     }
 
     @Test
-    fun postPlaylist_at10Max_returns400() = testApp(
+    fun postPlaylist_at20Max_returns400() = testApp(
         setupDao = {
             kotlinx.coroutines.runBlocking {
-                repeat(10) { i ->
-                    insert(tv.parentapproved.app.data.cache.PlaylistEntity(youtubePlaylistId = "PL$i", displayName = "P$i"))
+                repeat(20) { i ->
+                    insert(ChannelEntity(sourceType = "yt_playlist", sourceId = "PL$i", sourceUrl = "url$i", displayName = "P$i"))
                 }
             }
         }
@@ -132,11 +161,10 @@ class PlaylistRoutesTest {
     fun deletePlaylist_existingId_returns200() = testApp(
         setupDao = {
             kotlinx.coroutines.runBlocking {
-                insert(tv.parentapproved.app.data.cache.PlaylistEntity(youtubePlaylistId = "PLdel", displayName = "Delete Me"))
+                insert(ChannelEntity(sourceType = "yt_playlist", sourceId = "PLdel", sourceUrl = "url", displayName = "Delete Me"))
             }
         }
     ) { token ->
-        // Get the ID
         val listResponse = client.get("/playlists") {
             header("Authorization", "Bearer $token")
         }
@@ -155,5 +183,33 @@ class PlaylistRoutesTest {
             header("Authorization", "Bearer $token")
         }
         assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun postPlaylist_barePlaylistId_returns201() = testApp { token ->
+        val response = client.post("/playlists") {
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
+            setBody("""{"url":"PLnew123456"}""")
+        }
+        assertEquals(HttpStatusCode.Created, response.status)
+    }
+
+    @Test
+    fun getPlaylists_returnsSourceFields() = testApp(
+        setupDao = {
+            kotlinx.coroutines.runBlocking {
+                insert(ChannelEntity(sourceType = "yt_video", sourceId = "vid1", sourceUrl = "https://www.youtube.com/watch?v=vid1", displayName = "My Video", videoCount = 1))
+            }
+        }
+    ) { token ->
+        val response = client.get("/playlists") {
+            header("Authorization", "Bearer $token")
+        }
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonArray
+        val item = body[0].jsonObject
+        assertEquals("yt_video", item["sourceType"]?.jsonPrimitive?.content)
+        assertEquals("vid1", item["sourceId"]?.jsonPrimitive?.content)
+        assertEquals("1", item["videoCount"]?.jsonPrimitive?.content)
     }
 }

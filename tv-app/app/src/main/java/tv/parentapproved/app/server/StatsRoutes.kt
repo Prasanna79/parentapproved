@@ -24,6 +24,7 @@ data class RecentEventResponse(
     val startedAt: Long,
     val durationSec: Int,
     val completedPct: Int,
+    val title: String = "",
 )
 
 fun Route.statsRoutes(sessionManager: SessionManager, database: CacheDatabase) {
@@ -56,6 +57,7 @@ fun Route.statsRoutes(sessionManager: SessionManager, database: CacheDatabase) {
                 startedAt = it.startedAt,
                 durationSec = it.durationSec,
                 completedPct = it.completedPct,
+                title = it.title,
             )
         })
     }

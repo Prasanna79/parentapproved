@@ -20,18 +20,15 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import tv.parentapproved.app.BuildConfig
 import tv.parentapproved.app.ServiceLocator
-import tv.parentapproved.app.relay.RelayConnectionState
 import tv.parentapproved.app.data.events.PlayEventRecorder
 import tv.parentapproved.app.ui.components.LogPanel
 import tv.parentapproved.app.ui.theme.KidBackground
@@ -39,7 +36,6 @@ import tv.parentapproved.app.ui.theme.KidSurface
 import tv.parentapproved.app.ui.theme.KidText
 import tv.parentapproved.app.ui.theme.KidTextDim
 import tv.parentapproved.app.ui.theme.OverscanPadding
-import tv.parentapproved.app.ui.theme.StatusSuccess
 import tv.parentapproved.app.ui.theme.StatusWarning
 import tv.parentapproved.app.util.AppLogger
 import tv.parentapproved.app.util.OfflineSimulator
@@ -99,59 +95,6 @@ fun SettingsScreen(
             Text("PIN: $displayPin", style = MaterialTheme.typography.bodySmall, color = KidTextDim)
             Text("Active sessions: $sessionCount", style = MaterialTheme.typography.bodySmall, color = KidTextDim)
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // --- Remote Access ---
-            Text("Remote Access", style = MaterialTheme.typography.titleMedium, color = KidText)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            var relayEnabled by remember { mutableStateOf(ServiceLocator.isRelayEnabled()) }
-
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SettingsBtn(if (relayEnabled) "Disable Remote" else "Enable Remote") {
-                    relayEnabled = !relayEnabled
-                    ServiceLocator.setRelayEnabled(relayEnabled)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            if (relayEnabled) {
-                var relayState by remember { mutableStateOf(
-                    try { ServiceLocator.relayConnector.state } catch (_: Exception) { null }
-                ) }
-                LaunchedEffect(relayEnabled) {
-                    while (true) {
-                        delay(2000)
-                        relayState = try { ServiceLocator.relayConnector.state } catch (_: Exception) { null }
-                    }
-                }
-                relayState?.let { state ->
-                    val statusText = when (state) {
-                        RelayConnectionState.CONNECTED -> "Connected"
-                        RelayConnectionState.CONNECTING -> "Connecting..."
-                        RelayConnectionState.DISCONNECTED -> "Disconnected"
-                    }
-                    val relayColor = when (state) {
-                        RelayConnectionState.CONNECTED -> StatusSuccess
-                        RelayConnectionState.CONNECTING -> StatusWarning
-                        RelayConnectionState.DISCONNECTED -> KidTextDim
-                    }
-                    Text("Relay: $statusText", style = MaterialTheme.typography.bodySmall, color = relayColor)
-                }
-                Text(
-                    "Dashboard works from anywhere when enabled.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = KidTextDim,
-                )
-            } else {
-                Text(
-                    "Dashboard only works on same WiFi.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = KidTextDim,
-                )
-            }
-
             Spacer(modifier = Modifier.height(24.dp))
 
             // --- Debug ---
@@ -168,7 +111,7 @@ fun SettingsScreen(
                     ServiceLocator.sessionManager.invalidateAll()
                     try {
                         ServiceLocator.relayConfig.rotateTvSecret()
-                        if (relayEnabled) {
+                        if (ServiceLocator.isRelayEnabled()) {
                             ServiceLocator.relayConnector.reconnectNow()
                         }
                     } catch (_: Exception) {}

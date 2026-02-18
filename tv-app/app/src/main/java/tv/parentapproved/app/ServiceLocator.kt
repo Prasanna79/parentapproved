@@ -38,7 +38,7 @@ object ServiceLocator {
         )
 
         // RelayConnector
-        relayConnector = RelayConnector(config = relayConfig)
+        relayConnector = RelayConnector(config = relayConfig, appVersion = BuildConfig.VERSION_NAME)
 
         pinManager = PinManager(
             onPinValidated = { sessionManager.createSession() ?: "" }

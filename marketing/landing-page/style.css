@@ -260,16 +260,15 @@ h3 {
 .hero-visual {
   max-width: 900px;
   margin: 0 auto;
-  background: var(--section-alt);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  padding: 32px;
-  min-height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-light);
-  font-size: 0.9rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.hero-visual img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 @media (max-width: 768px) {
@@ -385,17 +384,39 @@ h3 {
 }
 
 .step-visual {
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.step-visual img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.step-visual-download {
   background: var(--section-alt);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  min-height: 160px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--text-light);
-  font-size: 0.85rem;
-  margin-bottom: 16px;
+  padding: 40px 24px;
+  min-height: 200px;
+  gap: 12px;
+}
+
+.download-step-icon {
+  color: var(--green);
+}
+
+.download-step-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .step h3 {
@@ -442,16 +463,15 @@ h3 {
 .tv-screenshot {
   max-width: 900px;
   margin: 0 auto 40px;
-  background: var(--section-alt);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 40px;
-  min-height: 350px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-light);
-  font-size: 0.9rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.tv-screenshot img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .tv-features {
@@ -496,16 +516,22 @@ h3 {
 }
 
 .dashboard-screenshot {
-  background: var(--section-alt);
-  border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 32px;
-  min-height: 320px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  background: var(--section-alt);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-light);
-  font-size: 0.9rem;
+  padding: 24px;
+}
+
+.dashboard-screenshot img {
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-sm);
 }
 
 .dashboard-features {
@@ -797,6 +823,53 @@ h3 {
 
 .sideload-note strong {
   color: #D1D5DB;
+}
+
+/* --- Prelaunch Form --- */
+.prelaunch-form {
+  display: flex;
+  gap: 8px;
+  max-width: 420px;
+  margin: 0 auto 24px;
+}
+
+.prelaunch-form input[type="email"] {
+  flex: 1;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.prelaunch-form input[type="email"]::placeholder {
+  color: #9CA3AF;
+}
+
+.prelaunch-form input[type="email"]:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(34, 165, 89, 0.25);
+}
+
+.prelaunch-form .btn-primary {
+  padding: 16px 28px;
+  white-space: nowrap;
+  font-size: 1rem;
+  width: auto;
+  max-width: none;
+  margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+  .prelaunch-form {
+    flex-direction: column;
+  }
+  .prelaunch-form .btn-primary {
+    width: 100%;
+  }
 }
 
 @media (max-width: 768px) {

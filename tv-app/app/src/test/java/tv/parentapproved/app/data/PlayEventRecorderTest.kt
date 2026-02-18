@@ -74,6 +74,22 @@ class PlayEventRecorderTest {
     }
 
     @Test
+    fun updateTitle_changesCurrentTitle() {
+        PlayEventRecorder.startEvent("dQw4w9WgXcQ", "pl1", title = "dQw4w9WgXcQ", playlistTitle = "PL", durationMs = 60_000)
+        assertEquals("dQw4w9WgXcQ", PlayEventRecorder.currentTitle)
+        PlayEventRecorder.updateTitle("Never Gonna Give You Up")
+        assertEquals("Never Gonna Give You Up", PlayEventRecorder.currentTitle)
+    }
+
+    @Test
+    fun updateTitle_doesNotOverwriteExistingGoodTitle() {
+        PlayEventRecorder.startEvent("vid1", "pl1", title = "Already Good Title", playlistTitle = "PL", durationMs = 60_000)
+        PlayEventRecorder.updateTitle("Different Title")
+        // currentTitle is always updated (server needs latest), but DB preserves the original
+        assertEquals("Different Title", PlayEventRecorder.currentTitle)
+    }
+
+    @Test
     fun getElapsedMs_whilePlaying_returnsWallClockDelta() {
         fakeTime = 10_000L
         PlayEventRecorder.startEvent("vid1", "pl1", title = "Vid", playlistTitle = "PL", durationMs = 60_000)

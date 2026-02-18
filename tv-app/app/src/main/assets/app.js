@@ -126,7 +126,9 @@
                 playlistList.innerHTML = '';
                 result.data.forEach(function(pl) {
                     var li = document.createElement('li');
-                    li.innerHTML = '<span>' + escapeHtml(pl.displayName) + '</span>';
+                    var label = escapeHtml(pl.displayName);
+                    if (pl.videoCount > 0) label += ' \u2014 ' + pl.videoCount + ' videos';
+                    li.innerHTML = '<span>' + label + '</span>';
                     var btn = document.createElement('button');
                     btn.className = 'delete-btn';
                     btn.textContent = 'Remove';
@@ -161,7 +163,8 @@
                 result.data.slice(0, 10).forEach(function(evt) {
                     var li = document.createElement('li');
                     var mins = Math.round(evt.durationSec / 60);
-                    li.innerHTML = '<span>' + escapeHtml(evt.videoId) + '</span><span>' + mins + 'm</span>';
+                    var label = evt.title ? escapeHtml(evt.title) : escapeHtml(evt.videoId);
+                    li.innerHTML = '<span>' + label + '</span><span>' + mins + 'm</span>';
                     recentList.appendChild(li);
                 });
             }
@@ -178,6 +181,9 @@
                 nowPlaying.classList.remove('hidden');
                 npTitle.textContent = np.title || np.videoId;
                 npPlaylistTitle.textContent = np.playlistTitle || '';
+                var npThumbnail = document.getElementById('np-thumbnail');
+                npThumbnail.src = 'https://img.youtube.com/vi/' + np.videoId + '/mqdefault.jpg';
+                npThumbnail.alt = np.title || np.videoId;
                 npElapsed.textContent = formatTime(np.elapsedSec || 0);
                 npDuration.textContent = formatTime(np.durationSec || 0);
                 npPauseBtn.textContent = np.playing ? 'Pause' : 'Play';
@@ -191,13 +197,16 @@
                 // Switch to fast polling when playing
                 if (!isCurrentlyPlaying) {
                     isCurrentlyPlaying = true;
-                    setPollingRate(5000);
+                    setPollingRate(30000);
                 }
             } else {
                 nowPlaying.classList.add('hidden');
+                var npThumbnailHide = document.getElementById('np-thumbnail');
+                npThumbnailHide.src = '';
+                npThumbnailHide.alt = '';
                 if (isCurrentlyPlaying) {
                     isCurrentlyPlaying = false;
-                    setPollingRate(30000);
+                    setPollingRate(120000);
                     loadStats();
                     loadRecent();
                 }
@@ -232,7 +241,7 @@
         loadStats();
         loadRecent();
         loadStatus();
-        setPollingRate(30000);
+        setPollingRate(120000);
     }
 
     function escapeHtml(str) {
@@ -248,6 +257,50 @@
         authScreen.classList.remove('hidden');
         if (statusInterval) clearInterval(statusInterval);
     }
+
+    // Add to Home Screen banner
+    (function() {
+        var DISMISS_KEY = 'kw_homescreen_dismissed';
+        var banner = document.getElementById('homescreen-banner');
+        var addBtn = document.getElementById('homescreen-add-btn');
+        var dismissBtn = document.getElementById('homescreen-dismiss-btn');
+        var bannerText = document.getElementById('homescreen-text');
+        var deferredPrompt = null;
+
+        // Don't show on desktop or if already standalone
+        var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        var isMobile = 'ontouchstart' in window || window.innerWidth <= 768;
+        if (isStandalone || !isMobile || localStorage.getItem(DISMISS_KEY)) return;
+
+        var isIOS = /iPhone|iPad/.test(navigator.userAgent);
+
+        if (isIOS) {
+            bannerText.textContent = "Tap Share then 'Add to Home Screen' for quick access.";
+            addBtn.style.display = 'none';
+            banner.classList.remove('hidden');
+        }
+
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            banner.classList.remove('hidden');
+        });
+
+        addBtn.addEventListener('click', function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(function() {
+                    deferredPrompt = null;
+                    banner.classList.add('hidden');
+                });
+            }
+        });
+
+        dismissBtn.addEventListener('click', function() {
+            banner.classList.add('hidden');
+            localStorage.setItem(DISMISS_KEY, '1');
+        });
+    })();
 
     // Auto-PIN from URL query param (QR code scan)
     var autoPin = extractPin();

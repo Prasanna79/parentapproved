@@ -55,6 +55,7 @@ import tv.parentapproved.app.ui.theme.StatusSuccess
 import tv.parentapproved.app.ui.theme.StatusWarning
 import tv.parentapproved.app.util.NetworkUtils
 import tv.parentapproved.app.util.QrCodeGenerator
+import kotlinx.coroutines.delay
 
 @Composable
 fun ConnectScreen(onBack: () -> Unit = {}) {
@@ -64,7 +65,7 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
     var relayQrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var showSettings by remember { mutableStateOf(false) }
     val pin = remember { ServiceLocator.pinManager.getCurrentPin() }
-    val relayEnabled = remember { ServiceLocator.isRelayEnabled() }
+    var relayEnabled by remember { mutableStateOf(ServiceLocator.isRelayEnabled()) }
 
     val relayConfig = remember {
         if (ServiceLocator.isInitialized()) ServiceLocator.relayConfig else null
@@ -102,7 +103,21 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
                 localQrBitmap = localQrBitmap,
                 relayConfig = relayConfig,
                 relayConnector = relayConnector,
-                onClose = { showSettings = false },
+                onClose = {
+                    // Re-read relay state so QR code reflects any toggle change
+                    relayEnabled = ServiceLocator.isRelayEnabled()
+                    // Regenerate relay QR if newly enabled
+                    if (relayEnabled && relayQrBitmap == null) {
+                        relayConfig?.let { config ->
+                            relayQrBitmap = QrCodeGenerator.generate("${config.relayUrl}/tv/${config.tvId}/?pin=$pin")
+                        }
+                    }
+                    showSettings = false
+                },
+                onToggleRelay = { enabled ->
+                    ServiceLocator.setRelayEnabled(enabled)
+                    relayEnabled = enabled
+                },
             )
         } else {
             // Two-column layout: QR left, info right
@@ -315,8 +330,23 @@ private fun ConnectSettingsPanel(
     relayConfig: tv.parentapproved.app.relay.RelayConfig?,
     relayConnector: tv.parentapproved.app.relay.RelayConnector?,
     onClose: () -> Unit,
+    onToggleRelay: (Boolean) -> Unit,
 ) {
     var debugQrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var localRelayEnabled by remember { mutableStateOf(relayEnabled) }
+
+    // Poll relay status while panel is open
+    var relayState by remember { mutableStateOf(
+        try { relayConnector?.state } catch (_: Exception) { null }
+    ) }
+    LaunchedEffect(localRelayEnabled) {
+        if (localRelayEnabled) {
+            while (true) {
+                delay(2000)
+                relayState = try { relayConnector?.state } catch (_: Exception) { null }
+            }
+        }
+    }
 
     LaunchedEffect(ip) {
         ip?.let { address ->
@@ -354,24 +384,49 @@ private fun ConnectSettingsPanel(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text("Remote Access", style = MaterialTheme.typography.titleMedium, color = KidText)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                localRelayEnabled = !localRelayEnabled
+                onToggleRelay(localRelayEnabled)
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (localRelayEnabled) KidSurface else KidAccent,
+            ),
+            shape = RoundedCornerShape(8.dp),
+        ) {
+            Text(
+                if (localRelayEnabled) "Disable Remote Access" else "Enable Remote Access",
+                color = if (localRelayEnabled) KidText else KidBackground,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+
         Spacer(modifier = Modifier.height(4.dp))
-        if (relayEnabled) {
+
+        if (localRelayEnabled) {
             relayConfig?.let {
                 Text("Relay: ${it.relayUrl}", style = MaterialTheme.typography.bodySmall, color = KidTextDim)
             }
-            relayConnector?.let {
-                val statusText = when (it.state) {
+            relayState?.let { state ->
+                val statusText = when (state) {
                     RelayConnectionState.CONNECTED -> "Connected"
                     RelayConnectionState.CONNECTING -> "Connecting..."
                     RelayConnectionState.DISCONNECTED -> "Disconnected"
                 }
-                val statusColor = when (it.state) {
+                val statusColor = when (state) {
                     RelayConnectionState.CONNECTED -> StatusSuccess
                     RelayConnectionState.CONNECTING -> StatusWarning
                     RelayConnectionState.DISCONNECTED -> KidTextDim
                 }
                 Text("Status: $statusText", style = MaterialTheme.typography.bodySmall, color = statusColor)
             }
+            Text(
+                "Dashboard works from anywhere when enabled.",
+                style = MaterialTheme.typography.bodySmall,
+                color = KidTextDim,
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
             Text("Local connection (same WiFi):", style = MaterialTheme.typography.bodySmall, color = KidTextDim)
@@ -392,17 +447,10 @@ private fun ConnectSettingsPanel(
             }
         } else {
             Text(
-                "Remote access is off. Enable it to connect from anywhere.",
+                "Dashboard only works on same WiFi.",
                 style = MaterialTheme.typography.bodySmall,
                 color = KidTextDim,
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = { ServiceLocator.setRelayEnabled(true) },
-                colors = ButtonDefaults.buttonColors(containerColor = KidAccent),
-            ) {
-                Text("Enable Remote Access", color = KidBackground, fontWeight = FontWeight.SemiBold)
-            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

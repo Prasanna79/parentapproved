@@ -173,8 +173,8 @@
 
   <!-- ========== BETA BANNER ========== -->
   <div class="beta-banner">
-    Beta &mdash; Built by a parent, for parents. Help shape it &rarr;
-    <a href="#download">Join the beta</a>
+    Coming soon &mdash; Built by a parent, for parents.
+    <a href="#download">Get notified at launch</a>
     <button class="beta-banner-close" aria-label="Dismiss">&times;</button>
   </div>
 
@@ -187,12 +187,11 @@
         Works with YouTube&#8482;. No algorithm. No ads. No surprises.
       </p>
       <div class="hero-buttons">
-        <a href="#download" class="btn btn-primary">Download the App</a>
+        <a href="#download" class="btn btn-primary">Get Notified at Launch</a>
         <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
       </div>
       <div class="hero-visual">
-        <!-- Replace with real screenshot: TV showing playlist grid + phone showing dashboard -->
-        [TV app screenshot + phone dashboard &mdash; side by side]
+        <img src="screenshot-home.png" alt="ParentApproved.tv home screen showing parent-curated video playlists on Android TV" width="900">
       </div>
     </div>
   </section>
@@ -258,13 +257,15 @@
       <div class="steps">
         <div class="step">
           <div class="step-number">1</div>
-          <div class="step-visual">
-            <!-- Replace: TV showing connect screen -->
-            [TV showing QR code]
+          <div class="step-visual step-visual-download">
+            <div class="download-step-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </div>
+            <span class="download-step-label">parentapproved.tv</span>
           </div>
-          <h3>Install on your TV</h3>
+          <h3>Download &amp; install</h3>
           <p>
-            Download the app file and install it on any Android TV &mdash;
+            Download the app file from this website and install it on any Android TV &mdash;
             Mi Box, Chromecast with Google TV, Shield, any Android TV box.
           </p>
         </div>
@@ -272,8 +273,7 @@
         <div class="step">
           <div class="step-number">2</div>
           <div class="step-visual">
-            <!-- Replace: Phone scanning QR -->
-            [Phone scanning QR code on TV]
+            <img src="screenshot-connect.png" alt="QR code on TV screen — scan with your phone to connect" width="480">
           </div>
           <h3>Connect your phone</h3>
           <p>
@@ -285,8 +285,7 @@
         <div class="step">
           <div class="step-number">3</div>
           <div class="step-visual">
-            <!-- Replace: Dashboard with playlist being added -->
-            [Phone dashboard &mdash; adding a playlist]
+            <img src="screenshot-home.png" alt="TV home screen showing playlists after adding them from your phone" width="480">
           </div>
           <h3>Add playlists</h3>
           <p>
@@ -317,8 +316,7 @@
       </div>
 
       <div class="tv-screenshot">
-        <!-- Replace: Full-width TV home screen screenshot -->
-        [TV home screen &mdash; playlist rows with large thumbnails, no YouTube branding]
+        <img src="screenshot-home.png" alt="ParentApproved.tv TV interface — only parent-approved playlists, no search, no recommendations" width="900">
       </div>
 
       <div class="tv-features">
@@ -356,8 +354,7 @@
 
       <div class="dashboard-grid">
         <div class="dashboard-screenshot">
-          <!-- Replace: Phone dashboard screenshot with annotations -->
-          [Phone showing parent dashboard &mdash; playlists, now playing, controls]
+          <img src="screenshot-dashboard.jpg" alt="ParentApproved.tv parent dashboard on phone — now playing, playlists, playback controls, watch activity" width="480">
         </div>
 
         <ul class="dashboard-features">
@@ -458,13 +455,6 @@
               <td>Google cloud</td>
               <td>Cloud</td>
               <td>Local</td>
-            </tr>
-            <tr>
-              <td>Works offline?</td>
-              <td>Yes (local mode)</td>
-              <td>No</td>
-              <td>No</td>
-              <td>Yes</td>
             </tr>
           </tbody>
         </table>
@@ -578,42 +568,25 @@
     </div>
   </section>
 
-  <!-- ========== DOWNLOAD ========== -->
+  <!-- ========== PRELAUNCH ========== -->
   <section class="download-section" id="download">
     <div class="download-card">
-      <h2>Ready to try it?</h2>
-      <p class="version-info">Latest beta &middot; For Android TV</p>
+      <h2>Coming soon.</h2>
+      <p class="version-info">We&rsquo;re finishing the beta. Be the first to know when it&rsquo;s ready.</p>
 
-      <div class="before-you-start">
-        <h3>What you need</h3>
-        <ul>
-          <li>&#10003; An Android TV device (Mi Box, Chromecast with Google TV, Shield, or similar)</li>
-          <li>&#10003; A phone or computer with a web browser</li>
-          <li>&#10003; A YouTube&#8482; playlist URL you want your kids to watch</li>
-          <li>&#10003; 5 minutes for first-time setup</li>
-        </ul>
-      </div>
-
-      <a href="https://github.com/user/kidswatch/releases/latest" class="btn btn-primary">
-        Download the App
-      </a>
+      <form class="prelaunch-form" action="#" method="POST">
+        <input type="email" placeholder="you@example.com" required aria-label="Email address">
+        <button type="submit" class="btn btn-primary">Notify Me</button>
+      </form>
 
       <p class="download-meta">
-        Works on: Xiaomi Mi Box, Chromecast with Google TV,<br>
-        NVIDIA Shield, and other Android TV devices (Android 7.0+)
-      </p>
-
-      <p class="sideload-note">
-        <strong>First time installing an app outside the Play Store?</strong><br>
-        It takes about 5 minutes. Our guide walks you through every step with screenshots.
-        <br><br>
-        <a href="#" class="btn btn-secondary btn-sm">Step-by-step install guide &rarr;</a>
+        For Android TV &mdash; Mi Box, Chromecast with Google TV,<br>
+        NVIDIA Shield, and other Android TV devices.
       </p>
 
       <div class="download-links">
         <a href="https://github.com/user/kidswatch">Source code on GitHub</a>
-        <a href="https://github.com/user/kidswatch/issues">Report a bug</a>
-        <a href="https://github.com/user/kidswatch/discussions">Ask a question</a>
+        <a href="mailto:hello@parentapproved.tv">Contact</a>
       </div>
     </div>
   </section>
@@ -984,15 +957,6 @@
     </div>
   </section>
 
-  <!-- ========== EMAIL SIGNUP ========== -->
-  <section class="email-section" id="updates">
-    <h2>Stay in the loop</h2>
-    <p>We send updates about once a month. New features, important fixes, that&rsquo;s it. No spam.</p>
-    <form class="email-form" action="#" method="POST">
-      <input type="email" placeholder="you@example.com" required aria-label="Email address">
-      <button type="submit" class="btn btn-primary btn-sm">Notify me</button>
-    </form>
-  </section>
 
   <!-- ========== FOOTER ========== -->
   <footer class="site-footer">

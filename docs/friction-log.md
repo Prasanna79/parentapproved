@@ -165,3 +165,14 @@ Reference designs (build when friction justifies): [v031-MOLDABLE-DEV-SPEC.md](.
 **Root cause:** Two independent serving paths, both missing SVG support. (1) Relay Worker had no route for `/favicon.svg` and no `image/svg+xml` in CONTENT_TYPES. (2) Ktor's DashboardRoutes.kt had no `.svg` content type mapping. The favicon file existed in `relay/assets/` but was never reachable via HTTP.
 **What would have helped:** An integration test that fetches all referenced assets from the dashboard HTML and asserts 200. Or a checklist: "new asset type? Update BOTH relay and Ktor serving."
 **Pattern:** multi-server-asset-gap | Count: 1
+
+---
+
+### 2026-02-18 — Now Playing shows video ID instead of title
+
+**Question:** Why does the Now Playing card show `dQw4w9WgXcQ` instead of the video title?
+**Files read:** app.js (~line 182, loadStatus), PlayEventRecorder.kt (currentTitle), ContentSourceRepository.kt (resolveVideo), StatusRoutes.kt (NowPlayingResponse)
+**Trace length:** 4 files, ~60 lines
+**Root cause:** The title exists in `VideoItem.title` after resolution, but multiple objects carry the same video info — `VideoItem`, `PlayEventEntity`, `NowPlayingResponse`, `StatusResponse` — each with its own `title` field that may or may not be populated. On first play of a single `yt_video` source, timing can cause the title to be empty, falling back to the videoId slug in the JS `np.title || np.videoId` logic.
+**What would have helped:** A single `WatchableContent` domain object (from `v031-MOLDABLE-DEV-SPEC.md`) as the source of truth for video display metadata, ensuring title is always resolved before any display path can access it.
+**Pattern:** video-metadata-not-flowing | Count: 3 (v0.4 Recent Activity, v0.6 playlist list, v0.6.1 Now Playing) — **3-STRIKE: candidate for WatchableContent domain object**

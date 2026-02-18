@@ -39,7 +39,7 @@ import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import tv.parentapproved.app.ServiceLocator
-import tv.parentapproved.app.data.PlaylistRepository
+import tv.parentapproved.app.data.ContentSourceRepository
 import tv.parentapproved.app.data.events.PlayEventRecorder
 import tv.parentapproved.app.data.models.VideoItem
 import tv.parentapproved.app.playback.DpadKeyHandler
@@ -165,6 +165,12 @@ fun PlaybackScreen(
                     val extractor = ServiceList.YouTube.getStreamExtractor(url)
                     extractor.fetchPage()
 
+                    // Update title from extractor if we only had the video ID
+                    val extractedTitle = try { extractor.name } catch (_: Exception) { null }
+                    if (!extractedTitle.isNullOrBlank() && extractedTitle != vid) {
+                        PlayEventRecorder.updateTitle(extractedTitle)
+                    }
+
                     val progressive = (extractor.videoStreams ?: emptyList()).filter { !it.isVideoOnly }
                     val videoOnly = extractor.videoOnlyStreams ?: emptyList()
                     val audio = extractor.audioStreams ?: emptyList()
@@ -203,14 +209,14 @@ fun PlaybackScreen(
 
     // Load playlist for auto-advance
     LaunchedEffect(playlistId) {
-        val cached = PlaylistRepository.getCachedVideos(db, playlistId)
+        val cached = ContentSourceRepository.getCachedVideos(db, playlistId)
         playlist = cached
         playlistRef.value = cached
 
-        // Try to get playlist display name from DB
+        // Try to get source display name from DB
         try {
             val entity = withContext(Dispatchers.IO) {
-                db.playlistDao().getByYoutubeId(playlistId)
+                db.channelDao().getBySourceId(playlistId)
             }
             playlistTitle = entity?.displayName ?: playlistId
         } catch (_: Exception) {
@@ -316,6 +322,7 @@ fun PlaybackScreen(
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
+                    keepScreenOn = true
                     player = object : ForwardingPlayer(exoPlayer) {
                         override fun hasNextMediaItem(): Boolean =
                             indexRef.intValue < playlistRef.value.size - 1

@@ -4,7 +4,7 @@ import tv.parentapproved.app.ServiceLocator
 import tv.parentapproved.app.auth.PinManager
 import tv.parentapproved.app.auth.SessionManager
 import tv.parentapproved.app.data.cache.CacheDatabase
-import tv.parentapproved.app.data.cache.PlaylistDao
+import tv.parentapproved.app.data.cache.ChannelDao
 import tv.parentapproved.app.data.events.PlayEventRecorder
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -34,9 +34,9 @@ class StatusRoutesTest {
     @Before
     fun setup() {
         mockDb = mockk<CacheDatabase>()
-        val mockPlaylistDao = mockk<PlaylistDao>()
-        coEvery { mockPlaylistDao.count() } returns 3
-        every { mockDb.playlistDao() } returns mockPlaylistDao
+        val mockChannelDao = mockk<ChannelDao>()
+        coEvery { mockChannelDao.count() } returns 3
+        every { mockDb.channelDao() } returns mockChannelDao
 
         val mockPlayEventDao = mockk<tv.parentapproved.app.data.events.PlayEventDao>(relaxed = true)
         coEvery { mockPlayEventDao.insert(any()) } returns 1L
@@ -91,6 +91,20 @@ class StatusRoutesTest {
         val np = body["currentlyPlaying"]!!.jsonObject
         assertEquals("Cool Video", np["title"]!!.jsonPrimitive.content)
         assertEquals("Fun Playlist", np["playlistTitle"]!!.jsonPrimitive.content)
+        PlayEventRecorder.endEvent(0, 0)
+    }
+
+    @Test
+    fun getStatus_nowPlaying_titleUpdatedAfterExtraction() = testApp {
+        fakeTime = 10_000L
+        // Simulate race: startEvent with slug (playlist not loaded yet)
+        PlayEventRecorder.startEvent("dQw4w9WgXcQ", "pl1", title = "dQw4w9WgXcQ", playlistTitle = "PL", durationMs = 120_000)
+        // Simulate extractor resolving the real title
+        PlayEventRecorder.updateTitle("Never Gonna Give You Up")
+        val response = client.get("/status")
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val np = body["currentlyPlaying"]!!.jsonObject
+        assertEquals("Never Gonna Give You Up", np["title"]!!.jsonPrimitive.content)
         PlayEventRecorder.endEvent(0, 0)
     }
 

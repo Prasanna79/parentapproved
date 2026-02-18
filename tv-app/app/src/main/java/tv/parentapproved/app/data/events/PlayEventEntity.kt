@@ -1,5 +1,6 @@
 package tv.parentapproved.app.data.events
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -11,4 +12,5 @@ data class PlayEventEntity(
     val startedAt: Long,
     val durationSec: Int = 0,
     val completedPct: Int = 0,
+    @ColumnInfo(defaultValue = "") val title: String = "",
 )

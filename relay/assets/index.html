@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ParentApproved Dashboard</title>
+    <title>ParentApproved.tv</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
         </div>
 
         <div id="auth-screen">
-            <h1>ParentApproved</h1>
+            <h1><svg class="logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#22A559"/><path d="M20 33.4L12 25.4L14.8 22.6L20 27.8L33.2 14.6L36 17.4Z" fill="#fff"/></svg> ParentApproved.tv</h1>
             <p>Enter the PIN shown on your TV</p>
             <form id="pin-form">
                 <input type="text" id="pin-input" maxlength="6" pattern="[0-9]{6}" placeholder="000000" inputmode="numeric" autocomplete="off">
@@ -32,14 +32,23 @@
 
         <div id="dashboard" class="hidden">
             <header>
-                <h1>ParentApproved</h1>
+                <h1><svg class="logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#22A559"/><path d="M20 33.4L12 25.4L14.8 22.6L20 27.8L33.2 14.6L36 17.4Z" fill="#fff"/></svg> ParentApproved.tv</h1>
             </header>
+
+            <div id="homescreen-banner" class="homescreen-banner hidden">
+                <span id="homescreen-text">Add ParentApproved to your home screen for quick access.</span>
+                <div class="homescreen-actions">
+                    <button id="homescreen-add-btn" class="homescreen-btn">Add</button>
+                    <button id="homescreen-dismiss-btn" class="homescreen-dismiss">&times;</button>
+                </div>
+            </div>
 
             <div id="now-playing" class="now-playing-card hidden">
                 <div class="np-header">
                     <span class="badge">Now Playing</span>
                     <span id="np-playlist-title" class="np-playlist"></span>
                 </div>
+                <img id="np-thumbnail" class="np-thumbnail" src="" alt="">
                 <div id="np-title" class="np-title"></div>
                 <div class="np-progress-container">
                     <div class="np-progress-bar">
@@ -58,10 +67,10 @@
             </div>
 
             <section id="playlists-section">
-                <h2>Playlists</h2>
+                <h2>Content Sources</h2>
                 <form id="playlist-form">
-                    <input type="url" id="playlist-url" placeholder="Paste YouTube playlist URL" required>
-                    <button type="submit">Add Playlist</button>
+                    <input type="url" id="playlist-url" placeholder="Paste any YouTube URL (video, playlist, or channel)" required>
+                    <button type="submit">Add</button>
                 </form>
                 <p id="playlist-error" class="error hidden"></p>
                 <ul id="playlist-list"></ul>
@@ -85,6 +94,13 @@
                 <h2>Recent Activity</h2>
                 <ul id="recent-list"></ul>
             </section>
+
+            <footer class="charityware">
+                <p>ParentApproved.tv is free, forever.</p>
+                <p>If it's been useful to your family, consider supporting loving-kindness meditation.</p>
+                <p>India: <a href="https://mettavipassana.org/donate" target="_blank" rel="noopener">mettavipassana.org/donate</a></p>
+                <p>Worldwide: donate to a Buddhist charity near you.</p>
+            </footer>
         </div>
     </div>
     <script src="app.js"></script>
