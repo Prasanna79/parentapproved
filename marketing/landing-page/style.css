@@ -117,21 +117,16 @@ a:hover {
 .site-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  text-decoration: none;
+  gap: 8px;
   color: var(--text);
+  font-family: 'Nunito Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
-  font-size: 1.15rem;
-  letter-spacing: -0.01em;
-}
-
-.site-brand:hover {
-  text-decoration: none;
+  font-size: 1.1rem;
 }
 
 .site-logo {
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
 }
 
