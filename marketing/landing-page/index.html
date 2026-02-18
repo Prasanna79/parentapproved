@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ParentApproved.tv &mdash; Kid-Safe Video Player for Android TV | No Algorithm, No Ads</title>
+  <meta name="description" content="Your kids watch ONLY the videos you pick. Works with YouTube&#8482; playlists. No algorithm, no ads, no surprises. Free, open-source Android TV app. Manage from your phone.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://parentapproved.tv/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ParentApproved.tv &mdash; Kid-Safe Video Player for Android TV">
+  <meta property="og:description" content="Your kids watch ONLY the videos you pick. No algorithm, no ads, no surprises. Free &amp; open-source.">
+  <meta property="og:url" content="https://parentapproved.tv/">
+  <meta property="og:image" content="https://parentapproved.tv/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ParentApproved.tv &mdash; Kid-Safe Video Player for Android TV">
+  <meta name="twitter:description" content="Your kids watch ONLY the videos you pick. No algorithm, no ads, no surprises.">
+  <meta name="twitter:image" content="https://parentapproved.tv/og-image.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Schema: SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ParentApproved.tv",
+    "operatingSystem": "Android TV",
+    "applicationCategory": "MultimediaApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "A free, open-source Android TV app that plays only parent-approved video playlists. No algorithm, no ads, no YouTube UI. Manage from your phone.",
+    "url": "https://parentapproved.tv",
+    "downloadUrl": "https://github.com/user/kidswatch/releases/latest",
+    "softwareVersion": "0.3-beta",
+    "author": {
+      "@type": "Person",
+      "name": "ParentApproved.tv"
+    }
+  }
+  </script>
+
+  <!-- Schema: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is ParentApproved.tv really free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. No catch. It's open-source software built by a parent. There's no company, no investors, no business model. If you find it useful, we suggest donating to charity."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is ParentApproved.tv different from YouTube Kids?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "YouTube Kids uses an algorithm to decide what your kid can watch. ParentApproved.tv doesn't. You paste playlist URLs, and your kid sees ONLY those videos. No search bar, no recommendations, no algorithm."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is sideloading safe?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Sideloading means installing an app outside the Play Store — it's a standard Android feature. ParentApproved.tv is open-source, so you can read every line of code on GitHub. The app doesn't collect data or phone home."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need a YouTube account or API key?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. The app uses open-source technology to play videos directly. No YouTube account, no Google sign-in, no API key needed."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What Android TV devices does ParentApproved.tv work on?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Any device running Android TV with Android 7.0 or higher. Tested on Xiaomi Mi Box 4, Chromecast with Google TV, and NVIDIA Shield."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I manage ParentApproved.tv remotely?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — it's opt-in. Enable Remote Access in Settings and your dashboard works from anywhere. The relay is free and open-source. If you prefer fully local, leave it off — the app works entirely over your home WiFi."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can my kid escape the app?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The app has no search, no settings accessible to kids, and no way to browse videos beyond what you've added. The Home button on the remote will exit to the Android TV launcher — that's an OS limitation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the relay? Is my data going through someone else's server?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The relay is a tiny open-source bridge that forwards requests to your TV. It doesn't store playlists, videos, PINs, or watch history. Your TV is still the backend. All data stays in your TV's local database."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does ParentApproved.tv work without internet?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The TV needs internet to stream videos. But all your playlists and settings are stored locally on the TV — they survive reboots and don't depend on any cloud service."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What happens if a video source changes and videos stop playing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The video extraction technology occasionally needs updates. When this happens, we release an updated app file. Join the mailing list or watch the GitHub repo to get notified."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Who is the best person to curate what kids watch?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You are. No algorithm, company, or app knows your child like you do. ParentApproved.tv gives you 100% control over exactly which videos your kids can watch — and plays nothing else."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is ParentApproved.tv a YouTube Kids alternative?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Unlike YouTube Kids, ParentApproved.tv has no algorithm, no ads, and no YouTube interface. You pick playlists, and your kids see only those videos. It's free, open-source, and runs locally on your Android TV."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+
+<body>
+
+  <!-- ========== BETA BANNER ========== -->
+  <div class="beta-banner">
+    Beta &mdash; Built by a parent, for parents. Help shape it &rarr;
+    <a href="#download">Join the beta</a>
+    <button class="beta-banner-close" aria-label="Dismiss">&times;</button>
+  </div>
+
+  <!-- ========== HERO ========== -->
+  <section class="hero" id="top">
+    <div class="container">
+      <h1>You pick the videos.<br>They watch only those.</h1>
+      <p class="subheadline">
+        A free, open-source Android TV app that plays videos from playlists you choose &mdash; nothing else.
+        Works with YouTube&#8482;. No algorithm. No ads. No distractions.
+      </p>
+      <div class="hero-buttons">
+        <a href="#download" class="btn btn-primary">Download the App</a>
+        <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
+      </div>
+      <div class="hero-visual">
+        <!-- Replace with real screenshot: TV showing playlist grid + phone showing dashboard -->
+        [TV app screenshot + phone dashboard &mdash; side by side]
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== THE PROBLEM ========== -->
+  <section class="section-alt" id="why">
+    <div class="container">
+      <div class="section-headline">
+        <h2>In the age of infinite content,<br>who curates your child&rsquo;s mind?</h2>
+      </div>
+
+      <p class="problem-intro">
+        There are more videos uploaded every hour than your child could watch in a lifetime.
+        Algorithms decide what they see next &mdash; optimized for watch time, not for your child&rsquo;s
+        wellbeing. No algorithm knows your child. No company has your child&rsquo;s interests at heart
+        the way you do. The only person qualified to decide what goes into your child&rsquo;s mind is you.
+      </p>
+
+      <div class="problem-cards">
+        <div class="problem-card">
+          <div class="card-icon card-icon-infinite">&#8734;</div>
+          <h3>Infinite content, zero curation</h3>
+          <p>
+            More video is uploaded every minute than anyone could review. Algorithms fill the gap &mdash;
+            but they optimize for engagement, not education. Not safety. Not your values.
+          </p>
+        </div>
+
+        <div class="problem-card">
+          <div class="card-icon card-icon-algorithm">&#9906;</div>
+          <h3>The algorithm picks, not you</h3>
+          <p>
+            Video apps decide what plays next. You don&rsquo;t. 46% of parents report their kids saw
+            something inappropriate &mdash; even with parental controls turned on.
+            <span class="source">Source: Pew Research</span>
+          </p>
+        </div>
+
+        <div class="problem-card">
+          <div class="card-icon card-icon-ui">&#9776;</div>
+          <h3>Designed to keep watching</h3>
+          <p>
+            Search bars. Recommended videos. Autoplay. Ads for fast food. These interfaces are built to maximize
+            watch time &mdash; not to keep kids safe.
+          </p>
+        </div>
+      </div>
+
+      <p class="problem-closing">
+        Nobody else should decide what your child watches.
+        Not an algorithm. Not a company. Not even us.<br>
+        <strong>You&rsquo;re the parent. You decide.</strong>
+      </p>
+    </div>
+  </section>
+
+  <!-- ========== HOW IT WORKS ========== -->
+  <section id="how-it-works">
+    <div class="container">
+      <div class="section-headline">
+        <h2>Set up in 5 minutes. Manage from your phone.</h2>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-visual">
+            <!-- Replace: TV showing connect screen -->
+            [TV showing QR code]
+          </div>
+          <h3>Install on your TV</h3>
+          <p>
+            Download the app file and install it on any Android TV &mdash;
+            Mi Box, Chromecast with Google TV, Shield, any Android TV box.
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-visual">
+            <!-- Replace: Phone scanning QR -->
+            [Phone scanning QR code on TV]
+          </div>
+          <h3>Connect your phone</h3>
+          <p>
+            Scan the QR code on the TV with your phone. Enter the PIN.
+            Your phone is now the remote control and management dashboard.
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-visual">
+            <!-- Replace: Dashboard with playlist being added -->
+            [Phone dashboard &mdash; adding a playlist]
+          </div>
+          <h3>Add playlists</h3>
+          <p>
+            Paste any YouTube&#8482; playlist URL. It shows up on the TV
+            instantly. Your kids see only what you&rsquo;ve approved.
+          </p>
+        </div>
+      </div>
+
+      <p class="steps-note">
+        That&rsquo;s it. No account to create. No subscription. No cloud. Everything runs on your TV.
+      </p>
+
+      <div class="remote-callout">
+        <strong>Want to manage it from work?</strong>
+        In Settings on the TV, check &ldquo;Enable Remote Access.&rdquo; Your dashboard then works from
+        anywhere &mdash; work, the commute, grandma&rsquo;s house. The relay is free, open-source, and
+        fully optional. The app works completely locally without it.
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== WHAT YOUR KID SEES ========== -->
+  <section class="section-alt" id="tv-experience">
+    <div class="container">
+      <div class="section-headline">
+        <h2>Just videos. Nothing else.</h2>
+        <p>Here&rsquo;s what your kid sees on the TV. Playlists you picked. Videos you approved. That&rsquo;s it.</p>
+      </div>
+
+      <div class="tv-screenshot">
+        <!-- Replace: Full-width TV home screen screenshot -->
+        [TV home screen &mdash; playlist rows with large thumbnails, no YouTube branding]
+      </div>
+
+      <div class="tv-features">
+        <div class="tv-feature">
+          <span class="check">&#10003;</span>
+          <span>Big thumbnails, easy to browse with a remote</span>
+        </div>
+        <div class="tv-feature">
+          <span class="check">&#10003;</span>
+          <span>Use the arrow keys to browse, OK button to play &mdash; that&rsquo;s all they need</span>
+        </div>
+        <div class="tv-feature">
+          <span class="check">&#10003;</span>
+          <span>No search bar. No recommendations. No comments. No ads. Ever.</span>
+        </div>
+        <div class="tv-feature">
+          <span class="check">&#10003;</span>
+          <span>When a video ends, the next one in the playlist plays automatically</span>
+        </div>
+        <div class="tv-feature">
+          <span class="cross">&#10007;</span>
+          <span>No way to search for videos. No way to browse. No way to escape to random content.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PARENT DASHBOARD ========== -->
+  <section id="dashboard">
+    <div class="container">
+      <div class="section-headline">
+        <h2>Your phone is the control panel.</h2>
+        <p>Manage everything from your phone&rsquo;s browser. No app to install.</p>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dashboard-screenshot">
+          <!-- Replace: Phone dashboard screenshot with annotations -->
+          [Phone showing parent dashboard &mdash; playlists, now playing, controls]
+        </div>
+
+        <ul class="dashboard-features">
+          <li class="dashboard-feature">
+            <h3>Add &amp; remove playlists</h3>
+            <p>Paste a YouTube&#8482; playlist URL. Remove with one tap. Changes appear on the TV right away.</p>
+          </li>
+          <li class="dashboard-feature">
+            <h3>See what&rsquo;s playing now</h3>
+            <p>Check the Now Playing card to see exactly which video your kid is watching, in real time.</p>
+          </li>
+          <li class="dashboard-feature">
+            <h3>Play, pause, skip</h3>
+            <p>Control playback from your phone. Works from another room &mdash; or from anywhere if Remote Access is on.</p>
+          </li>
+          <li class="dashboard-feature">
+            <h3>Watch history</h3>
+            <p>See what your kids watched and for how long. No judgment &mdash; just info so you can adjust playlists.</p>
+          </li>
+          <li class="dashboard-feature">
+            <h3>Works in any browser</h3>
+            <p>Safari, Chrome, Firefox &mdash; whatever you have. Open a web page, that&rsquo;s your dashboard.</p>
+          </li>
+        </ul>
+      </div>
+
+      <p class="dashboard-note">
+        The dashboard is a web page. In local mode, it&rsquo;s served directly from your TV over WiFi.
+        With Remote Access enabled, it loads from the relay &mdash; same dashboard, works from anywhere.
+        Either way: no account, no app to install.
+      </p>
+    </div>
+  </section>
+
+  <!-- ========== COMPARISON TABLE ========== -->
+  <section class="section-alt" id="compare">
+    <div class="container">
+      <div class="section-headline">
+        <h2>How it compares</h2>
+      </div>
+
+      <div class="comparison-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>ParentApproved.tv</th>
+              <th>YouTube&#8482; Kids</th>
+              <th>Kidoodle.TV</th>
+              <th>SmartTube</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Who picks videos?</td>
+              <td>You (playlists)</td>
+              <td>Algorithm</td>
+              <td>The company</td>
+              <td>Nobody (open browse)</td>
+            </tr>
+            <tr>
+              <td>Ads?</td>
+              <td>Never</td>
+              <td>Yes (unless Premium)</td>
+              <td>Yes (free tier)</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td>Algorithm?</td>
+              <td>None</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td>Manage from phone?</td>
+              <td>&#10003; Any browser</td>
+              <td>&#10003; App only</td>
+              <td>&#10007;</td>
+              <td>&#10007;</td>
+            </tr>
+            <tr>
+              <td>Open source?</td>
+              <td>&#10003;</td>
+              <td>&#10007;</td>
+              <td>&#10007;</td>
+              <td>&#10003;</td>
+            </tr>
+            <tr>
+              <td>Cost</td>
+              <td>Free forever</td>
+              <td>Free w/ ads</td>
+              <td>$5/month</td>
+              <td>Free</td>
+            </tr>
+            <tr>
+              <td>Privacy</td>
+              <td>Local-first</td>
+              <td>Google cloud</td>
+              <td>Cloud</td>
+              <td>Local</td>
+            </tr>
+            <tr>
+              <td>Works offline?</td>
+              <td>Yes (local mode)</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== DIFFERENTIATORS ========== -->
+  <section id="why-this">
+    <div class="container">
+      <div class="section-headline">
+        <h2>Built different, on purpose.</h2>
+      </div>
+
+      <div class="differentiators">
+        <div class="differentiator">
+          <h3>Local-first by default</h3>
+          <p>
+            Everything runs on your TV. Your phone connects over WiFi. No cloud. No account. No data
+            leaves your home. Want remote access? Turn it on in Settings &mdash; it&rsquo;s optional,
+            and the relay is free and open-source. You choose. We don&rsquo;t decide for you.
+          </p>
+        </div>
+
+        <div class="differentiator">
+          <h3>Open source</h3>
+          <p>
+            Every line of code is on GitHub. Read it, audit it, fork it. We have nothing to hide
+            because there&rsquo;s nothing to hide.
+          </p>
+          <a href="https://github.com/user/kidswatch">View on GitHub &rarr;</a>
+        </div>
+
+        <div class="differentiator">
+          <h3>No business model</h3>
+          <p>
+            No subscription. No ads. No &ldquo;premium tier.&rdquo; No data to sell. This is a parent
+            side project, not a startup. If you find it useful, consider donating to a children&rsquo;s
+            charity of your choice.
+          </p>
+        </div>
+
+        <div class="differentiator">
+          <h3>Single-purpose</h3>
+          <p>
+            This app does one thing: play parent-approved videos on the TV. Currently works with
+            YouTube&#8482; playlists &mdash; support for other video sources is planned. It doesn&rsquo;t
+            track your kid. It just plays what you picked.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== WHO IT'S FOR ========== -->
+  <section class="section-alt" id="fit">
+    <div class="container">
+      <div class="section-headline">
+        <h2>Is this for you?</h2>
+      </div>
+
+      <div class="fit-grid">
+        <div class="fit-column for-you">
+          <h3>This is for you if&hellip;</h3>
+          <ul class="fit-list">
+            <li>
+              <span class="icon">&#10003;</span>
+              <span>You have an Android TV (Mi Box, Chromecast with Google TV, Shield, or any Android TV box)</span>
+            </li>
+            <li>
+              <span class="icon">&#10003;</span>
+              <span>You already know which YouTube&#8482; playlists or channels your kids should watch</span>
+            </li>
+            <li>
+              <span class="icon">&#10003;</span>
+              <span>You&rsquo;re comfortable installing an app outside the Play Store (we have a step-by-step guide)</span>
+            </li>
+            <li>
+              <span class="icon">&#10003;</span>
+              <span>You want zero algorithm involvement in what your kids see on the TV</span>
+            </li>
+            <li>
+              <span class="icon">&#10003;</span>
+              <span>You want to manage what&rsquo;s on the TV from your phone, without handing anyone your data</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="fit-column not-for-you">
+          <h3>Not for you if&hellip;</h3>
+          <ul class="fit-list">
+            <li>
+              <span class="icon">&#10007;</span>
+              <span>You want the app to pick &ldquo;safe&rdquo; content for you (we don&rsquo;t curate &mdash; you do)</span>
+            </li>
+            <li>
+              <span class="icon">&#10007;</span>
+              <span>You need Apple TV, Roku, or Fire TV support (Android TV only for now)</span>
+            </li>
+            <li>
+              <span class="icon">&#10007;</span>
+              <span>You want a polished, Play Store app (this is an early beta &mdash; it works, but it&rsquo;s not fancy)</span>
+            </li>
+            <li>
+              <span class="icon">&#10007;</span>
+              <span>You&rsquo;re not comfortable with a short technical setup</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== DOWNLOAD ========== -->
+  <section class="download-section" id="download">
+    <div class="download-card">
+      <h2>Ready to try it?</h2>
+      <p class="version-info">v0.3 beta &middot; Android TV &middot; ~12 MB</p>
+
+      <a href="https://github.com/user/kidswatch/releases/latest" class="btn btn-primary">
+        Download the App
+      </a>
+
+      <p class="download-meta">
+        Works on: Xiaomi Mi Box, Chromecast with Google TV,<br>
+        NVIDIA Shield, and other Android TV devices (Android 7.0+)
+      </p>
+
+      <p class="sideload-note">
+        <strong>First time installing an app outside the Play Store?</strong><br>
+        It takes about 5 minutes. Our guide walks you through every step with screenshots.
+        <br><br>
+        <a href="#" class="btn btn-secondary btn-sm">Step-by-step install guide &rarr;</a>
+      </p>
+
+      <div class="download-links">
+        <a href="https://github.com/user/kidswatch">Source code on GitHub</a>
+        <a href="https://github.com/user/kidswatch/issues">Report a bug</a>
+        <a href="https://github.com/user/kidswatch/discussions">Ask a question</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FAQ ========== -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-headline">
+        <h2>Questions</h2>
+      </div>
+
+      <div class="faq-list">
+
+        <!-- General -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Is this really free? What&rsquo;s the catch?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              Yes, really free. No catch. This is open-source software built by a parent who had the same problem
+              you do. There&rsquo;s no company behind it, no investors, no business model. The code is on GitHub for
+              anyone to read. If you find it useful, we suggest donating to a children&rsquo;s charity &mdash;
+              but that&rsquo;s entirely up to you.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            How is this different from YouTube Kids?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              YouTube Kids uses an algorithm to decide what your kid can watch. Even in &ldquo;Approved Content
+              Only&rdquo; mode, the setup is clunky and doesn&rsquo;t work well on TV devices. ParentApproved.tv
+              takes a completely different approach: you paste playlist URLs, and your kid sees <strong>only</strong>
+              those videos. No search bar, no recommendations, no algorithm, no ads. You have 100% control over
+              every video that appears on the screen.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Who curates the videos?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              You do. That&rsquo;s the whole point. We don&rsquo;t pick &ldquo;safe&rdquo; content. We don&rsquo;t
+              filter or recommend. We don&rsquo;t use AI to decide what&rsquo;s appropriate. You pick the playlists.
+              Your kids watch those playlists. Nobody knows your child better than you &mdash; and no algorithm
+              or company should be making that decision for your family.
+            </p>
+          </div>
+        </div>
+
+        <!-- Setup & technical -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Is installing the app outside the Play Store safe?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              Yes. Installing apps outside the Play Store (&ldquo;sideloading&rdquo;) is a standard Android feature
+              &mdash; it&rsquo;s how many popular apps like SmartTube are installed on Android TV. Our app is
+              completely open-source, so you (or anyone you trust) can read every line of code on GitHub. The app
+              doesn&rsquo;t collect personal data, doesn&rsquo;t require unusual permissions, and doesn&rsquo;t
+              send information to any server unless you explicitly turn on Remote Access.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Do I need a YouTube account or API key?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              No. The app uses open-source technology (the same used by the NewPipe app) to play videos
+              directly. You don&rsquo;t need a YouTube account, a Google sign-in, or any API key. Just paste a
+              playlist URL and it works.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            What Android TV devices does it work on?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              Any device running Android TV with Android 7.0 or higher. We&rsquo;ve tested it on the
+              Xiaomi Mi Box 4 (Android 9) and the Android TV emulator (Android 14). It also works on
+              Chromecast with Google TV, NVIDIA Shield, and generic Android TV boxes. If your TV runs
+              Android TV and is from the last few years, it should work.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            How long does setup take?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              About 5 minutes. Download the app file, install it on your TV, scan a QR code with your phone,
+              enter a PIN, and add your first playlist. Our install guide walks you through every step. After that
+              initial setup, adding or removing playlists takes seconds.
+            </p>
+          </div>
+        </div>
+
+        <!-- Privacy & safety -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Does the app collect any data about my kids?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              No. All data stays on your TV. Playlists, watch history, settings &mdash; everything is stored
+              locally in a database on the TV itself. Nothing is sent to any cloud server. Nothing is tracked.
+              There are no analytics, no cookies, no data collection of any kind. The app doesn&rsquo;t even
+              have the ability to send data anywhere unless you turn on Remote Access &mdash; and even then,
+              the relay doesn&rsquo;t store anything.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Can my kid get out of the app and watch other things?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              Inside the app, there&rsquo;s no way to search for videos, no settings menu accessible to kids,
+              and no way to browse anything you haven&rsquo;t added. The Back button returns to the playlist
+              screen. The one thing we can&rsquo;t prevent: the Home button on the remote exits to the
+              Android TV launcher. That&rsquo;s an operating system limitation that no app can override.
+              For a dedicated kids&rsquo; TV, you can set ParentApproved.tv as the default launcher
+              (guide coming soon).
+            </p>
+          </div>
+        </div>
+
+        <!-- Remote access -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Can I manage it from work or when I&rsquo;m not home?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              Yes &mdash; if you choose to turn it on. Go to Settings on the TV and enable Remote Access.
+              Your TV connects to a lightweight relay, and your phone&rsquo;s dashboard works from anywhere.
+              You can add playlists, check what&rsquo;s playing, pause playback &mdash; all from your phone
+              at work, on the bus, wherever. The relay is free and runs as charityware. If you prefer to keep
+              everything fully local, just leave Remote Access off &mdash; the app works completely over your
+              home WiFi.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            What is the relay? Is my data going through someone else&rsquo;s server?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              The relay is a tiny open-source bridge that connects your phone to your TV when you&rsquo;re
+              not on the same WiFi. It forwards your requests to the TV and sends responses back &mdash;
+              that&rsquo;s all it does. It doesn&rsquo;t store playlists, videos, PINs, or watch history.
+              Your TV is still the backend and all data stays in your TV&rsquo;s local database. The relay
+              code is open-source too &mdash; you can audit it or even host your own.
+            </p>
+          </div>
+        </div>
+
+        <!-- Day-to-day use -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Does it work without internet?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              The TV needs internet to stream videos. But all your playlists and settings are stored locally
+              on the TV &mdash; they survive reboots, power outages, and app updates. Nothing depends on
+              a cloud service. If your internet goes out, the playlists are still there when it comes back.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            What happens when a video stops working?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              The technology that plays videos occasionally needs updates when YouTube changes something
+              on their end. When this happens, we release an updated version of the app. Sign up for email
+              updates or watch the GitHub repository to get notified. These updates are usually quick
+              &mdash; download the new app file and install it over the old one.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Can both parents manage the TV?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              Yes. Each parent scans the QR code on the TV and enters the PIN from their own phone. They each
+              get their own bookmark to the dashboard. Both parents can add playlists, control playback, and
+              view watch history. The TV is the single source of truth &mdash; both see the same playlists
+              and the same data.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Will it support videos from places other than YouTube?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              That&rsquo;s the plan. Right now the app works with YouTube&#8482; playlists. Support for other video
+              URLs and sources is planned for a future version. The goal is to let you add any video from
+              anywhere &mdash; not just YouTube.
+            </p>
+          </div>
+        </div>
+
+        <!-- Beta & contributing -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            This is a beta &mdash; what does that mean?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              It means the app works &mdash; real families use it &mdash; but it&rsquo;s still being actively
+              developed. You might hit rough edges. Some features (like daily time limits) aren&rsquo;t built
+              yet. We&rsquo;re honest about what&rsquo;s done and what&rsquo;s not. Your feedback during the
+              beta directly shapes what gets built next. If something doesn&rsquo;t work, tell us and we&rsquo;ll fix it.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            I found a bug or have an idea. How do I share it?
+            <svg class="faq-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>
+              Open an issue on <a href="https://github.com/user/kidswatch/issues">GitHub</a> or start a
+              discussion in the <a href="https://github.com/user/kidswatch/discussions">Discussions</a> tab.
+              You can also email us directly. We read everything and respond. This app is built by parents
+              for parents &mdash; your feedback isn&rsquo;t going into a void.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== EMAIL SIGNUP ========== -->
+  <section class="email-section" id="updates">
+    <h2>Stay in the loop</h2>
+    <p>We send updates about once a month. New features, important fixes, that&rsquo;s it. No spam.</p>
+    <form class="email-form" action="#" method="POST">
+      <input type="email" placeholder="you@example.com" required aria-label="Email address">
+      <button type="submit" class="btn btn-primary btn-sm">Notify me</button>
+    </form>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <strong style="color: #D1D5DB; font-size: 1rem;">ParentApproved.tv</strong>
+        <p>
+          Open source, local-first, parent-controlled video player for kids. Built by a parent who codes,
+          for parents who care. Not a company. Not a startup.
+        </p>
+      </div>
+      <div class="footer-links">
+        <h4>Links</h4>
+        <ul>
+          <li><a href="https://github.com/user/kidswatch">GitHub</a></li>
+          <li><a href="#">Install Guide</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="mailto:hello@parentapproved.tv">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-project">
+        <h4>Privacy</h4>
+        <ul>
+          <li>We collect nothing.</li>
+          <li>All data stays on your TV.</li>
+          <li>No cookies on this website.</li>
+          <li>No analytics tracking.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>&copy; 2026 ParentApproved.tv</span>
+      <span class="trademark">
+        Not affiliated with YouTube or Google LLC. YouTube is a trademark of Google LLC.
+      </span>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
