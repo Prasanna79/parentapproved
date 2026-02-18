@@ -284,3 +284,11 @@ section {
     font-size: 0.9em;
     margin-top: 8px;
 }
+
+.local-notice {
+    margin-top: 32px;
+    padding: 12px;
+    text-align: center;
+    color: #888;
+    font-size: 0.8em;
+}
