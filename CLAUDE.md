@@ -82,13 +82,15 @@ cd marketing/landing-page && npx wrangler pages deploy . --project-name parentap
 - **Dashboard sync**: Local (`tv-app/app/src/main/assets/`) and relay (`relay/assets/`) copies must be updated together
 - **Package**: `tv.parentapproved.app` (renamed from `com.kidswatch.tv` in v0.4.1)
 
-## Test Summary (v0.6.2)
+## Test Summary (v0.7.1)
 | Suite | Count | Runner |
 |-------|-------|--------|
 | TV unit tests | 194 | `./gradlew testDebugUnitTest` |
 | TV instrumented | 19 | `./gradlew connectedDebugAndroidTest` |
 | Relay tests | 139 | `cd relay && npx vitest run` |
-| **Total** | **352** | |
+| Landing page tests | 10 | `cd marketing/landing-page && npx vitest run` |
+| Digest worker tests | 9 | `cd marketing/notify-digest && npx vitest run` |
+| **Total** | **371** | |
 
 ## ADB
 - Use `/adb` slash command or full path: `/opt/homebrew/share/android-commandlinetools/platform-tools/adb`

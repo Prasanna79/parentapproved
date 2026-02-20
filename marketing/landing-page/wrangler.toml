@@ -1,0 +1,7 @@
+name = "parentapproved-tv"
+pages_build_output_dir = "."
+compatibility_date = "2024-12-01"
+
+[[kv_namespaces]]
+binding = "NOTIFY_EMAILS"
+id = "a7e68c5bacb24480b76c8df5ccd6b6f7"

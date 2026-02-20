@@ -913,6 +913,18 @@ h3 {
   }
 }
 
+.notify-message {
+  max-width: 420px;
+  margin: -12px auto 16px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  text-align: center;
+}
+.notify-success { background: rgba(34, 165, 89, 0.15); color: #6ee7a0; }
+.notify-info { background: rgba(59, 130, 246, 0.15); color: #93bbfd; }
+.notify-error { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
 @media (max-width: 768px) {
   .download-section {
     padding: var(--section-padding-mobile);

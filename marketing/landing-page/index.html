@@ -621,10 +621,11 @@
       <h2>Coming soon.</h2>
       <p class="version-info">We&rsquo;re finishing the beta. Be the first to know when it&rsquo;s ready.</p>
 
-      <form class="prelaunch-form" action="#" method="POST">
-        <input type="email" placeholder="you@example.com" required aria-label="Email address">
-        <button type="submit" class="btn btn-primary">Notify Me</button>
+      <form class="prelaunch-form" id="notify-form">
+        <input type="email" id="notify-email" placeholder="you@example.com" required aria-label="Email address">
+        <button type="submit" class="btn btn-primary" id="notify-btn">Notify Me</button>
       </form>
+      <p class="notify-message" id="notify-message" style="display:none;"></p>
 
       <p class="download-meta">
         For Android TV &mdash; Mi Box, Chromecast with Google TV,<br>

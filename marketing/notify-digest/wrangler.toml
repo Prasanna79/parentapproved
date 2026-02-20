@@ -1,0 +1,11 @@
+name = "parentapproved-notify-digest"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "NOTIFY_EMAILS"
+id = "a7e68c5bacb24480b76c8df5ccd6b6f7"
+
+[triggers]
+crons = ["0 14 * * *"]  # 2pm UTC = ~morning US time zones

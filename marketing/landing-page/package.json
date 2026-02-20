@@ -1,0 +1,12 @@
+{
+  "name": "parentapproved-landing-page",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "deploy": "wrangler pages deploy . --project-name parentapproved-tv"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0",
+    "wrangler": "^4.0.0"
+  }
+}
