@@ -6,14 +6,22 @@ sealed class PinResult {
     data class RateLimited(val retryAfterMs: Long) : PinResult()
 }
 
+interface PinLockoutPersistence {
+    fun save(failedAttempts: Int, lockoutUntil: Long, lockoutCount: Int)
+    fun loadFailedAttempts(): Int
+    fun loadLockoutUntil(): Long
+    fun loadLockoutCount(): Int
+}
+
 class PinManager(
     private val clock: () -> Long = System::currentTimeMillis,
     private val onPinValidated: ((String) -> String)? = null,
+    private val lockoutPersistence: PinLockoutPersistence? = null,
 ) {
     private var currentPin: String = generatePin()
-    private var failedAttempts: Int = 0
-    private var lockoutUntil: Long = 0
-    private var lockoutCount: Int = 0
+    private var failedAttempts: Int = lockoutPersistence?.loadFailedAttempts() ?: 0
+    private var lockoutUntil: Long = lockoutPersistence?.loadLockoutUntil() ?: 0
+    private var lockoutCount: Int = lockoutPersistence?.loadLockoutCount() ?: 0
 
     companion object {
         private const val MAX_ATTEMPTS = 5
@@ -39,11 +47,13 @@ class PinManager(
         if (lockoutUntil > 0 && now >= lockoutUntil) {
             failedAttempts = 0
             lockoutUntil = 0
+            persistLockout()
         }
 
         if (pin == currentPin) {
             failedAttempts = 0
             lockoutCount = 0
+            persistLockout()
             val token = onPinValidated?.invoke(pin) ?: ""
             return PinResult.Success(token)
         }
@@ -53,9 +63,11 @@ class PinManager(
             lockoutCount++
             val multiplier = 1L shl (lockoutCount - 1).coerceAtMost(10)
             lockoutUntil = now + BASE_LOCKOUT_MS * multiplier
+            persistLockout()
             return PinResult.RateLimited(BASE_LOCKOUT_MS * multiplier)
         }
 
+        persistLockout()
         return PinResult.Invalid(MAX_ATTEMPTS - failedAttempts)
     }
 
@@ -64,10 +76,15 @@ class PinManager(
         failedAttempts = 0
         lockoutCount = 0
         lockoutUntil = 0
+        persistLockout()
         return newPin
     }
 
     fun isLockedOut(): Boolean = clock() < lockoutUntil
 
     fun getFailedAttempts(): Int = failedAttempts
+
+    private fun persistLockout() {
+        lockoutPersistence?.save(failedAttempts, lockoutUntil, lockoutCount)
+    }
 }

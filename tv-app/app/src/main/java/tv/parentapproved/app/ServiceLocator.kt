@@ -4,11 +4,15 @@ import android.content.Context
 import android.content.SharedPreferences
 import tv.parentapproved.app.auth.PinManager
 import tv.parentapproved.app.auth.SessionManager
+import tv.parentapproved.app.auth.SharedPrefsPinLockoutPersistence
 import tv.parentapproved.app.auth.SharedPrefsSessionPersistence
 import tv.parentapproved.app.data.cache.CacheDatabase
 import tv.parentapproved.app.data.events.PlayEventRecorder
 import tv.parentapproved.app.relay.RelayConfig
 import tv.parentapproved.app.relay.RelayConnector
+import tv.parentapproved.app.timelimits.RoomTimeLimitStore
+import tv.parentapproved.app.timelimits.RoomWatchTimeProvider
+import tv.parentapproved.app.timelimits.TimeLimitManager
 
 object ServiceLocator {
     lateinit var pinManager: PinManager
@@ -16,6 +20,7 @@ object ServiceLocator {
     lateinit var database: CacheDatabase
     lateinit var relayConfig: RelayConfig
     lateinit var relayConnector: RelayConnector
+    lateinit var timeLimitManager: TimeLimitManager
 
     private var initialized = false
     private lateinit var relayPrefs: SharedPreferences
@@ -40,10 +45,25 @@ object ServiceLocator {
         // RelayConnector
         relayConnector = RelayConnector(config = relayConfig, appVersion = BuildConfig.VERSION_NAME)
 
+        val pinLockoutPersistence = SharedPrefsPinLockoutPersistence(
+            context.getSharedPreferences("parentapproved_pin_lockout", Context.MODE_PRIVATE)
+        )
         pinManager = PinManager(
-            onPinValidated = { sessionManager.createSession() ?: "" }
+            onPinValidated = { sessionManager.createSession() ?: "" },
+            lockoutPersistence = pinLockoutPersistence,
         )
         PlayEventRecorder.init(database)
+
+        val timeLimitStore = RoomTimeLimitStore(database.timeLimitDao())
+        val watchTimeProvider = RoomWatchTimeProvider(
+            playEventDao = database.playEventDao(),
+            currentVideoElapsedProvider = { PlayEventRecorder.getElapsedMs() },
+        )
+        timeLimitManager = TimeLimitManager(
+            store = timeLimitStore,
+            watchTimeProvider = watchTimeProvider,
+        )
+
         initialized = true
     }
 
@@ -62,11 +82,31 @@ object ServiceLocator {
         }
     }
 
-    fun initForTest(db: CacheDatabase, pin: PinManager, session: SessionManager) {
+    fun initForTest(
+        db: CacheDatabase,
+        pin: PinManager,
+        session: SessionManager,
+        timeLimit: TimeLimitManager? = null,
+    ) {
         database = db
         pinManager = pin
         sessionManager = session
         PlayEventRecorder.init(db)
+        if (timeLimit != null) {
+            timeLimitManager = timeLimit
+        } else {
+            // No-op default: no limits configured, always allowed
+            val noOpStore = object : tv.parentapproved.app.timelimits.TimeLimitStore {
+                override fun getConfig() = null
+                override fun saveConfig(config: tv.parentapproved.app.timelimits.TimeLimitConfig) {}
+                override fun updateManualLock(locked: Boolean) {}
+                override fun updateBonus(minutes: Int, date: String) {}
+            }
+            val noOpWatch = object : tv.parentapproved.app.timelimits.WatchTimeProvider {
+                override fun getTodayWatchSeconds() = 0
+            }
+            timeLimitManager = TimeLimitManager(store = noOpStore, watchTimeProvider = noOpWatch)
+        }
         initialized = true
     }
 

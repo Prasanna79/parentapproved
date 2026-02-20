@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import tv.parentapproved.app.data.events.PlayEventRecorder
 import tv.parentapproved.app.server.ParentApprovedServer
 import tv.parentapproved.app.ui.navigation.AppNavigation
 import tv.parentapproved.app.ui.theme.ParentApprovedTheme
@@ -23,6 +24,11 @@ class MainActivity : ComponentActivity() {
                 AppNavigation()
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        PlayEventRecorder.flushCurrentEvent()
     }
 
     override fun onDestroy() {

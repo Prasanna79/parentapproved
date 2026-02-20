@@ -61,6 +61,7 @@ class ParentApprovedServer(private val context: Context, private val port: Int =
                     playlistRoutes(ServiceLocator.sessionManager, ServiceLocator.database)
                     playbackRoutes(ServiceLocator.sessionManager)
                     statsRoutes(ServiceLocator.sessionManager, ServiceLocator.database)
+                    timeLimitRoutes(ServiceLocator.sessionManager, ServiceLocator.timeLimitManager)
                     statusRoutes()
                     dashboardRoutes()
                 }

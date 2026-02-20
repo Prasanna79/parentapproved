@@ -36,6 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tv.parentapproved.app.BuildConfig
+import tv.parentapproved.app.ServiceLocator
+import tv.parentapproved.app.timelimits.TimeLimitStatus
 import tv.parentapproved.app.ui.components.VideoCard
 import tv.parentapproved.app.ui.theme.KidAccent
 import tv.parentapproved.app.ui.theme.KidBackground
@@ -51,12 +53,25 @@ fun HomeScreen(
     onPlayVideo: (videoId: String, playlistId: String, videoIndex: Int) -> Unit,
     onSettings: () -> Unit,
     onConnect: () -> Unit,
+    onLocked: (String) -> Unit = {},
     viewModel: HomeViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.start()
+    }
+
+    // Check time limits on composition and periodically
+    LaunchedEffect(Unit) {
+        while (true) {
+            val status = ServiceLocator.timeLimitManager.canPlay()
+            if (status is TimeLimitStatus.Blocked) {
+                onLocked(status.reason.name.lowercase())
+                return@LaunchedEffect
+            }
+            kotlinx.coroutines.delay(5_000)
+        }
     }
 
     Box(

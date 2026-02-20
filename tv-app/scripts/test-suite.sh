@@ -92,7 +92,7 @@ result=$(send_intent "DEBUG_GET_PLAYLISTS")
 echo "After add: $(echo "$result" | grep -o "$TAG:.*" | cut -d' ' -f2-)"
 
 result=$(send_intent "DEBUG_REFRESH_PLAYLISTS")
-assert_json_exists "$result" "playlist_count"
+assert_json_exists "$result" "source_count"
 
 # 3. Playback
 echo ""
@@ -113,7 +113,7 @@ assert_json_exists "$result" "offline"
 send_intent "DEBUG_SIMULATE_OFFLINE" > /dev/null
 
 result=$(send_intent "DEBUG_GET_STATE_DUMP")
-assert_json_exists "$result" "playlists"
+assert_json_exists "$result" "sources"
 assert_json_exists "$result" "pin"
 
 result=$(send_intent "DEBUG_CLEAR_PLAY_EVENTS")

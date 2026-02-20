@@ -387,23 +387,6 @@ The Screen Time section appears between Now Playing and Playlists in the dashboa
 
 ---
 
-## Known Bugs (fix in v0.6.x or v0.7)
-
-### D-pad / emulator controls unresponsive
-
-**Reported:** 2026-02-18, v0.6.0 on TV_API34 emulator
-
-D-pad navigation and emulator controls don't work — user cannot navigate or select items using the remote/keyboard. Requires debug intents (`DEBUG_PLAY_INDEX`) to trigger playback. Unclear if this is emulator-only or also affects real hardware (Mi Box not available to test at time of report).
-
-**Impact:** Can't use the app without ADB debug intents. Blocks all manual QA on emulator.
-
-**Investigate:**
-- Is focus being consumed/intercepted by a Compose component?
-- Did the v0.6 HomeScreen/PlaybackScreen changes break focus handling?
-- Test on Mi Box when available to determine if emulator-only
-
----
-
 ## What's NOT in v0.7
 
 - **Schedules per-playlist** (e.g., "cartoons only before 5 PM") — future

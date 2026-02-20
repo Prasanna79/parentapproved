@@ -58,6 +58,71 @@
                 </div>
             </div>
 
+            <section id="screen-time-section">
+                <h2>Screen Time</h2>
+                <div id="screen-time-card" class="screen-time-card">
+                    <div class="st-status-row">
+                        <span id="st-status-badge" class="badge st-badge-allowed">Allowed</span>
+                        <span id="st-lock-reason" class="st-lock-reason hidden"></span>
+                    </div>
+
+                    <div class="st-usage-row">
+                        <div class="st-usage-bar-container">
+                            <div id="st-usage-bar" class="st-usage-bar" style="width: 0%"></div>
+                        </div>
+                        <span id="st-usage-label" class="st-usage-label">0m / No limit</span>
+                    </div>
+
+                    <div id="st-time-request" class="st-time-request hidden">
+                        Your child is requesting more time.
+                        <div class="st-request-actions">
+                            <button onclick="grantBonusTime(15)" class="st-bonus-btn">+15 min</button>
+                            <button onclick="grantBonusTime(30)" class="st-bonus-btn">+30 min</button>
+                        </div>
+                    </div>
+
+                    <div class="st-controls">
+                        <button id="st-lock-btn" onclick="toggleLock()">Lock TV</button>
+                        <button id="st-bonus-15" class="st-bonus-btn" onclick="grantBonusTime(15)">+15 min</button>
+                        <button id="st-bonus-30" class="st-bonus-btn" onclick="grantBonusTime(30)">+30 min</button>
+                        <button id="st-edit-btn" class="st-edit-btn" onclick="openEditLimits()">Edit Limits</button>
+                    </div>
+                </div>
+
+                <!-- Edit Limits Modal -->
+                <div id="edit-limits-modal" class="modal-overlay hidden">
+                    <div class="modal-content">
+                        <h3>Edit Time Limits</h3>
+
+                        <div class="modal-field">
+                            <label>
+                                <input type="checkbox" id="edit-limit-enabled"> Daily limit
+                            </label>
+                            <div id="edit-limit-input-row" class="modal-input-row hidden">
+                                <input type="number" id="edit-limit-minutes" min="1" max="480" value="120" class="modal-number-input">
+                                <span>minutes</span>
+                            </div>
+                        </div>
+
+                        <div class="modal-field">
+                            <label>
+                                <input type="checkbox" id="edit-bedtime-enabled"> Bedtime
+                            </label>
+                            <div id="edit-bedtime-input-row" class="modal-input-row hidden">
+                                <input type="time" id="edit-bedtime-start" value="20:30" class="modal-time-input">
+                                <span>to</span>
+                                <input type="time" id="edit-bedtime-end" value="07:00" class="modal-time-input">
+                            </div>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button onclick="saveLimits()" class="modal-save-btn">Save</button>
+                            <button onclick="closeEditLimits()" class="modal-cancel-btn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section id="playlists-section">
                 <h2>Content Sources</h2>
                 <form id="playlist-form">

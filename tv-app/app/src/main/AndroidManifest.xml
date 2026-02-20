@@ -51,6 +51,15 @@
                 <action android:name="tv.parentapproved.app.DEBUG_PLAY_VIDEO" />
                 <action android:name="tv.parentapproved.app.DEBUG_STOP_PLAYBACK" />
                 <action android:name="tv.parentapproved.app.DEBUG_GET_NOW_PLAYING" />
+                <!-- Time Limits -->
+                <action android:name="tv.parentapproved.app.DEBUG_SET_DAILY_LIMIT" />
+                <action android:name="tv.parentapproved.app.DEBUG_CLEAR_DAILY_LIMIT" />
+                <action android:name="tv.parentapproved.app.DEBUG_MANUAL_LOCK" />
+                <action android:name="tv.parentapproved.app.DEBUG_MANUAL_UNLOCK" />
+                <action android:name="tv.parentapproved.app.DEBUG_GRANT_BONUS" />
+                <action android:name="tv.parentapproved.app.DEBUG_SET_BEDTIME" />
+                <action android:name="tv.parentapproved.app.DEBUG_CLEAR_BEDTIME" />
+                <action android:name="tv.parentapproved.app.DEBUG_TIME_STATUS" />
                 <!-- Lifecycle -->
                 <action android:name="tv.parentapproved.app.DEBUG_FULL_RESET" />
                 <action android:name="tv.parentapproved.app.DEBUG_SIMULATE_OFFLINE" />

@@ -122,4 +122,49 @@ class PinManagerTest {
         repeat(5) { pinManager.validate("wrong!") }
         assertTrue("Should be locked out after 5 failures", pinManager.isLockedOut())
     }
+
+    @Test
+    fun lockoutPersistence_survivesRestart() {
+        val fakePersistence = FakePinLockoutPersistence()
+        val pm1 = PinManager(clock = { currentTime }, lockoutPersistence = fakePersistence)
+        val pin = pm1.getCurrentPin()
+
+        // Fail 3 times
+        repeat(3) { pm1.validate("wrong!") }
+        assertEquals(3, pm1.getFailedAttempts())
+
+        // Simulate restart: create new PinManager with same persistence
+        val pm2 = PinManager(clock = { currentTime }, lockoutPersistence = fakePersistence)
+        assertEquals(3, pm2.getFailedAttempts())
+    }
+
+    @Test
+    fun lockoutPersistence_lockoutSurvivesRestart() {
+        val fakePersistence = FakePinLockoutPersistence()
+        val pm1 = PinManager(clock = { currentTime }, lockoutPersistence = fakePersistence)
+
+        // Trigger lockout
+        repeat(5) { pm1.validate("wrong!") }
+        assertTrue(pm1.isLockedOut())
+
+        // Simulate restart
+        val pm2 = PinManager(clock = { currentTime }, lockoutPersistence = fakePersistence)
+        assertTrue("Lockout should survive restart", pm2.isLockedOut())
+    }
+
+    private class FakePinLockoutPersistence : PinLockoutPersistence {
+        private var failedAttempts = 0
+        private var lockoutUntil = 0L
+        private var lockoutCount = 0
+
+        override fun save(failedAttempts: Int, lockoutUntil: Long, lockoutCount: Int) {
+            this.failedAttempts = failedAttempts
+            this.lockoutUntil = lockoutUntil
+            this.lockoutCount = lockoutCount
+        }
+
+        override fun loadFailedAttempts(): Int = failedAttempts
+        override fun loadLockoutUntil(): Long = lockoutUntil
+        override fun loadLockoutCount(): Int = lockoutCount
+    }
 }

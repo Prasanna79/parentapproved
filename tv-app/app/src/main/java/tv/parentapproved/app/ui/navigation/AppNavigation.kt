@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import tv.parentapproved.app.ui.screens.ConnectScreen
 import tv.parentapproved.app.ui.screens.HomeScreen
+import tv.parentapproved.app.ui.screens.LockScreen
 import tv.parentapproved.app.ui.screens.PlaybackScreen
 import tv.parentapproved.app.ui.screens.SettingsScreen
 
@@ -16,13 +17,21 @@ object Routes {
     const val HOME = "home"
     const val PLAYBACK = "playback/{videoId}/{playlistId}/{startIndex}"
     const val SETTINGS = "settings"
+    const val LOCK = "lock/{reason}"
 
     fun playback(videoId: String, playlistId: String, startIndex: Int) = "playback/$videoId/$playlistId/$startIndex"
+    fun lock(reason: String) = "lock/${reason.lowercase()}"
 }
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+
+    val onLocked: (String) -> Unit = { reason ->
+        navController.navigate(Routes.lock(reason)) {
+            popUpTo(Routes.HOME) { inclusive = false }
+        }
+    }
 
     NavHost(navController = navController, startDestination = Routes.HOME) {
         composable(Routes.CONNECT) {
@@ -40,6 +49,7 @@ fun AppNavigation() {
                 onConnect = {
                     navController.navigate(Routes.CONNECT)
                 },
+                onLocked = onLocked,
             )
         }
 
@@ -59,6 +69,7 @@ fun AppNavigation() {
                 playlistId = playlistId,
                 startIndex = startIndex,
                 onBack = { navController.popBackStack() },
+                onLocked = onLocked,
             )
         }
 
@@ -67,6 +78,21 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() },
                 onRefresh = {
                     navController.popBackStack()
+                },
+            )
+        }
+
+        composable(
+            Routes.LOCK,
+            arguments = listOf(
+                navArgument("reason") { type = NavType.StringType },
+            )
+        ) { backStackEntry ->
+            val reason = backStackEntry.arguments?.getString("reason") ?: "manual_lock"
+            LockScreen(
+                reason = reason,
+                onUnlocked = {
+                    navController.popBackStack(Routes.HOME, inclusive = false)
                 },
             )
         }

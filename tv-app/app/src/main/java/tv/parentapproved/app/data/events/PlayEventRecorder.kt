@@ -110,6 +110,15 @@ object PlayEventRecorder {
         pausedElapsedMs = 0
     }
 
+    fun flushCurrentEvent() {
+        if (currentEventId != null) {
+            val elapsed = (getElapsedMs() / 1000).toInt()
+            if (elapsed > 0) {
+                updateEvent(elapsed, 0)
+            }
+        }
+    }
+
     fun clearAll() {
         val dao = db?.playEventDao() ?: return
         scope.launch { dao.deleteAll() }

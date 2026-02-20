@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +42,7 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import tv.parentapproved.app.ServiceLocator
 import tv.parentapproved.app.data.ContentSourceRepository
+import tv.parentapproved.app.timelimits.TimeLimitStatus
 import tv.parentapproved.app.data.events.PlayEventRecorder
 import tv.parentapproved.app.data.models.VideoItem
 import tv.parentapproved.app.playback.DpadKeyHandler
@@ -47,8 +50,10 @@ import tv.parentapproved.app.playback.PlaybackCommand
 import tv.parentapproved.app.playback.PlaybackCommandBus
 import tv.parentapproved.app.playback.StreamSelector
 import tv.parentapproved.app.ui.theme.KidBackground
+import tv.parentapproved.app.ui.theme.KidText
 import tv.parentapproved.app.ui.theme.KidTextDim
 import tv.parentapproved.app.ui.theme.StatusError
+import tv.parentapproved.app.ui.theme.StatusWarning
 import tv.parentapproved.app.util.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,6 +71,7 @@ fun PlaybackScreen(
     playlistId: String,
     startIndex: Int,
     onBack: () -> Unit,
+    onLocked: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -293,6 +299,43 @@ fun PlaybackScreen(
         }
     }
 
+    // Time limit check — separate from event update cadence
+    var warningShown by remember { mutableStateOf(false) }
+    var warningMinutes by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        // Pre-play check
+        val initialStatus = ServiceLocator.timeLimitManager.canPlay()
+        if (initialStatus is TimeLimitStatus.Blocked) {
+            onLocked(initialStatus.reason.name.lowercase())
+            return@LaunchedEffect
+        }
+
+        while (true) {
+            delay(30_000)
+            val status = ServiceLocator.timeLimitManager.canPlay()
+            when (status) {
+                is TimeLimitStatus.Blocked -> {
+                    PlaybackCommandBus.send(PlaybackCommand.Stop)
+                    onLocked(status.reason.name.lowercase())
+                    return@LaunchedEffect
+                }
+                is TimeLimitStatus.Warning -> {
+                    warningMinutes = status.minutesLeft
+                    warningShown = true
+                    // Auto-hide after 10 seconds
+                    scope.launch {
+                        delay(10_000)
+                        warningShown = false
+                    }
+                }
+                is TimeLimitStatus.Allowed -> {
+                    warningShown = false
+                }
+            }
+        }
+    }
+
     // Start playback
     LaunchedEffect(videoId) {
         controller.extractAndPlay?.invoke(videoId)
@@ -371,6 +414,26 @@ fun PlaybackScreen(
                         color = KidTextDim,
                     )
                 }
+            }
+        }
+
+        // Time limit warning overlay
+        if (warningShown) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .background(
+                        StatusWarning.copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(8.dp),
+                    )
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = "$warningMinutes minutes left!",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = KidText,
+                )
             }
         }
     }

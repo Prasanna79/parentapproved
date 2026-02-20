@@ -12,6 +12,7 @@ import tv.parentapproved.app.data.events.PlayEventRecorder
 import tv.parentapproved.app.util.AppLogger
 import tv.parentapproved.app.util.ContentSourceParser
 import tv.parentapproved.app.util.NetworkUtils
+import tv.parentapproved.app.timelimits.TimeLimitConfig
 import tv.parentapproved.app.util.OfflineSimulator
 import tv.parentapproved.app.util.ParseResult
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +39,8 @@ class DebugReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (!tv.parentapproved.app.BuildConfig.IS_DEBUG) return
+
         when (intent.action) {
             // --- Server/Playlists ---
             "$PKG.DEBUG_ADD_PLAYLIST" -> handleAddPlaylist(context, intent)
@@ -61,6 +64,16 @@ class DebugReceiver : BroadcastReceiver() {
             // --- Relay ---
             "$PKG.DEBUG_GET_RELAY_STATUS" -> handleGetRelayStatus()
             "$PKG.DEBUG_RESET_TV_SECRET" -> handleResetTvSecret()
+
+            // --- Time Limits ---
+            "$PKG.DEBUG_SET_DAILY_LIMIT" -> handleSetDailyLimit(intent)
+            "$PKG.DEBUG_CLEAR_DAILY_LIMIT" -> handleClearDailyLimit()
+            "$PKG.DEBUG_MANUAL_LOCK" -> handleManualLock()
+            "$PKG.DEBUG_MANUAL_UNLOCK" -> handleManualUnlock()
+            "$PKG.DEBUG_GRANT_BONUS" -> handleGrantBonus(intent)
+            "$PKG.DEBUG_SET_BEDTIME" -> handleSetBedtime(intent)
+            "$PKG.DEBUG_CLEAR_BEDTIME" -> handleClearBedtime()
+            "$PKG.DEBUG_TIME_STATUS" -> handleTimeStatus()
 
             // --- Lifecycle ---
             "$PKG.DEBUG_FULL_RESET" -> handleFullReset(context)
@@ -278,6 +291,91 @@ class DebugReceiver : BroadcastReceiver() {
         } catch (e: Exception) {
             logResult("""{"error":"${e.message}"}""")
         }
+    }
+
+    // --- Time Limits ---
+
+    private fun handleSetDailyLimit(intent: Intent) {
+        val minutes = intent.getIntExtra("minutes", -1)
+        if (minutes < 0) {
+            logResult("""{"error":"missing minutes extra"}""")
+            return
+        }
+        val manager = ServiceLocator.timeLimitManager
+        val config = manager.getConfig() ?: TimeLimitConfig()
+        val today = java.time.LocalDate.now().dayOfWeek
+        val updated = config.copy(dailyLimits = config.dailyLimits + (today to minutes))
+        manager.saveConfig(updated)
+        logResult("""{"success":true,"day":"${today.name.lowercase()}","minutes":$minutes}""")
+    }
+
+    private fun handleClearDailyLimit() {
+        val manager = ServiceLocator.timeLimitManager
+        val config = manager.getConfig() ?: TimeLimitConfig()
+        manager.saveConfig(config.copy(dailyLimits = emptyMap()))
+        logResult("""{"success":true}""")
+    }
+
+    private fun handleManualLock() {
+        ServiceLocator.timeLimitManager.setManualLock(true)
+        tv.parentapproved.app.playback.PlaybackCommandBus.send(
+            tv.parentapproved.app.playback.PlaybackCommand.Stop
+        )
+        logResult("""{"success":true,"locked":true}""")
+    }
+
+    private fun handleManualUnlock() {
+        ServiceLocator.timeLimitManager.setManualLock(false)
+        logResult("""{"success":true,"locked":false}""")
+    }
+
+    private fun handleGrantBonus(intent: Intent) {
+        val minutes = intent.getIntExtra("minutes", -1)
+        if (minutes <= 0) {
+            logResult("""{"error":"missing or invalid minutes extra"}""")
+            return
+        }
+        ServiceLocator.timeLimitManager.grantBonusMinutes(minutes)
+        logResult("""{"success":true,"minutes":$minutes}""")
+    }
+
+    private fun handleSetBedtime(intent: Intent) {
+        val start = intent.getStringExtra("start") ?: run {
+            logResult("""{"error":"missing start extra (HH:mm)"}""")
+            return
+        }
+        val end = intent.getStringExtra("end") ?: run {
+            logResult("""{"error":"missing end extra (HH:mm)"}""")
+            return
+        }
+        try {
+            val startParts = start.split(":")
+            val endParts = end.split(":")
+            val startMin = startParts[0].toInt() * 60 + startParts[1].toInt()
+            val endMin = endParts[0].toInt() * 60 + endParts[1].toInt()
+            val manager = ServiceLocator.timeLimitManager
+            val config = manager.getConfig() ?: TimeLimitConfig()
+            manager.saveConfig(config.copy(bedtimeStartMin = startMin, bedtimeEndMin = endMin))
+            logResult("""{"success":true,"start":"$start","end":"$end"}""")
+        } catch (e: Exception) {
+            logResult("""{"error":"invalid time format: ${e.message}"}""")
+        }
+    }
+
+    private fun handleClearBedtime() {
+        val manager = ServiceLocator.timeLimitManager
+        val config = manager.getConfig() ?: TimeLimitConfig()
+        manager.saveConfig(config.copy(bedtimeStartMin = -1, bedtimeEndMin = -1))
+        logResult("""{"success":true}""")
+    }
+
+    private fun handleTimeStatus() {
+        val manager = ServiceLocator.timeLimitManager
+        val config = manager.getConfig()
+        val status = manager.canPlay()
+        val remaining = manager.getRemainingMinutes()
+        val usedMin = manager.getTodayUsedMinutes()
+        logResult("""{"status":"$status","remaining":${remaining ?: "null"},"usedMin":$usedMin,"manuallyLocked":${config?.manuallyLocked ?: false},"bonusMinutes":${config?.bonusMinutes ?: 0},"bonusDate":"${config?.bonusDate ?: ""}"}""")
     }
 
     // --- Lifecycle ---

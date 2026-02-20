@@ -233,14 +233,170 @@
         if (statusInterval) clearInterval(statusInterval);
         statusInterval = setInterval(function() {
             loadStatus();
+            loadTimeLimits();
         }, ms);
     }
+
+    // --- Screen Time ---
+
+    var currentlyLocked = false;
+
+    async function loadTimeLimits() {
+        try {
+            var result = await apiCall('GET', '/time-limits');
+            if (result.status !== 200) return;
+            var d = result.data;
+
+            // Status badge
+            var badge = document.getElementById('st-status-badge');
+            badge.className = 'badge st-badge-' + d.currentStatus;
+            badge.textContent = d.currentStatus === 'allowed' ? 'Allowed'
+                : d.currentStatus === 'warning' ? 'Warning'
+                : 'Blocked';
+
+            // Lock reason
+            var reasonEl = document.getElementById('st-lock-reason');
+            if (d.lockReason) {
+                var reasonText = d.lockReason === 'daily_limit' ? 'Daily limit reached'
+                    : d.lockReason === 'bedtime' ? 'Bedtime'
+                    : 'Manually locked';
+                reasonEl.textContent = reasonText;
+                reasonEl.classList.remove('hidden');
+            } else {
+                reasonEl.classList.add('hidden');
+            }
+
+            // Usage bar
+            var bar = document.getElementById('st-usage-bar');
+            var label = document.getElementById('st-usage-label');
+            var usedMin = d.todayUsedMin || 0;
+
+            if (d.todayLimitMin != null) {
+                var effectiveLimit = d.todayLimitMin + (d.todayBonusMin || 0);
+                var pct = Math.min(100, Math.round((usedMin / effectiveLimit) * 100));
+                bar.style.width = pct + '%';
+                bar.className = 'st-usage-bar' + (d.currentStatus === 'blocked' ? ' st-bar-blocked' : d.currentStatus === 'warning' ? ' st-bar-warning' : '');
+                label.textContent = usedMin + 'm / ' + effectiveLimit + 'm' + (d.todayBonusMin > 0 ? ' (+' + d.todayBonusMin + 'm bonus)' : '');
+            } else {
+                bar.style.width = '0%';
+                label.textContent = usedMin + 'm / No limit';
+            }
+
+            // Lock button
+            var lockBtn = document.getElementById('st-lock-btn');
+            currentlyLocked = d.manuallyLocked;
+            if (d.manuallyLocked) {
+                lockBtn.textContent = 'Unlock TV';
+                lockBtn.className = 'st-unlock';
+                lockBtn.id = 'st-lock-btn';
+            } else {
+                lockBtn.textContent = 'Lock TV';
+                lockBtn.className = '';
+                lockBtn.id = 'st-lock-btn';
+            }
+
+            // Time request banner
+            var requestEl = document.getElementById('st-time-request');
+            if (d.hasTimeRequest) {
+                requestEl.classList.remove('hidden');
+            } else {
+                requestEl.classList.add('hidden');
+            }
+        } catch (err) {
+            console.error('Load time limits failed:', err);
+        }
+    }
+
+    window.toggleLock = async function() {
+        var locked = !currentlyLocked;
+        await apiCall('POST', '/time-limits/lock', { locked: locked });
+        loadTimeLimits();
+    };
+
+    window.grantBonusTime = async function(minutes) {
+        await apiCall('POST', '/time-limits/bonus', { minutes: minutes });
+        loadTimeLimits();
+    };
+
+    // Edit limits modal
+    window.openEditLimits = async function() {
+        var result = await apiCall('GET', '/time-limits');
+        if (result.status !== 200) return;
+        var d = result.data;
+
+        // Populate fields
+        var limitEnabled = document.getElementById('edit-limit-enabled');
+        var limitMinutes = document.getElementById('edit-limit-minutes');
+        var limitRow = document.getElementById('edit-limit-input-row');
+        var bedtimeEnabled = document.getElementById('edit-bedtime-enabled');
+        var bedtimeStart = document.getElementById('edit-bedtime-start');
+        var bedtimeEnd = document.getElementById('edit-bedtime-end');
+        var bedtimeRow = document.getElementById('edit-bedtime-input-row');
+
+        // Check if any daily limit is set
+        var hasLimit = d.todayLimitMin != null;
+        limitEnabled.checked = hasLimit;
+        limitRow.classList.toggle('hidden', !hasLimit);
+        if (hasLimit) limitMinutes.value = d.todayLimitMin;
+
+        var hasBedtime = d.bedtime != null;
+        bedtimeEnabled.checked = hasBedtime;
+        bedtimeRow.classList.toggle('hidden', !hasBedtime);
+        if (hasBedtime) {
+            bedtimeStart.value = d.bedtime.start;
+            bedtimeEnd.value = d.bedtime.end;
+        }
+
+        // Toggle visibility handlers
+        limitEnabled.onchange = function() { limitRow.classList.toggle('hidden', !limitEnabled.checked); };
+        bedtimeEnabled.onchange = function() { bedtimeRow.classList.toggle('hidden', !bedtimeEnabled.checked); };
+
+        document.getElementById('edit-limits-modal').classList.remove('hidden');
+    };
+
+    window.saveLimits = async function() {
+        var limitEnabled = document.getElementById('edit-limit-enabled').checked;
+        var bedtimeEnabled = document.getElementById('edit-bedtime-enabled').checked;
+        var body = {};
+
+        if (limitEnabled) {
+            var mins = parseInt(document.getElementById('edit-limit-minutes').value) || 120;
+            // Apply same limit to all days
+            body.dailyLimits = {
+                monday: mins, tuesday: mins, wednesday: mins,
+                thursday: mins, friday: mins, saturday: mins, sunday: mins
+            };
+        } else {
+            body.dailyLimits = {};
+        }
+
+        if (bedtimeEnabled) {
+            var start = document.getElementById('edit-bedtime-start').value;
+            var end = document.getElementById('edit-bedtime-end').value;
+            var startParts = start.split(':');
+            var endParts = end.split(':');
+            body.bedtimeStartMin = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+            body.bedtimeEndMin = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+        } else {
+            body.bedtimeStartMin = -1;
+            body.bedtimeEndMin = -1;
+        }
+
+        await apiCall('PUT', '/time-limits', body);
+        closeEditLimits();
+        loadTimeLimits();
+    };
+
+    window.closeEditLimits = function() {
+        document.getElementById('edit-limits-modal').classList.add('hidden');
+    };
 
     function loadDashboard() {
         loadPlaylists();
         loadStats();
         loadRecent();
         loadStatus();
+        loadTimeLimits();
         setPollingRate(120000);
     }
 
