@@ -1,6 +1,5 @@
 package tv.parentapproved.app.timelimits
 
-import kotlinx.coroutines.runBlocking
 import tv.parentapproved.app.data.events.PlayEventDao
 import java.time.LocalDate
 import java.time.ZoneId
@@ -19,14 +18,12 @@ class RoomWatchTimeProvider(
     private val clock: () -> Long = System::currentTimeMillis,
 ) : WatchTimeProvider {
 
-    override fun getTodayWatchSeconds(): Int {
+    override suspend fun getTodayWatchSeconds(): Int {
         val dayStartMillis = LocalDate.now(
             ZoneId.systemDefault()
         ).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-        val dbSeconds = runBlocking {
-            playEventDao.sumDurationToday(dayStartMillis)
-        }
+        val dbSeconds = playEventDao.sumDurationToday(dayStartMillis)
 
         // Current video elapsed is already included in the DB total via periodic updates,
         // but there may be up to 10 seconds of uncounted time since the last update.

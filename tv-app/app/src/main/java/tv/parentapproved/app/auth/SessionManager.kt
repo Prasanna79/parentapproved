@@ -1,6 +1,7 @@
 package tv.parentapproved.app.auth
 
 import java.security.SecureRandom
+import java.util.concurrent.ConcurrentHashMap
 
 class SessionManager(
     private val clock: () -> Long = System::currentTimeMillis,
@@ -8,7 +9,7 @@ class SessionManager(
     private val ttlMs: Long = 90L * 24 * 60 * 60 * 1000, // 90 days
     private val persistence: SessionPersistence? = null,
 ) {
-    private val sessions = HashMap<String, Long>() // token -> createdAt
+    private val sessions = ConcurrentHashMap<String, Long>() // token -> createdAt
     private val random = SecureRandom()
 
     init {
@@ -66,6 +67,6 @@ class SessionManager(
 
     private fun pruneExpired() {
         val now = clock()
-        sessions.entries.removeAll { now - it.value > ttlMs }
+        sessions.entries.removeIf { now - it.value > ttlMs }
     }
 }

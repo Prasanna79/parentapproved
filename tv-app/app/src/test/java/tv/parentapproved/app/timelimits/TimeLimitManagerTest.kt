@@ -1,5 +1,6 @@
 package tv.parentapproved.app.timelimits
 
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -36,20 +37,20 @@ class TimeLimitManagerTest {
     // --- Daily limit tests ---
 
     @Test
-    fun canPlay_noConfig_returnsAllowed() {
+    fun canPlay_noConfig_returnsAllowed() = runTest {
         val status = manager.canPlay()
         assertTrue(status is TimeLimitStatus.Allowed)
     }
 
     @Test
-    fun canPlay_noLimitSet_returnsAllowed() {
+    fun canPlay_noLimitSet_returnsAllowed() = runTest {
         store.storedConfig = TimeLimitConfig() // all defaults = no limits
         val status = manager.canPlay()
         assertTrue(status is TimeLimitStatus.Allowed)
     }
 
     @Test
-    fun canPlay_underLimit_returnsAllowed() {
+    fun canPlay_underLimit_returnsAllowed() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -59,7 +60,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_exactlyAtLimit_returnsBlocked_DAILY_LIMIT() {
+    fun canPlay_exactlyAtLimit_returnsBlocked_DAILY_LIMIT() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -70,7 +71,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_overLimit_returnsBlocked_DAILY_LIMIT() {
+    fun canPlay_overLimit_returnsBlocked_DAILY_LIMIT() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -81,7 +82,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_5minRemaining_returnsWarning() {
+    fun canPlay_5minRemaining_returnsWarning() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -92,7 +93,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_6minRemaining_returnsAllowed() {
+    fun canPlay_6minRemaining_returnsAllowed() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -102,7 +103,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_saturdayLimit_usedOnSaturday() {
+    fun canPlay_saturdayLimit_usedOnSaturday() = runTest {
         // Set time to Saturday
         currentTime = LocalDate.of(2026, 2, 21) // Saturday
             .atTime(14, 0)
@@ -122,7 +123,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_noLimitForToday_returnsAllowed() {
+    fun canPlay_noLimitForToday_returnsAllowed() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.MONDAY to 60), // only Monday has a limit
         )
@@ -132,7 +133,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun getRemainingMinutes_calculatesCorrectly() {
+    fun getRemainingMinutes_calculatesCorrectly() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -142,14 +143,14 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun getRemainingMinutes_noLimit_returnsNull() {
+    fun getRemainingMinutes_noLimit_returnsNull() = runTest {
         store.storedConfig = TimeLimitConfig() // no limits
         val remaining = manager.getRemainingMinutes()
         assertNull(remaining)
     }
 
     @Test
-    fun getRemainingMinutes_accountsForCurrentVideoElapsed() {
+    fun getRemainingMinutes_accountsForCurrentVideoElapsed() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -161,7 +162,7 @@ class TimeLimitManagerTest {
     // --- Bedtime tests ---
 
     @Test
-    fun canPlay_duringBedtime_returnsBlocked_BEDTIME() {
+    fun canPlay_duringBedtime_returnsBlocked_BEDTIME() = runTest {
         // Set time to 21:00 (9 PM)
         currentTime = LocalDate.of(2026, 2, 18)
             .atTime(21, 0)
@@ -179,7 +180,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_outsideBedtime_returnsAllowed() {
+    fun canPlay_outsideBedtime_returnsAllowed() = runTest {
         // 14:00 is outside 20:30-07:00
         store.storedConfig = TimeLimitConfig(
             bedtimeStartMin = 20 * 60 + 30,
@@ -190,7 +191,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_bedtimeSpansMidnight_beforeMidnight_blocked() {
+    fun canPlay_bedtimeSpansMidnight_beforeMidnight_blocked() = runTest {
         // 23:00, bedtime 22:00-06:00
         currentTime = LocalDate.of(2026, 2, 18)
             .atTime(23, 0)
@@ -208,7 +209,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_bedtimeSpansMidnight_afterMidnight_blocked() {
+    fun canPlay_bedtimeSpansMidnight_afterMidnight_blocked() = runTest {
         // 03:00, bedtime 22:00-06:00
         currentTime = LocalDate.of(2026, 2, 19)
             .atTime(3, 0)
@@ -226,7 +227,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_bedtimeSpansMidnight_afterEnd_allowed() {
+    fun canPlay_bedtimeSpansMidnight_afterEnd_allowed() = runTest {
         // 07:00, bedtime 22:00-06:00
         currentTime = LocalDate.of(2026, 2, 19)
             .atTime(7, 0)
@@ -243,7 +244,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_bedtimeOff_returnsAllowed() {
+    fun canPlay_bedtimeOff_returnsAllowed() = runTest {
         store.storedConfig = TimeLimitConfig(
             bedtimeStartMin = -1,
             bedtimeEndMin = -1,
@@ -253,7 +254,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_exactlyAtBedtimeStart_blocked() {
+    fun canPlay_exactlyAtBedtimeStart_blocked() = runTest {
         // 20:30 exactly
         currentTime = LocalDate.of(2026, 2, 18)
             .atTime(20, 30)
@@ -271,7 +272,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_exactlyAtBedtimeEnd_allowed() {
+    fun canPlay_exactlyAtBedtimeEnd_allowed() = runTest {
         // 07:00 exactly
         currentTime = LocalDate.of(2026, 2, 19)
             .atTime(7, 0)
@@ -290,7 +291,7 @@ class TimeLimitManagerTest {
     // --- Manual lock tests ---
 
     @Test
-    fun canPlay_manuallyLocked_returnsBlocked_MANUAL_LOCK() {
+    fun canPlay_manuallyLocked_returnsBlocked_MANUAL_LOCK() = runTest {
         store.storedConfig = TimeLimitConfig(manuallyLocked = true)
         val status = manager.canPlay()
         assertTrue(status is TimeLimitStatus.Blocked)
@@ -298,14 +299,14 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_notManuallyLocked_returnsAllowed() {
+    fun canPlay_notManuallyLocked_returnsAllowed() = runTest {
         store.storedConfig = TimeLimitConfig(manuallyLocked = false)
         val status = manager.canPlay()
         assertTrue(status is TimeLimitStatus.Allowed)
     }
 
     @Test
-    fun setManualLock_true_blocksImmediately() {
+    fun setManualLock_true_blocksImmediately() = runTest {
         store.storedConfig = TimeLimitConfig()
         manager.setManualLock(true)
         val status = manager.canPlay()
@@ -314,7 +315,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun setManualLock_false_unblocks() {
+    fun setManualLock_false_unblocks() = runTest {
         store.storedConfig = TimeLimitConfig(manuallyLocked = true)
         manager.setManualLock(false)
         val status = manager.canPlay()
@@ -322,7 +323,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun setManualLock_false_doesNotOverrideDailyLimit() {
+    fun setManualLock_false_doesNotOverrideDailyLimit() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
             manuallyLocked = true,
@@ -338,7 +339,7 @@ class TimeLimitManagerTest {
     // --- Bonus time tests ---
 
     @Test
-    fun grantBonus_extendsDailyLimit() {
+    fun grantBonus_extendsDailyLimit() = runTest {
         val today = LocalDate.of(2026, 2, 18).toString()
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
@@ -357,7 +358,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun grantBonus_15plus15_accumulates() {
+    fun grantBonus_15plus15_accumulates() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -372,7 +373,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun grantBonus_unlocksBlockedDevice() {
+    fun grantBonus_unlocksBlockedDevice() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -388,7 +389,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun grantBonus_overridesBedtime() {
+    fun grantBonus_overridesBedtime() = runTest {
         // 21:00, bedtime 20:30-07:00
         currentTime = LocalDate.of(2026, 2, 18)
             .atTime(21, 0)
@@ -411,7 +412,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun grantBonus_duringBedtime_noDailyLimit_createsTemporaryAllowance() {
+    fun grantBonus_duringBedtime_noDailyLimit_createsTemporaryAllowance() = runTest {
         // 21:00, bedtime active, no daily limit set
         currentTime = LocalDate.of(2026, 2, 18)
             .atTime(21, 0)
@@ -433,7 +434,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun grantBonus_duringBedtime_expiresAfterActivePlayback() {
+    fun grantBonus_duringBedtime_expiresAfterActivePlayback() = runTest {
         // 21:00, bedtime active
         currentTime = LocalDate.of(2026, 2, 18)
             .atTime(21, 0)
@@ -459,7 +460,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun grantBonus_resetsNextDay() {
+    fun grantBonus_resetsNextDay() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -492,7 +493,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun grantBonus_doesNotOverrideManualLock() {
+    fun grantBonus_doesNotOverrideManualLock() = runTest {
         store.storedConfig = TimeLimitConfig(manuallyLocked = true)
         manager.grantBonusMinutes(15)
 
@@ -502,7 +503,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun grantBonus_cappedAt240minutes() {
+    fun grantBonus_cappedAt240minutes() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -515,7 +516,7 @@ class TimeLimitManagerTest {
     // --- Priority tests ---
 
     @Test
-    fun canPlay_manualLockPlusBedtime_reasonIsManualLock() {
+    fun canPlay_manualLockPlusBedtime_reasonIsManualLock() = runTest {
         currentTime = LocalDate.of(2026, 2, 18)
             .atTime(21, 0)
             .atZone(ZoneId.systemDefault())
@@ -533,7 +534,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_dailyLimitPlusBedtime_reasonIsDailyLimit() {
+    fun canPlay_dailyLimitPlusBedtime_reasonIsDailyLimit() = runTest {
         currentTime = LocalDate.of(2026, 2, 18)
             .atTime(21, 0)
             .atZone(ZoneId.systemDefault())
@@ -554,7 +555,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun canPlay_bonusOverridesBedtime_butNotManualLock() {
+    fun canPlay_bonusOverridesBedtime_butNotManualLock() = runTest {
         currentTime = LocalDate.of(2026, 2, 18)
             .atTime(21, 0)
             .atZone(ZoneId.systemDefault())
@@ -577,7 +578,7 @@ class TimeLimitManagerTest {
     // --- Midnight rollover tests ---
 
     @Test
-    fun midnightRollover_resetsDailyAccumulator() {
+    fun midnightRollover_resetsDailyAccumulator() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
         )
@@ -599,7 +600,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun midnightRollover_clearsBonusMinutes() {
+    fun midnightRollover_clearsBonusMinutes() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 60),
             bonusMinutes = 15,
@@ -628,7 +629,7 @@ class TimeLimitManagerTest {
     }
 
     @Test
-    fun midnightRollover_dayStartComputedAtQueryTime() {
+    fun midnightRollover_dayStartComputedAtQueryTime() = runTest {
         store.storedConfig = TimeLimitConfig(
             dailyLimits = mapOf(
                 DayOfWeek.WEDNESDAY to 60,
@@ -659,22 +660,54 @@ class TimeLimitManagerTest {
         assertTrue("After midnight should be fresh day, got $status", status is TimeLimitStatus.Allowed)
     }
 
+    @Test
+    fun setManualLock_true_clearsBonusTime() = runTest {
+        store.storedConfig = TimeLimitConfig(
+            dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 5),
+            bonusMinutes = 15,
+            bonusDate = LocalDate.of(2026, 2, 18).toString(),
+        )
+
+        manager.setManualLock(true)
+
+        val config = store.storedConfig!!
+        assertTrue(config.manuallyLocked)
+        assertEquals(0, config.bonusMinutes)
+    }
+
+    @Test
+    fun setManualLock_false_doesNotClearBonus() = runTest {
+        store.storedConfig = TimeLimitConfig(
+            dailyLimits = mapOf(DayOfWeek.WEDNESDAY to 5),
+            bonusMinutes = 15,
+            bonusDate = LocalDate.of(2026, 2, 18).toString(),
+            manuallyLocked = true,
+        )
+
+        manager.setManualLock(false)
+
+        val config = store.storedConfig!!
+        assertFalse(config.manuallyLocked)
+        // Unlocking doesn't restore bonus — parent must grant new bonus explicitly
+        assertEquals(15, config.bonusMinutes)
+    }
+
     // --- Test doubles ---
 
     class FakeTimeLimitStore : TimeLimitStore {
         var storedConfig: TimeLimitConfig? = null
 
-        override fun getConfig(): TimeLimitConfig? = storedConfig
+        override suspend fun getConfig(): TimeLimitConfig? = storedConfig
 
-        override fun saveConfig(config: TimeLimitConfig) {
+        override suspend fun saveConfig(config: TimeLimitConfig) {
             storedConfig = config
         }
 
-        override fun updateManualLock(locked: Boolean) {
+        override suspend fun updateManualLock(locked: Boolean) {
             storedConfig = (storedConfig ?: TimeLimitConfig()).copy(manuallyLocked = locked)
         }
 
-        override fun updateBonus(minutes: Int, date: String) {
+        override suspend fun updateBonus(minutes: Int, date: String) {
             storedConfig = (storedConfig ?: TimeLimitConfig()).copy(bonusMinutes = minutes, bonusDate = date)
         }
     }
@@ -682,6 +715,6 @@ class TimeLimitManagerTest {
     class FakeWatchTimeProvider : WatchTimeProvider {
         var watchSeconds: Int = 0
 
-        override fun getTodayWatchSeconds(): Int = watchSeconds
+        override suspend fun getTodayWatchSeconds(): Int = watchSeconds
     }
 }

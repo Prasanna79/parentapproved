@@ -301,32 +301,40 @@ class DebugReceiver : BroadcastReceiver() {
             logResult("""{"error":"missing minutes extra"}""")
             return
         }
-        val manager = ServiceLocator.timeLimitManager
-        val config = manager.getConfig() ?: TimeLimitConfig()
-        val today = java.time.LocalDate.now().dayOfWeek
-        val updated = config.copy(dailyLimits = config.dailyLimits + (today to minutes))
-        manager.saveConfig(updated)
-        logResult("""{"success":true,"day":"${today.name.lowercase()}","minutes":$minutes}""")
+        scope.launch {
+            val manager = ServiceLocator.timeLimitManager
+            val config = manager.getConfig() ?: TimeLimitConfig()
+            val today = java.time.LocalDate.now().dayOfWeek
+            val updated = config.copy(dailyLimits = config.dailyLimits + (today to minutes))
+            manager.saveConfig(updated)
+            logResult("""{"success":true,"day":"${today.name.lowercase()}","minutes":$minutes}""")
+        }
     }
 
     private fun handleClearDailyLimit() {
-        val manager = ServiceLocator.timeLimitManager
-        val config = manager.getConfig() ?: TimeLimitConfig()
-        manager.saveConfig(config.copy(dailyLimits = emptyMap()))
-        logResult("""{"success":true}""")
+        scope.launch {
+            val manager = ServiceLocator.timeLimitManager
+            val config = manager.getConfig() ?: TimeLimitConfig()
+            manager.saveConfig(config.copy(dailyLimits = emptyMap()))
+            logResult("""{"success":true}""")
+        }
     }
 
     private fun handleManualLock() {
-        ServiceLocator.timeLimitManager.setManualLock(true)
-        tv.parentapproved.app.playback.PlaybackCommandBus.send(
-            tv.parentapproved.app.playback.PlaybackCommand.Stop
-        )
-        logResult("""{"success":true,"locked":true}""")
+        scope.launch {
+            ServiceLocator.timeLimitManager.setManualLock(true)
+            tv.parentapproved.app.playback.PlaybackCommandBus.send(
+                tv.parentapproved.app.playback.PlaybackCommand.Stop
+            )
+            logResult("""{"success":true,"locked":true}""")
+        }
     }
 
     private fun handleManualUnlock() {
-        ServiceLocator.timeLimitManager.setManualLock(false)
-        logResult("""{"success":true,"locked":false}""")
+        scope.launch {
+            ServiceLocator.timeLimitManager.setManualLock(false)
+            logResult("""{"success":true,"locked":false}""")
+        }
     }
 
     private fun handleGrantBonus(intent: Intent) {
@@ -335,8 +343,10 @@ class DebugReceiver : BroadcastReceiver() {
             logResult("""{"error":"missing or invalid minutes extra"}""")
             return
         }
-        ServiceLocator.timeLimitManager.grantBonusMinutes(minutes)
-        logResult("""{"success":true,"minutes":$minutes}""")
+        scope.launch {
+            ServiceLocator.timeLimitManager.grantBonusMinutes(minutes)
+            logResult("""{"success":true,"minutes":$minutes}""")
+        }
     }
 
     private fun handleSetBedtime(intent: Intent) {
@@ -348,34 +358,40 @@ class DebugReceiver : BroadcastReceiver() {
             logResult("""{"error":"missing end extra (HH:mm)"}""")
             return
         }
-        try {
-            val startParts = start.split(":")
-            val endParts = end.split(":")
-            val startMin = startParts[0].toInt() * 60 + startParts[1].toInt()
-            val endMin = endParts[0].toInt() * 60 + endParts[1].toInt()
-            val manager = ServiceLocator.timeLimitManager
-            val config = manager.getConfig() ?: TimeLimitConfig()
-            manager.saveConfig(config.copy(bedtimeStartMin = startMin, bedtimeEndMin = endMin))
-            logResult("""{"success":true,"start":"$start","end":"$end"}""")
-        } catch (e: Exception) {
-            logResult("""{"error":"invalid time format: ${e.message}"}""")
+        scope.launch {
+            try {
+                val startParts = start.split(":")
+                val endParts = end.split(":")
+                val startMin = startParts[0].toInt() * 60 + startParts[1].toInt()
+                val endMin = endParts[0].toInt() * 60 + endParts[1].toInt()
+                val manager = ServiceLocator.timeLimitManager
+                val config = manager.getConfig() ?: TimeLimitConfig()
+                manager.saveConfig(config.copy(bedtimeStartMin = startMin, bedtimeEndMin = endMin))
+                logResult("""{"success":true,"start":"$start","end":"$end"}""")
+            } catch (e: Exception) {
+                logResult("""{"error":"invalid time format: ${e.message}"}""")
+            }
         }
     }
 
     private fun handleClearBedtime() {
-        val manager = ServiceLocator.timeLimitManager
-        val config = manager.getConfig() ?: TimeLimitConfig()
-        manager.saveConfig(config.copy(bedtimeStartMin = -1, bedtimeEndMin = -1))
-        logResult("""{"success":true}""")
+        scope.launch {
+            val manager = ServiceLocator.timeLimitManager
+            val config = manager.getConfig() ?: TimeLimitConfig()
+            manager.saveConfig(config.copy(bedtimeStartMin = -1, bedtimeEndMin = -1))
+            logResult("""{"success":true}""")
+        }
     }
 
     private fun handleTimeStatus() {
-        val manager = ServiceLocator.timeLimitManager
-        val config = manager.getConfig()
-        val status = manager.canPlay()
-        val remaining = manager.getRemainingMinutes()
-        val usedMin = manager.getTodayUsedMinutes()
-        logResult("""{"status":"$status","remaining":${remaining ?: "null"},"usedMin":$usedMin,"manuallyLocked":${config?.manuallyLocked ?: false},"bonusMinutes":${config?.bonusMinutes ?: 0},"bonusDate":"${config?.bonusDate ?: ""}"}""")
+        scope.launch {
+            val manager = ServiceLocator.timeLimitManager
+            val config = manager.getConfig()
+            val status = manager.canPlay()
+            val remaining = manager.getRemainingMinutes()
+            val usedMin = manager.getTodayUsedMinutes()
+            logResult("""{"status":"$status","remaining":${remaining ?: "null"},"usedMin":$usedMin,"manuallyLocked":${config?.manuallyLocked ?: false},"bonusMinutes":${config?.bonusMinutes ?: 0},"bonusDate":"${config?.bonusDate ?: ""}"}""")
+        }
     }
 
     // --- Lifecycle ---
@@ -385,7 +401,7 @@ class DebugReceiver : BroadcastReceiver() {
             try {
                 ServiceLocator.database.channelDao().deleteAll()
                 ServiceLocator.database.playEventDao().deleteAll()
-                ServiceLocator.database.videoDao().deleteByPlaylist("%") // won't match, need deleteAll
+                ServiceLocator.database.videoDao().deleteAll()
                 ServiceLocator.pinManager.resetPin()
                 ServiceLocator.sessionManager.invalidateAll()
                 logResult("""{"success":true}""")

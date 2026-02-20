@@ -172,6 +172,25 @@ class SessionManagerTest {
     }
 
     @Test
+    fun concurrentSessionValidation_doesNotThrow() {
+        // Create several sessions
+        val tokens = (1..10).mapNotNull { sessionManager.createSession() }
+        assertEquals(10, tokens.size)
+
+        // Validate all concurrently from multiple threads
+        val threads = tokens.map { token ->
+            Thread {
+                repeat(100) {
+                    sessionManager.validateSession(token)
+                }
+            }
+        }
+        threads.forEach { it.start() }
+        threads.forEach { it.join() }
+        // If we reach here without ConcurrentModificationException, test passes
+    }
+
+    @Test
     fun persistence_null_doesNotCrash() {
         // Default constructor with no persistence should work fine
         val sm = SessionManager(clock = { currentTime })

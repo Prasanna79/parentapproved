@@ -120,6 +120,32 @@ describe("rate limiter integration", () => {
   });
 });
 
+describe("time-limits flow through relay", () => {
+  it("GET /api/time-limits is allowed", () => {
+    expect(isAllowed("/api/time-limits", "GET").allowed).toBe(true);
+  });
+
+  it("PUT /api/time-limits is allowed", () => {
+    expect(isAllowed("/api/time-limits", "PUT").allowed).toBe(true);
+  });
+
+  it("POST /api/time-limits/lock is allowed", () => {
+    expect(isAllowed("/api/time-limits/lock", "POST").allowed).toBe(true);
+  });
+
+  it("POST /api/time-limits/bonus is allowed", () => {
+    expect(isAllowed("/api/time-limits/bonus", "POST").allowed).toBe(true);
+  });
+
+  it("POST /api/time-limits/request is allowed (unauthenticated)", () => {
+    expect(isAllowed("/api/time-limits/request", "POST").allowed).toBe(true);
+  });
+
+  it("DELETE /api/time-limits is blocked", () => {
+    expect(isAllowed("/api/time-limits", "DELETE").allowed).toBe(false);
+  });
+});
+
 describe("blocked paths never reach TV", () => {
   const blockedPaths = [
     "/api/admin",

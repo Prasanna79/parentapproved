@@ -9,6 +9,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -47,6 +48,16 @@ class ParentApprovedServer(private val context: Context, private val port: Int =
                     })
                 }
 
+                install(CORS) {
+                    anyHost()
+                    allowMethod(HttpMethod.Get)
+                    allowMethod(HttpMethod.Post)
+                    allowMethod(HttpMethod.Put)
+                    allowMethod(HttpMethod.Delete)
+                    allowHeader(HttpHeaders.Authorization)
+                    allowHeader(HttpHeaders.ContentType)
+                }
+
                 install(StatusPages) {
                     exception<Throwable> { call, cause ->
                         call.respond(
@@ -62,7 +73,7 @@ class ParentApprovedServer(private val context: Context, private val port: Int =
                     playbackRoutes(ServiceLocator.sessionManager)
                     statsRoutes(ServiceLocator.sessionManager, ServiceLocator.database)
                     timeLimitRoutes(ServiceLocator.sessionManager, ServiceLocator.timeLimitManager)
-                    statusRoutes()
+                    statusRoutes(ServiceLocator.sessionManager)
                     dashboardRoutes()
                 }
             }

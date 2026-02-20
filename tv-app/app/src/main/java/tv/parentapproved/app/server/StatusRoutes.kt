@@ -2,8 +2,10 @@ package tv.parentapproved.app.server
 
 import tv.parentapproved.app.BuildConfig
 import tv.parentapproved.app.ServiceLocator
+import tv.parentapproved.app.auth.SessionManager
 import tv.parentapproved.app.data.events.PlayEventRecorder
 import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
@@ -18,6 +20,12 @@ data class StatusResponse(
 )
 
 @Serializable
+data class PublicStatusResponse(
+    val version: String,
+    val serverRunning: Boolean,
+)
+
+@Serializable
 data class NowPlayingResponse(
     val videoId: String,
     val playlistId: String,
@@ -28,13 +36,27 @@ data class NowPlayingResponse(
     val playing: Boolean = false,
 )
 
-fun Route.statusRoutes() {
+fun Route.statusRoutes(sessionManager: SessionManager) {
     get("/status") {
+        // Check if authenticated — return full or minimal response
+        val authHeader = call.request.header("Authorization")
+        val token = authHeader?.removePrefix("Bearer ")
+            ?: call.request.cookies["session"]
+        val isAuthed = token != null && sessionManager.validateSession(token)
+
+        if (!isAuthed) {
+            call.respond(PublicStatusResponse(
+                version = BuildConfig.VERSION_NAME,
+                serverRunning = true,
+            ))
+            return@get
+        }
+
         val playlistCount = try {
             ServiceLocator.database.channelDao().count()
         } catch (e: Exception) { 0 }
 
-        val activeSessions = ServiceLocator.sessionManager.getActiveSessionCount()
+        val activeSessions = sessionManager.getActiveSessionCount()
 
         val nowPlaying = PlayEventRecorder.currentVideoId?.let { vid ->
             NowPlayingResponse(

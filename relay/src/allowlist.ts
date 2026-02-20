@@ -18,6 +18,10 @@ const ALLOWED_ROUTES: AllowlistEntry[] = [
   { pattern: /^\/api\/stats$/, methods: ["GET"] },
   { pattern: /^\/api\/stats\/recent$/, methods: ["GET"] },
   { pattern: /^\/api\/status$/, methods: ["GET"] },
+  { pattern: /^\/api\/time-limits$/, methods: ["GET", "PUT"] },
+  { pattern: /^\/api\/time-limits\/lock$/, methods: ["POST"] },
+  { pattern: /^\/api\/time-limits\/bonus$/, methods: ["POST"] },
+  { pattern: /^\/api\/time-limits\/request$/, methods: ["POST"] },
 ];
 
 const BLOCKED_METHODS = new Set(["CONNECT", "TRACE", "OPTIONS"]);
@@ -42,7 +46,7 @@ export function isAllowed(
   }
 
   // Only allow methods we know about
-  const validMethods = new Set(["GET", "POST", "DELETE"]);
+  const validMethods = new Set(["GET", "POST", "PUT", "DELETE"]);
   if (!validMethods.has(upperMethod)) {
     return { allowed: false, reason: "method_not_allowed" };
   }

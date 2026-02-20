@@ -39,8 +39,10 @@ class RelayBridgeIntegrationTest {
     companion object {
         private lateinit var server: ApplicationEngine
         private var serverPort: Int = 0
-        private val pinManager = PinManager()
         private val sessionManager = SessionManager()
+        private val pinManager = PinManager(
+            onPinValidated = { sessionManager.createSession() ?: "" },
+        )
 
         @JvmStatic
         @BeforeClass

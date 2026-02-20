@@ -81,9 +81,10 @@ describe("security", () => {
       expect(isAllowed("/api/stats", "POST").allowed).toBe(false);
     });
 
-    it("PUT is never allowed", () => {
+    it("PUT is only allowed on /api/time-limits", () => {
       expect(isAllowed("/api/playlists", "PUT").allowed).toBe(false);
       expect(isAllowed("/api/auth", "PUT").allowed).toBe(false);
+      expect(isAllowed("/api/time-limits", "PUT").allowed).toBe(true);
     });
 
     it("PATCH is never allowed", () => {
@@ -134,6 +135,19 @@ describe("security", () => {
 
     it("fresh DO (both null/false) → accept new", () => {
       expect(shouldAcceptSecret(null, false)).toBe("accept_new");
+    });
+  });
+
+  describe("CSP headers", () => {
+    it("CSP allows same-origin scripts and inline handlers", () => {
+      const csp = "default-src 'self'; img-src 'self' https://img.youtube.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'";
+      expect(csp).toContain("script-src 'self'");
+      expect(csp).toContain("'unsafe-inline'");
+    });
+
+    it("CSP allows YouTube thumbnails", () => {
+      const csp = "default-src 'self'; img-src 'self' https://img.youtube.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'";
+      expect(csp).toContain("img-src 'self' https://img.youtube.com");
     });
   });
 

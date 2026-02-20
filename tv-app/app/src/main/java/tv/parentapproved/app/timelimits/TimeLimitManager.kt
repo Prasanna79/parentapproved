@@ -16,7 +16,7 @@ class TimeLimitManager(
         private const val MAX_BONUS_MINUTES = 240
     }
 
-    fun canPlay(): TimeLimitStatus {
+    suspend fun canPlay(): TimeLimitStatus {
         val config = store.getConfig() ?: return TimeLimitStatus.Allowed
 
         // Priority 1: Manual lock (nothing overrides this)
@@ -70,7 +70,7 @@ class TimeLimitManager(
         return TimeLimitStatus.Allowed
     }
 
-    fun getRemainingMinutes(): Int? {
+    suspend fun getRemainingMinutes(): Int? {
         val config = store.getConfig() ?: return null
 
         val now = Instant.ofEpochMilli(clock()).atZone(ZoneId.systemDefault())
@@ -86,11 +86,15 @@ class TimeLimitManager(
         return (effectiveLimitMin - usedMin).coerceAtLeast(0)
     }
 
-    fun setManualLock(locked: Boolean) {
+    suspend fun setManualLock(locked: Boolean) {
+        if (locked) {
+            // Locking clears bonus — parent is saying "no more watching"
+            store.updateBonus(0, "")
+        }
         store.updateManualLock(locked)
     }
 
-    fun grantBonusMinutes(minutes: Int) {
+    suspend fun grantBonusMinutes(minutes: Int) {
         val config = store.getConfig() ?: TimeLimitConfig()
         val now = Instant.ofEpochMilli(clock()).atZone(ZoneId.systemDefault())
         val todayStr = now.toLocalDate().toString()
@@ -100,13 +104,13 @@ class TimeLimitManager(
         store.updateBonus(newBonus, todayStr)
     }
 
-    fun getConfig(): TimeLimitConfig? = store.getConfig()
+    suspend fun getConfig(): TimeLimitConfig? = store.getConfig()
 
-    fun saveConfig(config: TimeLimitConfig) = store.saveConfig(config)
+    suspend fun saveConfig(config: TimeLimitConfig) = store.saveConfig(config)
 
-    fun getTodayUsedMinutes(): Int = watchTimeProvider.getTodayWatchSeconds() / 60
+    suspend fun getTodayUsedMinutes(): Int = watchTimeProvider.getTodayWatchSeconds() / 60
 
-    fun isManuallyLocked(): Boolean = store.getConfig()?.manuallyLocked == true
+    suspend fun isManuallyLocked(): Boolean = store.getConfig()?.manuallyLocked == true
 
     private fun isBedtime(config: TimeLimitConfig, currentTime: LocalTime): Boolean {
         val start = config.bedtimeStartMin

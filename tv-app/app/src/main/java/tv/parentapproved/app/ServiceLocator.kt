@@ -97,13 +97,13 @@ object ServiceLocator {
         } else {
             // No-op default: no limits configured, always allowed
             val noOpStore = object : tv.parentapproved.app.timelimits.TimeLimitStore {
-                override fun getConfig() = null
-                override fun saveConfig(config: tv.parentapproved.app.timelimits.TimeLimitConfig) {}
-                override fun updateManualLock(locked: Boolean) {}
-                override fun updateBonus(minutes: Int, date: String) {}
+                override suspend fun getConfig() = null
+                override suspend fun saveConfig(config: tv.parentapproved.app.timelimits.TimeLimitConfig) {}
+                override suspend fun updateManualLock(locked: Boolean) {}
+                override suspend fun updateBonus(minutes: Int, date: String) {}
             }
             val noOpWatch = object : tv.parentapproved.app.timelimits.WatchTimeProvider {
-                override fun getTodayWatchSeconds() = 0
+                override suspend fun getTodayWatchSeconds() = 0
             }
             timeLimitManager = TimeLimitManager(store = noOpStore, watchTimeProvider = noOpWatch)
         }

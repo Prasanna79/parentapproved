@@ -114,6 +114,13 @@ async function serveStaticAsset(
     return new Response("Not found", { status: 404 });
   }
 
+  const securityHeaders: Record<string, string> = {
+    "Content-Security-Policy": "default-src 'self'; img-src 'self' https://img.youtube.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+  };
+
   // Resolve content-hashed key from Workers Sites manifest
   try {
     const kvKey = resolveAssetKey(assetName) || assetName;
@@ -123,6 +130,7 @@ async function serveStaticAsset(
         headers: {
           "Content-Type": contentType,
           "Cache-Control": "public, max-age=3600",
+          ...securityHeaders,
         },
       });
     }
@@ -134,12 +142,12 @@ async function serveStaticAsset(
   if (assetName === "index.html") {
     return new Response(
       "<!DOCTYPE html><html><head><title>ParentApproved</title></head><body><p>ParentApproved Relay — dashboard coming soon.</p></body></html>",
-      { headers: { "Content-Type": contentType } }
+      { headers: { "Content-Type": contentType, ...securityHeaders } }
     );
   }
 
   return new Response("/* placeholder */", {
-    headers: { "Content-Type": contentType },
+    headers: { "Content-Type": contentType, ...securityHeaders },
   });
 }
 
@@ -271,7 +279,7 @@ export default {
       }
 
       // For methods with body, check actual body size
-      if (request.method === "POST" || request.method === "DELETE") {
+      if (request.method === "POST" || request.method === "PUT" || request.method === "DELETE") {
         // Clone to read body without consuming
         if (request.body) {
           const body = await request.clone().text();

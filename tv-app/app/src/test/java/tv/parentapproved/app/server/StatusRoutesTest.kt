@@ -29,6 +29,7 @@ import org.junit.Test
 class StatusRoutesTest {
 
     private lateinit var mockDb: CacheDatabase
+    private lateinit var sessionManager: SessionManager
     private var fakeTime = 10_000L
 
     @Before
@@ -42,10 +43,11 @@ class StatusRoutesTest {
         coEvery { mockPlayEventDao.insert(any()) } returns 1L
         every { mockDb.playEventDao() } returns mockPlayEventDao
 
+        sessionManager = SessionManager()
         ServiceLocator.initForTest(
             db = mockDb,
             pin = PinManager(),
-            session = SessionManager(),
+            session = sessionManager,
         )
         PlayEventRecorder.init(mockDb, clock = { fakeTime })
     }
@@ -54,15 +56,18 @@ class StatusRoutesTest {
         application {
             install(ContentNegotiation) { json() }
             routing {
-                statusRoutes()
+                statusRoutes(sessionManager)
             }
         }
         block()
     }
 
     @Test
-    fun getStatus_returnsCorrectShape() = testApp {
-        val response = client.get("/status")
+    fun getStatus_authenticated_returnsFullShape() = testApp {
+        val token = sessionManager.createSession()!!
+        val response = client.get("/status") {
+            header("Authorization", "Bearer $token")
+        }
         assertEquals(HttpStatusCode.OK, response.status)
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         assertNotNull(body["version"])
@@ -72,10 +77,26 @@ class StatusRoutesTest {
     }
 
     @Test
+    fun getStatus_unauthenticated_returnsMinimalResponse() = testApp {
+        val response = client.get("/status")
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        assertNotNull(body["version"])
+        assertNotNull(body["serverRunning"])
+        // Should NOT contain sensitive fields
+        assertFalse(body.containsKey("playlistCount"))
+        assertFalse(body.containsKey("activeSessions"))
+        assertFalse(body.containsKey("currentlyPlaying"))
+    }
+
+    @Test
     fun getStatus_includesNowPlaying() = testApp {
+        val token = sessionManager.createSession()!!
         // No current playback — endEvent to ensure clean state
         PlayEventRecorder.endEvent(0, 0)
-        val response = client.get("/status")
+        val response = client.get("/status") {
+            header("Authorization", "Bearer $token")
+        }
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         // currentlyPlaying should be null when nothing is playing
         assertTrue(body.containsKey("currentlyPlaying"))
@@ -84,9 +105,12 @@ class StatusRoutesTest {
 
     @Test
     fun getStatus_nowPlaying_includesTitle() = testApp {
+        val token = sessionManager.createSession()!!
         fakeTime = 10_000L
         PlayEventRecorder.startEvent("vid1", "pl1", title = "Cool Video", playlistTitle = "Fun Playlist", durationMs = 120_000)
-        val response = client.get("/status")
+        val response = client.get("/status") {
+            header("Authorization", "Bearer $token")
+        }
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         val np = body["currentlyPlaying"]!!.jsonObject
         assertEquals("Cool Video", np["title"]!!.jsonPrimitive.content)
@@ -96,12 +120,15 @@ class StatusRoutesTest {
 
     @Test
     fun getStatus_nowPlaying_titleUpdatedAfterExtraction() = testApp {
+        val token = sessionManager.createSession()!!
         fakeTime = 10_000L
         // Simulate race: startEvent with slug (playlist not loaded yet)
         PlayEventRecorder.startEvent("dQw4w9WgXcQ", "pl1", title = "dQw4w9WgXcQ", playlistTitle = "PL", durationMs = 120_000)
         // Simulate extractor resolving the real title
         PlayEventRecorder.updateTitle("Never Gonna Give You Up")
-        val response = client.get("/status")
+        val response = client.get("/status") {
+            header("Authorization", "Bearer $token")
+        }
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         val np = body["currentlyPlaying"]!!.jsonObject
         assertEquals("Never Gonna Give You Up", np["title"]!!.jsonPrimitive.content)
@@ -110,10 +137,13 @@ class StatusRoutesTest {
 
     @Test
     fun getStatus_nowPlaying_includesElapsedAndDuration() = testApp {
+        val token = sessionManager.createSession()!!
         fakeTime = 10_000L
         PlayEventRecorder.startEvent("vid1", "pl1", title = "Vid", playlistTitle = "PL", durationMs = 120_000)
         fakeTime = 15_000L // 5 seconds elapsed
-        val response = client.get("/status")
+        val response = client.get("/status") {
+            header("Authorization", "Bearer $token")
+        }
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         val np = body["currentlyPlaying"]!!.jsonObject
         assertEquals(5, np["elapsedSec"]!!.jsonPrimitive.int)
@@ -123,9 +153,12 @@ class StatusRoutesTest {
 
     @Test
     fun getStatus_nowPlaying_includesPlayingState() = testApp {
+        val token = sessionManager.createSession()!!
         fakeTime = 10_000L
         PlayEventRecorder.startEvent("vid1", "pl1", title = "Vid", playlistTitle = "PL", durationMs = 60_000)
-        val response = client.get("/status")
+        val response = client.get("/status") {
+            header("Authorization", "Bearer $token")
+        }
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         val np = body["currentlyPlaying"]!!.jsonObject
         assertTrue(np["playing"]!!.jsonPrimitive.boolean)

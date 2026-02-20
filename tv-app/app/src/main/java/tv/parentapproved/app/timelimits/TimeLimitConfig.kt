@@ -28,12 +28,12 @@ enum class LockReason {
 }
 
 interface TimeLimitStore {
-    fun getConfig(): TimeLimitConfig?
-    fun saveConfig(config: TimeLimitConfig)
-    fun updateManualLock(locked: Boolean)
-    fun updateBonus(minutes: Int, date: String)
+    suspend fun getConfig(): TimeLimitConfig?
+    suspend fun saveConfig(config: TimeLimitConfig)
+    suspend fun updateManualLock(locked: Boolean)
+    suspend fun updateBonus(minutes: Int, date: String)
 }
 
 interface WatchTimeProvider {
-    fun getTodayWatchSeconds(): Int
+    suspend fun getTodayWatchSeconds(): Int
 }

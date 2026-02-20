@@ -1,5 +1,7 @@
 package tv.parentapproved.app.auth
 
+import java.security.MessageDigest
+
 sealed class PinResult {
     data class Success(val token: String) : PinResult()
     data class Invalid(val attemptsRemaining: Int) : PinResult()
@@ -50,7 +52,7 @@ class PinManager(
             persistLockout()
         }
 
-        if (pin == currentPin) {
+        if (MessageDigest.isEqual(pin.toByteArray(), currentPin.toByteArray())) {
             failedAttempts = 0
             lockoutCount = 0
             persistLockout()

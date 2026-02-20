@@ -10,22 +10,22 @@ import kotlinx.coroutines.launch
 object PlayEventRecorder {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var db: CacheDatabase? = null
-    private var currentEventId: Long? = null
-    private var currentStartTime: Long = 0
+    @Volatile private var currentEventId: Long? = null
+    @Volatile private var currentStartTime: Long = 0
     private var clock: () -> Long = { System.currentTimeMillis() }
-    private var pausedElapsedMs: Long = 0
+    @Volatile private var pausedElapsedMs: Long = 0
 
-    var currentVideoId: String? = null
+    @Volatile var currentVideoId: String? = null
         private set
-    var currentPlaylistId: String? = null
+    @Volatile var currentPlaylistId: String? = null
         private set
-    var currentTitle: String? = null
+    @Volatile var currentTitle: String? = null
         private set
-    var currentPlaylistTitle: String? = null
+    @Volatile var currentPlaylistTitle: String? = null
         private set
-    var currentDurationMs: Long = 0
+    @Volatile var currentDurationMs: Long = 0
         private set
-    var isPlaying: Boolean = false
+    @Volatile var isPlaying: Boolean = false
         private set
 
     fun init(database: CacheDatabase, clock: () -> Long = { System.currentTimeMillis() }) {

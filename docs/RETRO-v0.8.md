@@ -1,64 +1,84 @@
 # ParentApproved.tv v0.8 Retrospective
 
 **Date:** February 20, 2026
-**Scope:** Post-deploy smoke tests + route alignment test to prevent "deploy gap" bugs
+**Scope:** Quality and correctness release driven by four independent code reviews. 16 fixes, 0 new features, +189 tests.
 
 ---
 
 ## What Went Well
 
-### The Gap Was Obvious in Hindsight
-The v0.8 audit revealed that no test verified *deployed* artifacts. Unit tests mock everything, Playwright uses source files, the old `e2e-smoke.sh` only checked HTTP status codes (200, 503, 404). Nobody asked "does the HTML served by the running app actually contain the screen-time section?" Once we framed it that way, the fix was straightforward.
+### Four Independent Reviews Were Worth It
+Architecture, security, test coverage, and dev manager perspectives each found different things. The architecture reviewer caught the `runBlocking` ANR risk. The security reviewer caught the `/status` privacy leak and timing-safe PIN gap. The test coverage reviewer found the zero-test Durable Object. The dev manager prioritized ruthlessly. Four views, one coherent plan.
 
-### Route Alignment Test Is the Right Abstraction
-Defining the canonical Ktor route list in one place and checking it against `isAllowed()` is simple, fast (34 tests in 12ms), and catches the exact class of bug that bit us: adding a Ktor route without updating the relay allowlist. The "known extras" pattern handles the legitimate cases (allowlist entries without Ktor handlers) without false positives.
+### The Spec Was Surgical
+`v0.8-THE-AUDIT-SPEC.md` specified exact file paths, line numbers, before/after code blocks, and acceptance criteria for every change. This eliminated ambiguity — implementation was mostly mechanical. Each fix took less time than finding it.
 
-### Shell Smoke Tests Are Low-Ceremony, High-Value
-No test framework, no dependencies, just curl + grep. The emulator smoke test runs in seconds and catches content regressions that no unit test can. The `check_contains` / `check_header` helpers make it easy to add new checks.
+### Suspend Migration Was Smoother Than Expected
+Converting `TimeLimitStore`/`WatchTimeProvider`/`TimeLimitManager` from blocking to suspend touched 33 tests and 8 source files. The compiler guided every callsite. `runTest {}` was a drop-in wrapper. No runtime surprises.
 
-### Debug Intents Made Auth Testing Possible
-The emulator smoke test authenticates by getting the PIN via `DEBUG_GET_PIN` intent, then exercises the full auth → API flow. Without the debug intent system from v0.2, the smoke test would have to skip all authenticated endpoints.
+### Relay Assets as Symlinks Solved Copy Drift Permanently
+Previous versions manually copied dashboard files between `tv-app/app/src/main/assets/` and `relay/assets/`. The v0.8 parity test and symlink approach means divergence is now impossible — there's literally one copy of each file.
+
+### 26 Durable Object Tests in One Session
+The DO was the most critical untested code. WebSocket connect/disconnect, secret rotation, heartbeat timeout, request bridging — all tested with Miniflare's `runInDurableObject`. Going from 0 to 26 tests gave immediate confidence.
 
 ---
 
 ## What Didn't Go Well
 
-### `curl -sI` Sends HEAD, Ktor Only Handles GET
-The first run of the emulator smoke test failed on all security header checks. `curl -sI` sends a HEAD request, and Ktor's `get("/")` handler doesn't respond to HEAD — returns 405 with no custom headers. Had to switch to `curl -s -D /tmp/headers` which uses GET and captures headers from the response.
+### Relay Allowlist Gap Shipped for 2 Weeks
+The v0.7.0 "The Clock" feature (time controls) was broken on the relay from day one. No test verified that new Ktor routes had matching allowlist entries. The route-alignment test would have caught this in CI, but it didn't exist. This is the single most impactful gap in v0.8.
 
-**Lesson:** Ktor's GET routes don't automatically support HEAD. Use `curl -s -D` to capture headers from a GET request, not `curl -I`.
+**Lesson:** Route alignment is a cross-layer invariant. It needs its own test, not just "we'll remember to update both."
 
-### Multiple ADB Devices Require Explicit Selection
-The smoke test used `$ADB` without `-s emulator-5554`. With the Mi Box listed (even offline), adb refused to pick a device. Had to add a `DEVICE` parameter and wrap adb in a `adb_cmd()` function.
+### `curl -sI` vs Ktor HEAD Support
+The emulator smoke test initially used `curl -sI` (HEAD request) to check security headers. Ktor's GET routes don't support HEAD — returns 405 with no custom headers. Wasted a debug cycle before switching to `curl -s -D`.
 
-**Lesson:** Always parameterize the device in ADB scripts. Never assume a single connected device.
+**Lesson:** Ktor GET routes don't auto-support HEAD. Use `curl -s -D` for header checks.
 
-### Playwright Tests Can't Run in Cloudflare Workers Vitest Pool
-The `test/browser/dashboard.spec.ts` Playwright test was picked up by the workers vitest config, which can't resolve `node:os`. Had to add `test/browser/**` to the exclude list. Playwright tests run via `npx playwright test`, not vitest.
+### Multiple ADB Devices Broke Smoke Test
+The smoke test used `$ADB` without a device selector. With the Mi Box listed (even offline), adb refused to pick a device. Had to add explicit device parameterization.
 
-**Lesson:** Keep browser tests in a directory excluded from the workers vitest config. They use a different runner.
+**Lesson:** Always parameterize the device in ADB scripts.
+
+### Playwright in Workers Vitest Pool
+Playwright's `test/browser/dashboard.spec.ts` was picked up by the Cloudflare Workers vitest config, which can't resolve `node:os`. Had to exclude `test/browser/**`.
+
+**Lesson:** Browser tests and Workers pool tests need separate configs. Keep them in clearly separated directories.
+
+### Dashboard Had No Version/Feature Manifest
+The smoke tests check for specific HTML IDs, JS functions, and CSS selectors — but there's no single source of truth for "what the dashboard must contain." The lists in `deploy-smoke.sh` are manually curated. If someone adds a dashboard section, they need to know to update the smoke test.
+
+**Lesson:** Consider a `DASHBOARD_MANIFEST` constant that both the smoke tests and the code reference.
 
 ---
 
 ## Learnings
 
-1. **Test the artifact, not the source.** Unit tests verify logic, smoke tests verify the assembled product. Both are necessary. The smoke test caught a real gap that existed across 7 minor versions.
+1. **Review-driven releases are efficient.** The spec was 625 lines and covered 16 changes. Implementation took one focused day. The reviews took longer to write than the code took to fix.
 
-2. **Route alignment is a cross-layer concern.** The Ktor server and relay allowlist are in different languages, different repos-within-a-repo, different deploy pipelines. The alignment test is the only thing that bridges them.
+2. **Cross-layer invariants need dedicated tests.** The Ktor ↔ relay allowlist gap existed for 2 weeks because nothing verified the relationship. Route-alignment tests are cheap (34 tests in 12ms) and high-value.
 
-3. **"Known extras" is better than strict 1:1 matching.** The relay allowlist intentionally has entries without Ktor handlers (`GET /api/playlists/:id`, `GET /api/playback`). A strict check would produce false failures. The capped extras list keeps it honest without being brittle.
+3. **Test the artifact, not the source.** Unit tests verify logic. Smoke tests verify the assembled product. Both are necessary. The deploy smoke tests would have caught the missing relay time-controls on first deploy.
 
-4. **Smoke tests should be the last CI step.** They verify the deployed artifact, so they naturally come after build, unit tests, and instrumented tests. The CI runner now reflects this ordering.
+4. **Suspend migration is safe with compiler guidance.** Every callsite that needed updating failed to compile. The Kotlin compiler is effectively a migration tool for blocking → suspend conversions.
+
+5. **Symlinks beat copy-on-change.** For files that must stay identical (dashboard assets), symlinks eliminate the failure mode entirely. The parity test is belt-and-suspenders.
+
+6. **`@Volatile` is the minimum for cross-thread reads.** `PlayEventRecorder` was accessed from 3 threads with no synchronization. `@Volatile` doesn't solve everything, but it prevents stale reads at zero runtime cost.
+
+7. **`MessageDigest.isEqual()` is Java's timing-safe compare.** No external dependency needed. Drop-in replacement for `==` on byte arrays.
 
 ---
 
 ## By the Numbers
 
-- **3 new files** created (2 shell scripts, 1 vitest)
-- **3 files modified** (ci-run.sh, vitest.config.ts, CLAUDE.md)
-- **34 route-alignment tests** added
-- **30 emulator smoke checks** per run
-- **~25 relay smoke checks** per run
-- **218 total relay vitest tests** (was 184)
-- **2 bugs found during smoke test development** (HEAD vs GET, multi-device ADB)
+- **50 files** changed
+- **16 findings** resolved (5 Tier 1, 11 Tier 2)
+- **189 new tests** (83 TV unit + 79 relay vitest + 27 Playwright)
+- **560 total tests** (was 371)
+- **33 tests** migrated from blocking to `runTest`
+- **0 new features** — purely correctness and hardening
+- **4 independent reviews** drove the spec
+- **2 weeks** the relay allowlist gap existed before detection
 - **1 haiku** — tradition holds

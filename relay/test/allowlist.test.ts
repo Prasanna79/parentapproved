@@ -48,6 +48,30 @@ describe("allowlist", () => {
     it("allows GET /api/status", () => {
       expect(isAllowed("/api/status", "GET")).toEqual({ allowed: true });
     });
+
+    it("allows GET /api/time-limits", () => {
+      expect(isAllowed("/api/time-limits", "GET")).toEqual({ allowed: true });
+    });
+
+    it("allows PUT /api/time-limits", () => {
+      expect(isAllowed("/api/time-limits", "PUT")).toEqual({ allowed: true });
+    });
+
+    it("allows POST /api/time-limits/lock", () => {
+      expect(isAllowed("/api/time-limits/lock", "POST")).toEqual({ allowed: true });
+    });
+
+    it("allows POST /api/time-limits/bonus", () => {
+      expect(isAllowed("/api/time-limits/bonus", "POST")).toEqual({ allowed: true });
+    });
+
+    it("allows POST /api/time-limits/request", () => {
+      expect(isAllowed("/api/time-limits/request", "POST")).toEqual({ allowed: true });
+    });
+
+    it("blocks DELETE on /api/time-limits", () => {
+      expect(isAllowed("/api/time-limits", "DELETE")).toEqual({ allowed: false, reason: "method_not_allowed" });
+    });
   });
 
   describe("blocked paths", () => {
@@ -78,7 +102,7 @@ describe("allowlist", () => {
       expect(isAllowed("/api/playlists", "CONNECT")).toEqual({ allowed: false, reason: "method_not_allowed" });
     });
 
-    it("blocks PUT method", () => {
+    it("blocks PUT on non-time-limits endpoints", () => {
       expect(isAllowed("/api/playlists", "PUT")).toEqual({ allowed: false, reason: "method_not_allowed" });
     });
 

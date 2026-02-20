@@ -16,6 +16,9 @@ interface PlaylistCacheDao {
     @Query("DELETE FROM videos WHERE playlistId = :playlistId")
     suspend fun deleteByPlaylist(playlistId: String)
 
+    @Query("DELETE FROM videos")
+    suspend fun deleteAll()
+
     @Query("SELECT COUNT(*) FROM videos")
     suspend fun count(): Int
 }

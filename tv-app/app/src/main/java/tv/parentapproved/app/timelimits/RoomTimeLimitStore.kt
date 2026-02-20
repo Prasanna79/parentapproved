@@ -1,28 +1,26 @@
 package tv.parentapproved.app.timelimits
 
-import kotlinx.coroutines.runBlocking
 import tv.parentapproved.app.data.cache.TimeLimitConfigEntity
 import tv.parentapproved.app.data.cache.TimeLimitDao
 import java.time.DayOfWeek
 
 /**
  * Bridges TimeLimitStore interface to Room DAO.
- * Uses runBlocking since TimeLimitManager.canPlay() is called synchronously
- * from the UI thread's periodic check. The Room queries are fast (single-row reads).
+ * All methods are suspend — callers must be in a coroutine context.
  */
 class RoomTimeLimitStore(
     private val dao: TimeLimitDao,
 ) : TimeLimitStore {
 
-    override fun getConfig(): TimeLimitConfig? = runBlocking {
-        dao.getConfig()?.toTimeLimitConfig()
+    override suspend fun getConfig(): TimeLimitConfig? {
+        return dao.getConfig()?.toTimeLimitConfig()
     }
 
-    override fun saveConfig(config: TimeLimitConfig) = runBlocking {
+    override suspend fun saveConfig(config: TimeLimitConfig) {
         dao.insertOrUpdate(config.toEntity())
     }
 
-    override fun updateManualLock(locked: Boolean) = runBlocking {
+    override suspend fun updateManualLock(locked: Boolean) {
         // Ensure row exists
         if (dao.getConfig() == null) {
             dao.insertOrUpdate(TimeLimitConfigEntity())
@@ -30,7 +28,7 @@ class RoomTimeLimitStore(
         dao.setManualLock(locked)
     }
 
-    override fun updateBonus(minutes: Int, date: String) = runBlocking {
+    override suspend fun updateBonus(minutes: Int, date: String) {
         if (dao.getConfig() == null) {
             dao.insertOrUpdate(TimeLimitConfigEntity())
         }

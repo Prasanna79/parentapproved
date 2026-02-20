@@ -55,8 +55,7 @@ fun Route.authRoutes(pinManager: PinManager, sessionManager: SessionManager) {
 
         when (val result = pinManager.validate(pin)) {
             is PinResult.Success -> {
-                val token = sessionManager.createSession()
-                call.respond(HttpStatusCode.OK, AuthResponse(success = true, token = token))
+                call.respond(HttpStatusCode.OK, AuthResponse(success = true, token = result.token))
             }
             is PinResult.Invalid -> {
                 call.respond(HttpStatusCode.Unauthorized, AuthResponse(

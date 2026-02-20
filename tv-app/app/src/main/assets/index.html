@@ -7,11 +7,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="/assets/favicon.svg">
-    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="icon" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="app">
+        <div id="offline-banner" class="offline-banner hidden">
+            <span>TV is not connected. Make sure your TV is powered on, connected to WiFi, and Remote Access is enabled in the TV app Settings.</span>
+        </div>
+
+        <div id="version-banner" class="version-banner hidden">
+            <span>Your TV app needs updating. Please update ParentApproved on your TV.</span>
+        </div>
+
         <div id="auth-screen">
             <h1><svg class="logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#22A559"/><path d="M20 33.4L12 25.4L14.8 22.6L20 27.8L33.2 14.6L36 17.4Z" fill="#fff"/></svg> ParentApproved.tv</h1>
             <p>Enter the PIN shown on your TV</p>
@@ -159,11 +167,11 @@
                 <p>Worldwide: donate to a Buddhist charity near you.</p>
             </footer>
 
-            <footer class="local-notice">
+            <footer id="local-notice" class="local-notice">
                 <p>This dashboard is local-only (same WiFi). To access from anywhere, enable Remote Access in the TV app Settings.</p>
             </footer>
         </div>
     </div>
-    <script src="/assets/app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
