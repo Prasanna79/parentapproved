@@ -96,6 +96,21 @@ cd marketing/landing-page && npx wrangler pages deploy . --project-name parentap
 - Use `/adb` slash command or full path: `/opt/homebrew/share/android-commandlinetools/platform-tools/adb`
 - Mi Box: `-s 192.168.0.101:5555` | Emulator: `-s emulator-5554`
 
+## Deploy Verification (Required)
+
+Every release must pass all verification layers before it's considered deployed:
+
+1. **Unit tests**: `cd tv-app && ./gradlew testDebugUnitTest`
+2. **Instrumented tests**: `cd tv-app && ./gradlew connectedDebugAndroidTest`
+3. **Relay tests** (includes route-alignment): `cd relay && npx vitest run`
+4. **Playwright browser tests**: `cd relay && npx playwright test`
+5. **Emulator deploy smoke**: `bash tv-app/scripts/deploy-smoke.sh` (app must be running)
+6. **Relay deploy smoke**: `bash relay/test/deploy-smoke.sh <RELAY_URL>`
+
+**When adding dashboard features**: parity test + Playwright + both deploy smokes must pass
+**When adding API routes**: update `relay/src/allowlist.ts` + route-alignment test must pass
+**No deploy is complete until smoke tests pass on the running artifact**
+
 ## Moldable Development — Friction-Driven
 - **Friction log**: `docs/friction-log.md` — updated during every bug fix or investigation
 - **Before reading code** for a bug/question, note what question you're answering

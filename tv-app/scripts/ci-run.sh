@@ -14,7 +14,7 @@ RED='\033[0;31m'
 YELLOW='\033[0;33m'
 NC='\033[0m'
 
-echo "=== ParentApproved V0.2.1 CI ==="
+echo "=== ParentApproved CI ==="
 echo "Project dir: $PROJECT_DIR"
 echo ""
 
@@ -82,6 +82,27 @@ sleep 5
 echo ""
 echo -e "${YELLOW}--- Step 6: Automated UI Tests ---${NC}"
 "$SCRIPT_DIR/ui-test.sh"
+
+# Step 7: Deploy smoke test (emulator)
+echo ""
+echo -e "${YELLOW}--- Step 7: Deploy Smoke Test (Emulator) ---${NC}"
+"$SCRIPT_DIR/deploy-smoke.sh"
+echo -e "${GREEN}Deploy smoke passed!${NC}"
+
+# Step 8: Relay tests (including route-alignment)
+echo ""
+echo -e "${YELLOW}--- Step 8: Relay Tests ---${NC}"
+RELAY_DIR="$(cd "$PROJECT_DIR/../relay" && pwd)"
+cd "$RELAY_DIR"
+npx vitest run
+echo -e "${GREEN}Relay tests passed!${NC}"
+
+# Step 9: Playwright browser tests
+echo ""
+echo -e "${YELLOW}--- Step 9: Playwright Browser Tests ---${NC}"
+cd "$RELAY_DIR"
+npx playwright test
+echo -e "${GREEN}Playwright tests passed!${NC}"
 
 echo ""
 echo -e "${GREEN}=== All CI steps passed! ===${NC}"
