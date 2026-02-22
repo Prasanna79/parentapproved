@@ -99,7 +99,8 @@ jobs:
             --test tv-app/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
             --device model=MediumPhone.arm,version=34 \
             --timeout 5m \
-            --no-record-video
+            --no-record-video \
+            --project ${{ secrets.GCP_PROJECT_ID }}
 
       # --- Create GitHub Release ---
       - name: Create GitHub Release
