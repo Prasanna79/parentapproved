@@ -35,9 +35,28 @@ jobs:
         working-directory: tv-app
         run: ./gradlew testDebugUnitTest
 
-      - name: Build debug APK
+      - name: Build debug + test APKs
         working-directory: tv-app
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug assembleDebugAndroidTest
+
+      # --- Firebase Test Lab ---
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run instrumented tests on Firebase Test Lab
+        run: |
+          gcloud firebase test android run \
+            --type instrumentation \
+            --app tv-app/app/build/outputs/apk/debug/app-debug.apk \
+            --test tv-app/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
+            --device model=MediumPhone.arm,version=34 \
+            --timeout 5m \
+            --no-record-video
 
   relay:
     name: Relay — Tests
