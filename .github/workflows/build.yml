@@ -58,6 +58,13 @@ jobs:
             --timeout 5m \
             --no-record-video
 
+      - name: Upload debug APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: tv-app/app/build/outputs/apk/debug/app-debug.apk
+
   relay:
     name: Relay — Tests
     runs-on: ubuntu-latest
