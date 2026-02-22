@@ -2,9 +2,8 @@
 .DS_Store
 Thumbs.db
 
-# Node (legacy, removed in v0.2)
+# Node
 node_modules/
-package-lock.json
 npm-debug.log*
 
 # Android build artifacts
@@ -18,9 +17,10 @@ npm-debug.log*
 *.keystore
 *.jks
 
-# Firebase (removed in v0.2)
+# Firebase / GCP
 firebase-debug.log
 **/google-services.json
+*-key.json
 
 # IDE
 .idea/

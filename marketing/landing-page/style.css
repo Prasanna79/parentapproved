@@ -855,75 +855,84 @@ h3 {
   color: white;
 }
 
-.sideload-note {
-  margin-top: 24px;
-  font-size: 0.9rem;
+/* --- Sideload Guide --- */
+.sideload-guide {
+  text-align: left;
+  margin-top: 32px;
+  margin-bottom: 28px;
+}
+
+.sideload-guide h3 {
+  color: white;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.sideload-intro {
   color: #9CA3AF;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.sideload-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.sideload-method {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.sideload-method strong {
+  color: #D1D5DB;
+  font-size: 0.95rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.sideload-method ol {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.sideload-method li {
+  color: #9CA3AF;
+  font-size: 0.85rem;
   line-height: 1.6;
+  padding: 2px 0;
+}
+
+.sideload-method code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: #D1D5DB;
+}
+
+.sideload-note {
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  color: #9CA3AF;
+  line-height: 1.7;
 }
 
 .sideload-note strong {
   color: #D1D5DB;
 }
 
-/* --- Prelaunch Form --- */
-.prelaunch-form {
-  display: flex;
-  gap: 8px;
-  max-width: 420px;
-  margin: 0 auto 24px;
+.sideload-note em {
+  color: #D1D5DB;
 }
-
-.prelaunch-form input[type="email"] {
-  flex: 1;
-  padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-sm);
-  font-size: 1rem;
-  font-family: inherit;
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
-}
-
-.prelaunch-form input[type="email"]::placeholder {
-  color: #9CA3AF;
-}
-
-.prelaunch-form input[type="email"]:focus {
-  outline: none;
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(34, 165, 89, 0.25);
-}
-
-.prelaunch-form .btn-primary {
-  padding: 16px 28px;
-  white-space: nowrap;
-  font-size: 1rem;
-  width: auto;
-  max-width: none;
-  margin-bottom: 0;
-}
-
-@media (max-width: 480px) {
-  .prelaunch-form {
-    flex-direction: column;
-  }
-  .prelaunch-form .btn-primary {
-    width: 100%;
-  }
-}
-
-.notify-message {
-  max-width: 420px;
-  margin: -12px auto 16px;
-  padding: 10px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  text-align: center;
-}
-.notify-success { background: rgba(34, 165, 89, 0.15); color: #6ee7a0; }
-.notify-info { background: rgba(59, 130, 246, 0.15); color: #93bbfd; }
-.notify-error { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
 
 @media (max-width: 768px) {
   .download-section {

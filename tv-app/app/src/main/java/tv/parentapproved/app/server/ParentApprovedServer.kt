@@ -24,7 +24,7 @@ class ParentApprovedServer(private val context: Context, private val port: Int =
     fun start() {
         if (isRunning) return
         server = embeddedServer(Netty, port = port) {
-            configureServer(this)
+            configureServer(this, context)
         }.start(wait = false)
         isRunning = true
         AppLogger.log("Ktor server started on port $port")
@@ -38,7 +38,7 @@ class ParentApprovedServer(private val context: Context, private val port: Int =
     }
 
     companion object {
-        fun configureServer(application: Application) {
+        fun configureServer(application: Application, appContext: Context? = null) {
             application.apply {
                 install(ContentNegotiation) {
                     json(Json {
@@ -74,6 +74,9 @@ class ParentApprovedServer(private val context: Context, private val port: Int =
                     statsRoutes(ServiceLocator.sessionManager, ServiceLocator.database)
                     timeLimitRoutes(ServiceLocator.sessionManager, ServiceLocator.timeLimitManager)
                     statusRoutes(ServiceLocator.sessionManager)
+                    if (appContext != null) {
+                        crashLogRoutes(ServiceLocator.sessionManager, appContext)
+                    }
                     dashboardRoutes()
                 }
             }

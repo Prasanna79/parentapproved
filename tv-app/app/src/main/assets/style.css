@@ -569,3 +569,21 @@ section {
     color: #4B5563;
     font-size: 0.8em;
 }
+
+.dashboard-footer {
+    margin-top: 32px;
+    padding: 16px 12px;
+    text-align: center;
+    color: #6B7280;
+    font-size: 0.8em;
+    border-top: 1px solid #E5E7EB;
+}
+.dashboard-footer a { color: #22A559; text-decoration: none; }
+.dashboard-footer a:hover { text-decoration: underline; }
+.version-line { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
+.update-badge { background: #F59E0B; color: #fff; font-size: 0.75em; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.charityware-text { margin-top: 8px; }
+
+.crash-log { background: #1F2937; color: #F3F4F6; padding: 12px; border-radius: 8px; font-size: 0.75em; max-height: 200px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+.btn-small { margin-top: 8px; padding: 4px 12px; font-size: 0.8em; background: #374151; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.btn-small:hover { background: #4B5563; }

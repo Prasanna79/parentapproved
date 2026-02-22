@@ -23,6 +23,7 @@ data class StatusResponse(
 data class PublicStatusResponse(
     val version: String,
     val serverRunning: Boolean,
+    val protocolVersion: Int = BuildConfig.PROTOCOL_VERSION,
 )
 
 @Serializable

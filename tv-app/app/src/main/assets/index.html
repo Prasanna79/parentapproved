@@ -160,11 +160,19 @@
                 <ul id="recent-list"></ul>
             </section>
 
-            <footer class="charityware">
-                <p>ParentApproved.tv is free, forever.</p>
-                <p>If it's been useful to your family, consider supporting loving-kindness meditation.</p>
-                <p>India: <a href="https://mettavipassana.org/donate" target="_blank" rel="noopener">mettavipassana.org/donate</a></p>
-                <p>Worldwide: donate to a Buddhist charity near you.</p>
+            <section id="crash-section" class="hidden">
+                <h2>Last Crash</h2>
+                <pre id="crash-log" class="crash-log"></pre>
+                <button id="copy-crash" class="btn-small">Copy to clipboard</button>
+            </section>
+
+            <footer class="dashboard-footer">
+                <p class="version-line">
+                    <span id="footer-version"></span>
+                    <span id="update-badge" class="update-badge hidden">Update available</span>
+                </p>
+                <p><a id="feedback-link" href="mailto:hello@parentapproved.tv">Report a problem</a></p>
+                <p class="charityware-text">ParentApproved.tv is free, forever. <a href="https://mettavipassana.org/donate" target="_blank" rel="noopener">Support loving-kindness meditation</a></p>
             </footer>
 
             <footer id="local-notice" class="local-notice">

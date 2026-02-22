@@ -42,6 +42,9 @@ const KTOR_ROUTES: [string, string, string][] = [
   ["POST", "/api/time-limits/lock", "Manual lock/unlock"],
   ["POST", "/api/time-limits/bonus", "Grant bonus time"],
   ["POST", "/api/time-limits/request", "Kid requests more time"],
+
+  // CrashLogRoutes.kt
+  ["GET", "/api/crash-log", "Crash log"],
 ];
 
 // All allowlist entries (method + example path) — derived from allowlist.ts ALLOWED_ROUTES
@@ -63,6 +66,7 @@ const ALLOWLIST_ENTRIES: [string, string, string][] = [
   ["POST", "/api/time-limits/lock", "lock"],
   ["POST", "/api/time-limits/bonus", "bonus"],
   ["POST", "/api/time-limits/request", "time request"],
+  ["GET", "/api/crash-log", "crash log"],
 ];
 
 // Allowlist entries that exist in the relay but don't have dedicated Ktor handlers yet.

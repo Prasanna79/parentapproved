@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/tv-app"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      media3:
+        patterns:
+          - "androidx.media3:*"
+      ktor:
+        patterns:
+          - "io.ktor:*"
+      compose:
+        patterns:
+          - "androidx.compose*"
+      room:
+        patterns:
+          - "androidx.room:*"
+
+  - package-ecosystem: "npm"
+    directory: "/relay"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/marketing/landing-page"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/marketing/notify-digest"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

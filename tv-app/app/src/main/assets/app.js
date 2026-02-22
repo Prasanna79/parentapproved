@@ -533,6 +533,63 @@
         document.getElementById('edit-limits-modal').classList.add('hidden');
     };
 
+    // --- Version footer + feedback ---
+    var footerVersion = document.getElementById('footer-version');
+    var updateBadge = document.getElementById('update-badge');
+    var feedbackLink = document.getElementById('feedback-link');
+    var crashSection = document.getElementById('crash-section');
+    var crashLog = document.getElementById('crash-log');
+    var copyCrashBtn = document.getElementById('copy-crash');
+
+    function updateVersionFooter(version) {
+        if (footerVersion) footerVersion.textContent = 'v' + version;
+        if (feedbackLink) {
+            feedbackLink.href = 'mailto:hello@parentapproved.tv?subject='
+                + encodeURIComponent('[ParentApproved v' + version + '] Feedback')
+                + '&body=' + encodeURIComponent('Device: \nIssue: \n\n');
+        }
+    }
+
+    async function checkUpdateAvailable(version) {
+        try {
+            var resp = await fetch('https://parentapproved.tv/version.json');
+            if (resp.ok) {
+                var data = await resp.json();
+                if (data.latestCode && data.latest) {
+                    var current = parseInt(version.replace(/[^0-9]/g, ''));
+                    if (data.latestCode > current && updateBadge) {
+                        updateBadge.textContent = 'Update: v' + data.latest;
+                        updateBadge.classList.remove('hidden');
+                    }
+                }
+            }
+        } catch (err) {
+            // Best-effort
+        }
+    }
+
+    async function loadCrashLog() {
+        try {
+            var result = await apiCall('GET', '/crash-log');
+            if (result.status === 200 && result.data.hasCrash) {
+                if (crashSection) crashSection.classList.remove('hidden');
+                if (crashLog) crashLog.textContent = result.data.log;
+            }
+        } catch (err) {
+            // Best-effort
+        }
+    }
+
+    if (copyCrashBtn) {
+        copyCrashBtn.addEventListener('click', function() {
+            var text = crashLog ? crashLog.textContent : '';
+            navigator.clipboard.writeText(text).then(function() {
+                copyCrashBtn.textContent = 'Copied!';
+                setTimeout(function() { copyCrashBtn.textContent = 'Copy to clipboard'; }, 2000);
+            });
+        });
+    }
+
     // --- Dashboard lifecycle ---
     async function loadDashboard() {
         await refreshToken();
@@ -542,6 +599,17 @@
         loadStatus();
         loadTimeLimits();
         checkVersion();
+        loadCrashLog();
+
+        // Set version footer from status
+        try {
+            var statusResult = await apiCall('GET', '/status');
+            if (statusResult.status === 200 && statusResult.data.version) {
+                updateVersionFooter(statusResult.data.version);
+                checkUpdateAvailable(statusResult.data.version);
+            }
+        } catch (err) {}
+
         setPollingRate(120000);
     }
 

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -14,13 +16,28 @@ android {
         applicationId = "tv.parentapproved.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 11
-        versionName = "0.8.0"
+        versionCode = 12
+        versionName = "0.9.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "RELAY_URL", "\"https://relay.parentapproved.tv\"")
         buildConfigField("int", "PROTOCOL_VERSION", "1")
+        buildConfigField("String", "VERSION_CHECK_URL", "\"https://parentapproved.tv/version.json\"")
+    }
+
+    signingConfigs {
+        create("release") {
+            val localProps = rootProject.file("local.properties").let { file ->
+                if (file.exists()) Properties().also { it.load(file.inputStream()) } else Properties()
+            }
+            fun prop(name: String): String? = localProps.getProperty(name) ?: System.getenv(name)
+
+            storeFile = file(prop("RELEASE_STORE_FILE") ?: "nonexistent.keystore")
+            storePassword = prop("RELEASE_STORE_PASSWORD") ?: ""
+            keyAlias = prop("RELEASE_KEY_ALIAS") ?: ""
+            keyPassword = prop("RELEASE_KEY_PASSWORD") ?: storePassword
+        }
     }
 
     buildTypes {
@@ -29,6 +46,7 @@ android {
         }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             buildConfigField("Boolean", "IS_DEBUG", "false")
         }
     }
@@ -130,6 +148,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("androidx.room:room-testing:$roomVersion")
