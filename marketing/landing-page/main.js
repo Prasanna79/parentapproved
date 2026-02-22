@@ -43,50 +43,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // --- Notify Me form ---
-  var form = document.getElementById('notify-form');
-  if (form) {
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var emailInput = document.getElementById('notify-email');
-      var btn = document.getElementById('notify-btn');
-      var msg = document.getElementById('notify-message');
-      var email = emailInput.value.trim();
-
-      btn.disabled = true;
-      btn.textContent = 'Sending...';
-      msg.style.display = 'none';
-
-      fetch('/api/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email }),
+  // --- Version info from version.json ---
+  var versionEl = document.getElementById('version-info');
+  if (versionEl) {
+    fetch('/version.json')
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        versionEl.textContent = 'v' + data.latest + ' — ' + data.releaseNotes;
       })
-        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
-        .then(function (result) {
-          if (!result.ok) {
-            showMessage(msg, result.data.error || 'Something went wrong.', 'error');
-          } else if (result.data.status === 'already_subscribed') {
-            showMessage(msg, "You're already on the list. We'll be in touch!", 'info');
-          } else {
-            showMessage(msg, "You're in! We'll email you when it's ready.", 'success');
-            emailInput.value = '';
-          }
-        })
-        .catch(function () {
-          showMessage(msg, 'Network error. Please try again.', 'error');
-        })
-        .finally(function () {
-          btn.disabled = false;
-          btn.textContent = 'Notify Me';
-        });
-    });
-  }
-
-  function showMessage(el, text, type) {
-    el.textContent = text;
-    el.className = 'notify-message notify-' + type;
-    el.style.display = 'block';
+      .catch(function () {
+        versionEl.textContent = '';
+      });
   }
 
 });

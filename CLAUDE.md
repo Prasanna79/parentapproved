@@ -5,7 +5,7 @@ Android TV app for kid-safe YouTube viewing. Parents manage content sources from
 
 **Website:** [parentapproved.tv](https://parentapproved.tv)
 
-## Architecture (v0.6)
+## Architecture (v0.8)
 - **TV app** (`tv-app/`): Kotlin, Jetpack Compose, ExoPlayer, Ktor embedded server
 - **Phone dashboard**: HTML/CSS/JS served from tv-app assets via Ktor on port 8080
 - **Relay** (`relay/`): Cloudflare Workers + Durable Objects for remote access
@@ -82,15 +82,15 @@ cd marketing/landing-page && npx wrangler pages deploy . --project-name parentap
 - **Dashboard sync**: Local (`tv-app/app/src/main/assets/`) and relay (`relay/assets/`) copies must be updated together
 - **Package**: `tv.parentapproved.app` (renamed from `com.kidswatch.tv` in v0.4.1)
 
-## Test Summary (v0.7.1)
+## Test Summary (v0.8)
 | Suite | Count | Runner |
 |-------|-------|--------|
-| TV unit tests | 194 | `./gradlew testDebugUnitTest` |
+| TV unit tests | 290 | `./gradlew testDebugUnitTest` |
 | TV instrumented | 19 | `./gradlew connectedDebugAndroidTest` |
-| Relay tests | 139 | `cd relay && npx vitest run` |
+| Relay tests | 218 | `cd relay && npx vitest run` |
 | Landing page tests | 10 | `cd marketing/landing-page && npx vitest run` |
 | Digest worker tests | 9 | `cd marketing/notify-digest && npx vitest run` |
-| **Total** | **371** | |
+| **Total** | **546** | |
 
 ## ADB
 - Use `/adb` slash command or full path: `/opt/homebrew/share/android-commandlinetools/platform-tools/adb`
@@ -119,9 +119,29 @@ Every release must pass all verification layers before it's considered deployed:
 - **Reference designs**: `v-future-MOLDABLE-DEV-SPEC.md` has pre-designed domain objects (ResolutionAttempt, PlaybackSession, ParentAction, WatchableContent) — pull from this menu when friction justifies it
 - **Don't pre-build** — let real debugging pain drive what gets built
 
+## Distribution (v0.9+)
+- **Sideload only** (no Play Store). F-Droid if demand warrants it
+- **License**: open source forever, charityware (mettavipassana.org)
+- **APK hosting**: GitHub Releases (stable URL: `/releases/latest/download/ParentApproved.apk`)
+- **Update check**: `version.json` on parentapproved.tv, app checks on startup + every 24h
+- **Signing key**: release keystore in 1Password + GitHub Actions secret + cold USB backup. NEVER commit the keystore or passwords. Local builds read from `local.properties`, CI reads from env vars
+- **versionCode**: MUST increment on every APK distributed to anyone. Android refuses to install a lower versionCode over a higher one
+- **Release build**: `cd tv-app && ./gradlew assembleRelease` (requires signing config)
+
+## CI/CD
+- **Repo**: `https://github.com/Prasanna79/parentapproved`
+- **GitHub Actions**: `build.yml` (every push/PR), `release.yml` (manual trigger for releases)
+- **`release.yml` pipeline**: build → sign → Firebase Test Lab → GitHub Release → auto-update `version.json` → deploy landing page
+- **Firebase Test Lab**: instrumented tests run in `release.yml` before GitHub Release is created
+- **Dependabot**: `.github/dependabot.yml` monitors Gradle + npm dependencies weekly
+- **Anti-cloud clarification**: the app is local-first (no cloud accounts required from users). Dev infrastructure (GitHub, Cloudflare, Firebase Test Lab) is fair game
+
 ## What NOT to Do
-- Don't add Firebase or any cloud dependencies — this is local-first by design
+- Don't add cloud dependencies **to the app** — parents and kids should never need a cloud account
 - Don't use YouTube embed URLs (Error 152 in WebView)
 - Don't use WebView for Google sign-in (blocked by Google)
 - Don't use `HOME` as a variable name in shell scripts
 - Don't map D-pad Left/Right to playlist skip — it breaks ExoPlayer's controller navigation
+- Don't commit the release keystore or its passwords
+- Don't ship an APK without incrementing versionCode
+- Don't bump `PROTOCOL_VERSION` without relay supporting both current and previous version for 30 days

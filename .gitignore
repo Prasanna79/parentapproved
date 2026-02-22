@@ -18,9 +18,10 @@ npm-debug.log*
 *.keystore
 *.jks
 
-# Firebase (removed in v0.2)
+# Firebase / GCP
 firebase-debug.log
 **/google-services.json
+*-key.json
 
 # IDE
 .idea/

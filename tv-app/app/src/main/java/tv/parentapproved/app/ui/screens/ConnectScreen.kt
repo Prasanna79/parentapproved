@@ -292,14 +292,27 @@ fun ConnectScreen(onBack: () -> Unit = {}) {
                         Text("Back", color = KidText, fontWeight = FontWeight.SemiBold)
                     }
 
-                    if (BuildConfig.IS_DEBUG) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Update-available banner
+                    if (ServiceLocator.isInitialized() && ServiceLocator.updateChecker.isUpdateAvailable) {
+                        val latest = ServiceLocator.updateChecker.latestVersion
                         Text(
-                            text = "v${BuildConfig.VERSION_NAME}-debug",
+                            text = "Update available: v${latest?.latest} — visit parentapproved.tv",
                             style = MaterialTheme.typography.bodySmall,
-                            color = KidTextDim,
+                            color = StatusWarning,
+                            fontWeight = FontWeight.SemiBold,
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
                     }
+
+                    // Version (always shown)
+                    val versionSuffix = if (BuildConfig.IS_DEBUG) "-debug" else ""
+                    Text(
+                        text = "v${BuildConfig.VERSION_NAME}$versionSuffix",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = KidTextDim,
+                    )
                 }
             }
 

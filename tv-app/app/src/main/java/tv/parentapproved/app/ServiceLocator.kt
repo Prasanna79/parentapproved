@@ -21,6 +21,7 @@ object ServiceLocator {
     lateinit var relayConfig: RelayConfig
     lateinit var relayConnector: RelayConnector
     lateinit var timeLimitManager: TimeLimitManager
+    lateinit var updateChecker: UpdateChecker
 
     private var initialized = false
     private lateinit var relayPrefs: SharedPreferences
@@ -63,6 +64,9 @@ object ServiceLocator {
             store = timeLimitStore,
             watchTimeProvider = watchTimeProvider,
         )
+
+        updateChecker = UpdateChecker()
+        updateChecker.startPeriodicCheck()
 
         initialized = true
     }

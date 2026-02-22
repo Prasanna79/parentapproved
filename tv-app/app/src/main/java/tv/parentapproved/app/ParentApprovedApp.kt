@@ -16,6 +16,10 @@ class ParentApprovedApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        CrashHandler.install(this)
+        if (CrashHandler.hasCrashLog(this)) {
+            AppLogger.log("Previous crash detected — crash log available via /api/crash-log")
+        }
         NewPipe.init(NewPipeDownloader.instance)
         ServiceLocator.init(this)
         // Only connect relay if user has enabled remote access
