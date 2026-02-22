@@ -5,7 +5,7 @@ Android TV app for kid-safe YouTube viewing. Parents manage content sources from
 
 **Website:** [parentapproved.tv](https://parentapproved.tv)
 
-## Architecture (v0.8)
+## Architecture (v0.9)
 - **TV app** (`tv-app/`): Kotlin, Jetpack Compose, ExoPlayer, Ktor embedded server
 - **Phone dashboard**: HTML/CSS/JS served from tv-app assets via Ktor on port 8080
 - **Relay** (`relay/`): Cloudflare Workers + Durable Objects for remote access
@@ -82,15 +82,17 @@ cd marketing/landing-page && npx wrangler pages deploy . --project-name parentap
 - **Dashboard sync**: Local (`tv-app/app/src/main/assets/`) and relay (`relay/assets/`) copies must be updated together
 - **Package**: `tv.parentapproved.app` (renamed from `com.kidswatch.tv` in v0.4.1)
 
-## Test Summary (v0.8)
+## Test Summary (v0.9)
 | Suite | Count | Runner |
 |-------|-------|--------|
-| TV unit tests | 290 | `./gradlew testDebugUnitTest` |
+| TV unit tests | 302 | `./gradlew testDebugUnitTest` |
 | TV instrumented | 19 | `./gradlew connectedDebugAndroidTest` |
-| Relay tests | 218 | `cd relay && npx vitest run` |
+| Relay tests | 220 | `cd relay && npx vitest run` |
 | Landing page tests | 10 | `cd marketing/landing-page && npx vitest run` |
 | Digest worker tests | 9 | `cd marketing/notify-digest && npx vitest run` |
-| **Total** | **546** | |
+| **Total** | **560** | |
+
+**Quick runner**: `bash tv-app/scripts/ci-run.sh [suite]` — runs everything by default. Valid suites: `unit`, `instrumented`, `relay`, `landing`, `intent`, `ui`, `smoke`.
 
 ## ADB
 - Use `/adb` slash command or full path: `/opt/homebrew/share/android-commandlinetools/platform-tools/adb`
@@ -131,8 +133,10 @@ Every release must pass all verification layers before it's considered deployed:
 ## CI/CD
 - **Repo**: `https://github.com/Prasanna79/parentapproved`
 - **GitHub Actions**: `build.yml` (every push/PR), `release.yml` (manual trigger for releases)
-- **`release.yml` pipeline**: build → sign → Firebase Test Lab → GitHub Release → auto-update `version.json` → deploy landing page
-- **Firebase Test Lab**: instrumented tests run in `release.yml` before GitHub Release is created
+- **`build.yml` pipeline**: unit tests → debug build → Firebase Test Lab (19 instrumented tests) → relay tests → upload debug APK artifact
+- **`release.yml` pipeline**: unit tests → relay tests → sign APK → Firebase Test Lab → GitHub Release → auto-update `version.json` → deploy landing page
+- **Firebase Test Lab**: uses **debug APK** (not release) — DebugReceiver needs `IS_DEBUG=true`. Custom results bucket (`$PROJECT_ID-test-results`). Service account needs `roles/editor`. Cost: ~$0.08/run
+- **Firebase Test Lab setup**: enable both `testing.googleapis.com` and `toolresults.googleapis.com`. Use `--project` and `--results-bucket` flags explicitly
 - **Dependabot**: `.github/dependabot.yml` monitors Gradle + npm dependencies weekly
 - **Anti-cloud clarification**: the app is local-first (no cloud accounts required from users). Dev infrastructure (GitHub, Cloudflare, Firebase Test Lab) is fair game
 
@@ -145,3 +149,6 @@ Every release must pass all verification layers before it's considered deployed:
 - Don't commit the release keystore or its passwords
 - Don't ship an APK without incrementing versionCode
 - Don't bump `PROTOCOL_VERSION` without relay supporting both current and previous version for 30 days
+- Don't use release APK for Firebase Test Lab — use debug APK (DebugReceiver checks `IS_DEBUG`)
+- Don't gitignore `package-lock.json` — CI needs it for `npm ci` and cache
+- Don't claim "known bug" without a documentation link — provide evidence or say "not sure"
