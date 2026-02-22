@@ -82,7 +82,7 @@ cd marketing/landing-page && npx wrangler pages deploy . --project-name parentap
 - **Dashboard sync**: Local (`tv-app/app/src/main/assets/`) and relay (`relay/assets/`) copies must be updated together
 - **Package**: `tv.parentapproved.app` (renamed from `com.kidswatch.tv` in v0.4.1)
 
-## Test Summary (v0.9)
+## Test Summary (v0.9.2)
 | Suite | Count | Runner |
 |-------|-------|--------|
 | TV unit tests | 302 | `./gradlew testDebugUnitTest` |
@@ -90,9 +90,10 @@ cd marketing/landing-page && npx wrangler pages deploy . --project-name parentap
 | Relay tests | 220 | `cd relay && npx vitest run` |
 | Landing page tests | 10 | `cd marketing/landing-page && npx vitest run` |
 | Digest worker tests | 9 | `cd marketing/notify-digest && npx vitest run` |
-| **Total** | **560** | |
+| Playwright deploy smoke | 11 | `bash tv-app/scripts/ci-run.sh playwright-smoke` |
+| **Total** | **571** | |
 
-**Quick runner**: `bash tv-app/scripts/ci-run.sh [suite]` — runs everything by default. Valid suites: `unit`, `instrumented`, `relay`, `landing`, `intent`, `ui`, `smoke`.
+**Quick runner**: `bash tv-app/scripts/ci-run.sh [suite]` — runs everything by default. Valid suites: `unit`, `instrumented`, `relay`, `landing`, `intent`, `ui`, `smoke`, `playwright-smoke`.
 
 ## ADB
 - Use `/adb` slash command or full path: `/opt/homebrew/share/android-commandlinetools/platform-tools/adb`
@@ -107,7 +108,8 @@ Every release must pass all verification layers before it's considered deployed:
 3. **Relay tests** (includes route-alignment): `cd relay && npx vitest run`
 4. **Playwright browser tests**: `cd relay && npx playwright test`
 5. **Emulator deploy smoke**: `bash tv-app/scripts/deploy-smoke.sh` (app must be running)
-6. **Relay deploy smoke**: `bash relay/test/deploy-smoke.sh <RELAY_URL>`
+6. **Playwright deploy smoke**: `bash tv-app/scripts/ci-run.sh playwright-smoke` (works on release APK — no debug intents needed)
+7. **Relay deploy smoke**: `bash relay/test/deploy-smoke.sh <RELAY_URL>`
 
 **When adding dashboard features**: parity test + Playwright + both deploy smokes must pass
 **When adding API routes**: update `relay/src/allowlist.ts` + route-alignment test must pass
@@ -152,3 +154,6 @@ Every release must pass all verification layers before it's considered deployed:
 - Don't use release APK for Firebase Test Lab — use debug APK (DebugReceiver checks `IS_DEBUG`)
 - Don't gitignore `package-lock.json` — CI needs it for `npm ci` and cache
 - Don't claim "known bug" without a documentation link — provide evidence or say "not sure"
+- Don't do bulk uiautomator dumps while expecting Ktor to stay responsive — multiple dumps kill the embedded server. Restart app after dumps if you need HTTP access
+- Don't create new Playwright pages per test when talking to Ktor via adb forward — share a single page. New TCP connections get dropped
+- Don't use `page.request.get()` against Ktor via adb forward — use in-page `fetch()` to reuse the existing connection
