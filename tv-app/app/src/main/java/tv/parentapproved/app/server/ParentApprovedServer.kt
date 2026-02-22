@@ -1,6 +1,7 @@
 package tv.parentapproved.app.server
 
 import android.content.Context
+import tv.parentapproved.app.BuildConfig
 import tv.parentapproved.app.ServiceLocator
 import tv.parentapproved.app.util.AppLogger
 import io.ktor.http.*
@@ -49,7 +50,11 @@ class ParentApprovedServer(private val context: Context, private val port: Int =
                 }
 
                 install(CORS) {
-                    anyHost()
+                    // Restrict CORS to known origins: local dashboard and official relay.
+                    // (anyHost() is too permissive for production)
+                    allowHost("localhost:8080")
+                    allowHost("relay.parentapproved.tv", schemes = listOf("https"))
+
                     allowMethod(HttpMethod.Get)
                     allowMethod(HttpMethod.Post)
                     allowMethod(HttpMethod.Put)
@@ -60,9 +65,14 @@ class ParentApprovedServer(private val context: Context, private val port: Int =
 
                 install(StatusPages) {
                     exception<Throwable> { call, cause ->
+                        val errorMessage = if (BuildConfig.IS_DEBUG) {
+                            cause.message ?: "Unknown error"
+                        } else {
+                            "An unexpected error occurred"
+                        }
                         call.respond(
                             HttpStatusCode.InternalServerError,
-                            mapOf("error" to (cause.message ?: "Unknown error"))
+                            mapOf("error" to errorMessage)
                         )
                     }
                 }

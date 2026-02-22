@@ -1,6 +1,6 @@
 {
-  "latest": "0.9.0",
-  "latestCode": 12,
+  "latest": "0.9.1",
+  "latestCode": 13,
   "url": "https://github.com/Prasanna79/parentapproved/releases/latest/download/ParentApproved.apk",
-  "releaseNotes": "Friends and family release: crash visibility, update checks, sideload guide"
+  "releaseNotes": "Security polish and public documentation"
 }
