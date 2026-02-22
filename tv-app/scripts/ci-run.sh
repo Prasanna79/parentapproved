@@ -88,6 +88,16 @@ run_smoke() {
     echo -e "${GREEN}Deploy smoke passed!${NC}"
 }
 
+run_playwright_smoke() {
+    echo -e "${YELLOW}--- Playwright Deploy Smoke Test ---${NC}"
+    ensure_emulator
+    cd "$SCRIPT_DIR"
+    npm install --silent
+    npx playwright install chromium --with-deps 2>/dev/null || npx playwright install chromium
+    npx playwright test --config playwright-smoke.config.ts
+    echo -e "${GREEN}Playwright smoke passed!${NC}"
+}
+
 echo "=== ParentApproved CI === (suite: $SUITE)"
 echo ""
 
@@ -99,6 +109,7 @@ case "$SUITE" in
     intent)       run_intent ;;
     ui)           run_ui ;;
     smoke)        run_smoke ;;
+    playwright-smoke) run_playwright_smoke ;;
     all)
         run_unit
         echo ""
@@ -116,6 +127,8 @@ case "$SUITE" in
         echo ""
         run_smoke
         echo ""
+        run_playwright_smoke
+        echo ""
         run_relay
         echo ""
         run_landing
@@ -124,7 +137,7 @@ case "$SUITE" in
         ;;
     *)
         echo -e "${RED}Unknown suite: $SUITE${NC}"
-        echo "Usage: $0 [unit|instrumented|relay|landing|intent|ui|smoke|all]"
+        echo "Usage: $0 [unit|instrumented|relay|landing|intent|ui|smoke|playwright-smoke|all]"
         exit 1
         ;;
 esac

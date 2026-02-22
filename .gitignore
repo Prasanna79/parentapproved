@@ -33,5 +33,9 @@ firebase-debug.log
 # Debug screenshots (local only)
 debug-images/
 
+# Playwright smoke test deps & artifacts
+tv-app/scripts/node_modules/
+tv-app/scripts/test-results/
+
 # Claude Code
 .claude/
