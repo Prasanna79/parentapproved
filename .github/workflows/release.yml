@@ -62,7 +62,7 @@ jobs:
 
       # --- Decode signing key ---
       - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > tv-app/release.keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > tv-app/app/release.keystore
 
       # --- Build release APK ---
       - name: Build release APK
