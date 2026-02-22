@@ -57,7 +57,8 @@ jobs:
             --device model=MediumPhone.arm,version=34 \
             --timeout 5m \
             --no-record-video \
-            --project ${{ secrets.GCP_PROJECT_ID }}
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --results-bucket=${{ secrets.GCP_PROJECT_ID }}-test-results
 
       - name: Upload debug APK
         if: always()
