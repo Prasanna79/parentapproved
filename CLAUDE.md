@@ -93,7 +93,15 @@ cd marketing/landing-page && npx wrangler pages deploy . --project-name parentap
 | Playwright deploy smoke | 11 | `bash tv-app/scripts/ci-run.sh playwright-smoke` |
 | **Total** | **571** | |
 
-**Quick runner**: `bash tv-app/scripts/ci-run.sh [suite]` — runs everything by default. Valid suites: `unit`, `instrumented`, `relay`, `landing`, `intent`, `ui`, `smoke`, `playwright-smoke`.
+**Quick runner**: `bash tv-app/scripts/ci-run.sh [suite]` — Valid suites: `unit`, `instrumented`, `relay`, `landing`, `digest`, `intent`, `ui`, `smoke`, `playwright-smoke`, `verify`, `all`.
+
+## Mandatory Test Gate
+
+**Before ANY merge, dependency upgrade, or release, run:**
+```bash
+bash tv-app/scripts/ci-run.sh verify
+```
+This runs ALL automated tests (unit + instrumented + relay + landing + digest = 560 tests). It requires an emulator but does NOT require the app to be launched. There are no exceptions — do not skip suites or decide which tests are "relevant". If `verify` passes, proceed. If it fails, fix before merging.
 
 ## ADB
 - Use `/adb` slash command or full path: `/opt/homebrew/share/android-commandlinetools/platform-tools/adb`
@@ -103,9 +111,13 @@ cd marketing/landing-page && npx wrangler pages deploy . --project-name parentap
 
 Every release must pass all verification layers before it's considered deployed:
 
-1. **Unit tests**: `cd tv-app && ./gradlew testDebugUnitTest`
-2. **Instrumented tests**: `cd tv-app && ./gradlew connectedDebugAndroidTest`
-3. **Relay tests** (includes route-alignment): `cd relay && npx vitest run`
+### Step 1: Mandatory test gate (automated, no app launch needed)
+```bash
+bash tv-app/scripts/ci-run.sh verify
+```
+Runs: unit (302) + instrumented (19) + relay (220) + landing (10) + digest (9) = **560 tests**
+
+### Step 2: Deploy smoke tests (requires running app)
 4. **Playwright browser tests**: `cd relay && npx playwright test`
 5. **Emulator deploy smoke**: `bash tv-app/scripts/deploy-smoke.sh` (app must be running)
 6. **Playwright deploy smoke**: `bash tv-app/scripts/ci-run.sh playwright-smoke` (works on release APK — no debug intents needed)

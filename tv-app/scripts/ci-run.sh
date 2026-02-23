@@ -2,7 +2,8 @@
 # ParentApproved — Full CI runner
 # Usage: ./scripts/ci-run.sh [suite]
 #   No args = run everything
-#   unit | instrumented | relay | landing | intent | ui | smoke = run one suite
+#   verify = mandatory gate (all automated tests, no running app needed)
+#   unit | instrumented | relay | landing | digest | intent | ui | smoke = run one suite
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -65,6 +66,13 @@ run_landing() {
     echo -e "${GREEN}Landing page tests passed!${NC}"
 }
 
+run_digest() {
+    echo -e "${YELLOW}--- Digest Worker Tests ---${NC}"
+    cd "$REPO_DIR/marketing/notify-digest"
+    npx vitest run
+    echo -e "${GREEN}Digest worker tests passed!${NC}"
+}
+
 run_intent() {
     echo -e "${YELLOW}--- Intent + HTTP Tests ---${NC}"
     ensure_emulator
@@ -106,10 +114,26 @@ case "$SUITE" in
     instrumented) run_instrumented ;;
     relay)        run_relay ;;
     landing)      run_landing ;;
+    digest)       run_digest ;;
     intent)       run_intent ;;
     ui)           run_ui ;;
     smoke)        run_smoke ;;
     playwright-smoke) run_playwright_smoke ;;
+    verify)
+        # Mandatory gate: ALL automated tests. Must pass before any merge or release.
+        # Requires emulator running. Does NOT require the app to be launched.
+        run_unit
+        echo ""
+        run_instrumented
+        echo ""
+        run_relay
+        echo ""
+        run_landing
+        echo ""
+        run_digest
+        echo ""
+        echo -e "${GREEN}=== VERIFY PASSED — all mandatory tests green ===${NC}"
+        ;;
     all)
         run_unit
         echo ""
@@ -133,11 +157,13 @@ case "$SUITE" in
         echo ""
         run_landing
         echo ""
+        run_digest
+        echo ""
         echo -e "${GREEN}=== All CI steps passed! ===${NC}"
         ;;
     *)
         echo -e "${RED}Unknown suite: $SUITE${NC}"
-        echo "Usage: $0 [unit|instrumented|relay|landing|intent|ui|smoke|playwright-smoke|all]"
+        echo "Usage: $0 [unit|instrumented|relay|landing|digest|intent|ui|smoke|playwright-smoke|verify|all]"
         exit 1
         ;;
 esac
