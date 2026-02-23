@@ -37,7 +37,7 @@ import org.junit.Test
 class RelayBridgeIntegrationTest {
 
     companion object {
-        private lateinit var server: ApplicationEngine
+        private lateinit var server: EmbeddedServer<*, *>
         private var serverPort: Int = 0
         private val sessionManager = SessionManager()
         private val pinManager = PinManager(
@@ -67,7 +67,7 @@ class RelayBridgeIntegrationTest {
                 ParentApprovedServer.configureServer(this)
             }.start(wait = false)
 
-            serverPort = runBlocking { server.resolvedConnectors().first().port }
+            serverPort = runBlocking { server.engine.resolvedConnectors().first().port }
         }
 
         @JvmStatic

@@ -8,7 +8,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
+import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -75,7 +75,7 @@ fun Route.authRoutes(pinManager: PinManager, sessionManager: SessionManager) {
     }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.validateSession(sessionManager: SessionManager): Boolean {
+suspend fun RoutingContext.validateSession(sessionManager: SessionManager): Boolean {
     val authHeader = call.request.header("Authorization")
     val token = authHeader?.removePrefix("Bearer ")
         ?: call.request.cookies["session"]

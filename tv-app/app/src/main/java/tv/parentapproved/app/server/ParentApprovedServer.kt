@@ -17,7 +17,7 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
 
 class ParentApprovedServer(private val context: Context, private val port: Int = 8080) {
-    private var server: ApplicationEngine? = null
+    private var server: EmbeddedServer<*, *>? = null
 
     var isRunning: Boolean = false
         private set
