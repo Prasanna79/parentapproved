@@ -79,6 +79,14 @@ android {
     }
 }
 
+// Force kotlinx-coroutines 1.8.1 — Compose BOM 2026.02 pulls 1.9.0 which removed
+// internal APIs that Ktor 2.3.7 uses (LockFreeLinkedListHead). Remove when upgrading Ktor to 3.x.
+configurations.all {
+    resolutionStrategy.force("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    resolutionStrategy.force("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.1")
+    resolutionStrategy.force("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+}
+
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2026.02.00")
     implementation(composeBom)
