@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.0",
+    "@cloudflare/vitest-pool-workers": "^0.12.14",
     "@cloudflare/workers-types": "^4.20260228.0",
     "@playwright/test": "^1.58.2",
     "typescript": "^5.7.0",
