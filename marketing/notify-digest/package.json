@@ -12,6 +12,6 @@
   },
   "dependencies": {
     "mimetext": "^3.0.28",
-    "resend": "^6.9.2"
+    "resend": "^6.9.3"
   }
 }
