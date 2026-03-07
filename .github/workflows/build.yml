@@ -3,8 +3,20 @@ name: Build & Test
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - 'marketing/**'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - 'marketing/**'
+      - 'LICENSE'
+      - '.gitignore'
 
 jobs:
   tv-app:
