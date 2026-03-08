@@ -108,7 +108,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Desugaring (needed by NewPipeExtractor)
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
 
     // NewPipe Extractor
     implementation("com.github.teamnewpipe:NewPipeExtractor:v0.25.2")
