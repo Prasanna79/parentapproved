@@ -7,11 +7,11 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "vitest": "^4.0.18",
-    "wrangler": "^4.0.0"
+    "vitest": "^4.1.0",
+    "wrangler": "^4.73.0"
   },
   "dependencies": {
     "mimetext": "^3.0.28",
-    "resend": "^6.9.2"
+    "resend": "^6.9.3"
   }
 }

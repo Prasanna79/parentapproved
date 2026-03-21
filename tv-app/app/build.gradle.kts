@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "tv.parentapproved.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "tv.parentapproved.app"
@@ -80,11 +80,11 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2026.02.00")
+    val composeBom = platform("androidx.compose:compose-bom:2026.02.01")
     implementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.activity:activity-compose:1.12.4")
 
     // Compose
     implementation("androidx.compose.ui:ui")
@@ -108,7 +108,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Desugaring (needed by NewPipeExtractor)
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
 
     // NewPipe Extractor
     implementation("com.github.teamnewpipe:NewPipeExtractor:v0.25.2")
@@ -155,6 +155,6 @@ dependencies {
 
     // Instrumented test dependencies
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
