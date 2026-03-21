@@ -1,13 +1,14 @@
-import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
+import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
+import { defineConfig } from "vitest/config";
 
-export default defineWorkersConfig({
+export default defineConfig({
+  plugins: [
+    cloudflareTest({
+      isolatedStorage: false,
+      wrangler: { configPath: "./wrangler.toml" },
+    }),
+  ],
   test: {
     exclude: ["test/dashboard-parity.test.ts", "test/browser/**", "**/node_modules/**", "**/dist/**"],
-    poolOptions: {
-      workers: {
-        isolatedStorage: false,
-        wrangler: { configPath: "./wrangler.toml" },
-      },
-    },
   },
 });
