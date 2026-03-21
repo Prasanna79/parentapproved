@@ -84,7 +84,7 @@ dependencies {
     implementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.activity:activity-compose:1.12.4")
+    implementation("androidx.activity:activity-compose:1.13.0")
 
     // Compose
     implementation("androidx.compose.ui:ui")
