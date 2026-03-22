@@ -111,7 +111,7 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
 
     // NewPipe Extractor
-    implementation("com.github.teamnewpipe:NewPipeExtractor:v0.25.2")
+    implementation("com.github.teamnewpipe:NewPipeExtractor:v0.26.0")
 
     // Media3 ExoPlayer
     val media3Version = "1.9.2"
