@@ -590,6 +590,130 @@
         });
     }
 
+    // --- Kiosk / Apps management ---
+
+    async function loadKioskConfig() {
+        try {
+            var result = await apiCall('GET', '/apps/kiosk');
+            if (result.status !== 200) return;
+            var data = result.data;
+
+            var section = document.getElementById('kiosk-section');
+            section.classList.remove('hidden');
+
+            var badge = document.getElementById('kiosk-status-badge');
+            var controls = document.getElementById('kiosk-controls');
+            var setupHint = document.getElementById('kiosk-setup-hint');
+            var toggleBtn = document.getElementById('kiosk-toggle-btn');
+            var enforceCheck = document.getElementById('kiosk-enforce-time');
+            var deviceOwnerStatus = document.getElementById('kiosk-device-owner-status');
+
+            setupHint.classList.add('hidden');
+            controls.classList.remove('hidden');
+            deviceOwnerStatus.textContent = data.isDeviceOwner ? '' : 'Launcher mode (no device owner)';
+
+            if (data.kioskEnabled) {
+                badge.textContent = 'Active';
+                badge.className = 'badge st-badge-warning';
+                toggleBtn.textContent = 'Disable Kiosk Mode';
+                toggleBtn.className = 'st-lock-btn-locked';
+            } else {
+                badge.textContent = 'Off';
+                badge.className = 'badge st-badge-allowed';
+                toggleBtn.textContent = 'Enable Kiosk Mode';
+                toggleBtn.className = '';
+            }
+            enforceCheck.checked = data.enforceTimeLimitsOnAllApps;
+
+            loadAppsList();
+        } catch (err) {
+            console.error('Failed to load kiosk config', err);
+        }
+    }
+
+    async function loadAppsList() {
+        try {
+            var result = await apiCall('GET', '/apps');
+            if (result.status !== 200) return;
+            var apps = result.data;
+
+            var card = document.getElementById('apps-list-card');
+            card.classList.remove('hidden');
+            var list = document.getElementById('apps-list');
+            list.innerHTML = '';
+
+            apps.forEach(function(app) {
+                var li = document.createElement('li');
+                li.className = 'app-item';
+                var label = document.createElement('label');
+                label.className = 'app-label';
+                var checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = app.whitelisted;
+                checkbox.onchange = function() {
+                    toggleAppWhitelist(app.packageName, checkbox.checked);
+                };
+                var nameSpan = document.createElement('span');
+                nameSpan.className = 'app-name';
+                nameSpan.textContent = app.displayName;
+                var pkgSpan = document.createElement('span');
+                pkgSpan.className = 'app-pkg';
+                pkgSpan.textContent = app.packageName;
+                label.appendChild(checkbox);
+                label.appendChild(nameSpan);
+                li.appendChild(label);
+                li.appendChild(pkgSpan);
+                list.appendChild(li);
+            });
+        } catch (err) {
+            console.error('Failed to load apps list', err);
+        }
+    }
+
+    window.toggleKiosk = async function() {
+        try {
+            var result = await apiCall('GET', '/apps/kiosk');
+            if (result.status !== 200) return;
+            var currentEnabled = result.data.kioskEnabled;
+            var enforceTime = document.getElementById('kiosk-enforce-time').checked;
+
+            await apiCall('POST', '/apps/kiosk', {
+                enabled: !currentEnabled,
+                enforceTimeLimitsOnAllApps: enforceTime,
+            });
+            loadKioskConfig();
+        } catch (err) {
+            console.error('Failed to toggle kiosk', err);
+        }
+    };
+
+    window.toggleAppWhitelist = async function(packageName, whitelisted) {
+        try {
+            await apiCall('PUT', '/apps/whitelist', {
+                packageName: packageName,
+                whitelisted: whitelisted,
+            });
+        } catch (err) {
+            console.error('Failed to toggle app whitelist', err);
+        }
+    };
+
+    window.updateKioskEnforceTime = async function() {
+        var enforce = document.getElementById('kiosk-enforce-time').checked;
+        try {
+            var result = await apiCall('GET', '/apps/kiosk');
+            if (result.status !== 200) return;
+            if (result.data.kioskEnabled) {
+                await apiCall('POST', '/apps/kiosk', {
+                    enabled: true,
+                    enforceTimeLimitsOnAllApps: enforce,
+                });
+            }
+        } catch (err) {
+            console.error('Failed to update enforce time', err);
+        }
+    };
+
     // --- Dashboard lifecycle ---
     async function loadDashboard() {
         await refreshToken();
@@ -598,6 +722,7 @@
         loadRecent();
         loadStatus();
         loadTimeLimits();
+        loadKioskConfig();
         checkVersion();
         loadCrashLog();
 

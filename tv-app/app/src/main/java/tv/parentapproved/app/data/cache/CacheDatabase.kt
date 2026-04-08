@@ -10,8 +10,8 @@ import tv.parentapproved.app.data.events.PlayEventDao
 import tv.parentapproved.app.data.events.PlayEventEntity
 
 @Database(
-    entities = [VideoEntity::class, PlayEventEntity::class, ChannelEntity::class, TimeLimitConfigEntity::class],
-    version = 4,
+    entities = [VideoEntity::class, PlayEventEntity::class, ChannelEntity::class, TimeLimitConfigEntity::class, KioskConfigEntity::class, WhitelistEntity::class],
+    version = 5,
     exportSchema = false,
 )
 abstract class CacheDatabase : RoomDatabase() {
@@ -19,6 +19,8 @@ abstract class CacheDatabase : RoomDatabase() {
     abstract fun playEventDao(): PlayEventDao
     abstract fun channelDao(): ChannelDao
     abstract fun timeLimitDao(): TimeLimitDao
+    abstract fun kioskDao(): KioskDao
+    abstract fun whitelistDao(): WhitelistDao
 
     companion object {
         @Volatile
@@ -126,6 +128,28 @@ abstract class CacheDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS kiosk_config (
+                        id INTEGER NOT NULL PRIMARY KEY,
+                        kioskEnabled INTEGER NOT NULL DEFAULT 0,
+                        enforceTimeLimitsOnAllApps INTEGER NOT NULL DEFAULT 0
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS app_whitelist (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        package_name TEXT NOT NULL,
+                        display_name TEXT NOT NULL,
+                        whitelisted INTEGER NOT NULL DEFAULT 0,
+                        added_at INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_app_whitelist_package_name ON app_whitelist (package_name)")
+            }
+        }
+
         fun getInstance(context: Context): CacheDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -133,7 +157,7 @@ abstract class CacheDatabase : RoomDatabase() {
                     CacheDatabase::class.java,
                     "parentapproved_cache"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build()
                 INSTANCE = instance
                 instance

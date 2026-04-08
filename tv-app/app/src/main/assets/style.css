@@ -587,3 +587,26 @@ section {
 .crash-log { background: #1F2937; color: #F3F4F6; padding: 12px; border-radius: 8px; font-size: 0.75em; max-height: 200px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
 .btn-small { margin-top: 8px; padding: 4px 12px; font-size: 0.8em; background: #374151; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
 .btn-small:hover { background: #4B5563; }
+
+/* Kiosk / Apps */
+.kiosk-card { background: #1F2937; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.kiosk-status-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.kiosk-hint { font-size: 0.85em; color: #9CA3AF; }
+.kiosk-controls { display: flex; flex-direction: column; gap: 12px; }
+.kiosk-controls button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; background: #22A559; color: #fff; }
+.kiosk-controls button:hover { background: #1D8F4E; }
+.st-lock-btn-locked { background: #EF4444 !important; }
+.st-lock-btn-locked:hover { background: #DC2626 !important; }
+.kiosk-checkbox { display: flex; align-items: center; gap: 8px; color: #D1D5DB; font-size: 0.9em; cursor: pointer; }
+.kiosk-checkbox input { accent-color: #22A559; }
+.kiosk-setup-hint { background: #374151; padding: 12px; border-radius: 8px; color: #F59E0B; font-size: 0.85em; }
+.kiosk-setup-hint code { background: #1F2937; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+.apps-list-card { background: #1F2937; border-radius: 12px; padding: 16px; }
+.apps-list-card h3 { color: #F3F4F6; margin-bottom: 12px; font-size: 1em; }
+.apps-list { list-style: none; }
+.app-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #374151; }
+.app-item:last-child { border-bottom: none; }
+.app-label { display: flex; align-items: center; gap: 10px; color: #F3F4F6; cursor: pointer; font-size: 0.9em; }
+.app-label input { accent-color: #22A559; width: 18px; height: 18px; }
+.app-name { font-weight: 500; }
+.app-pkg { color: #6B7280; font-size: 0.75em; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

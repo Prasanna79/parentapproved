@@ -23,6 +23,9 @@ const ALLOWED_ROUTES: AllowlistEntry[] = [
   { pattern: /^\/api\/time-limits\/bonus$/, methods: ["POST"] },
   { pattern: /^\/api\/time-limits\/request$/, methods: ["POST"] },
   { pattern: /^\/api\/crash-log$/, methods: ["GET"] },
+  { pattern: /^\/api\/apps$/, methods: ["GET"] },
+  { pattern: /^\/api\/apps\/whitelist$/, methods: ["PUT"] },
+  { pattern: /^\/api\/apps\/kiosk$/, methods: ["GET", "POST"] },
 ];
 
 const BLOCKED_METHODS = new Set(["CONNECT", "TRACE", "OPTIONS"]);

@@ -4,6 +4,7 @@ import android.app.Application
 import tv.parentapproved.app.data.ChannelMeta
 import tv.parentapproved.app.data.ContentSourceRepository
 import tv.parentapproved.app.util.AppLogger
+import tv.parentapproved.app.kiosk.HomeWatcherService
 import tv.parentapproved.app.util.NewPipeDownloader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,19 @@ class ParentApprovedApp : Application() {
         // Only connect relay if user has enabled remote access
         if (ServiceLocator.isRelayEnabled()) {
             ServiceLocator.relayConnector.connect()
+        }
+        // Start home watcher if kiosk is enabled (delayed to avoid ANR on slow devices)
+        appScope.launch {
+            try {
+                kotlinx.coroutines.delay(5_000) // Wait for app to fully initialize
+                val config = ServiceLocator.database.kioskDao().getConfig()
+                if (config?.kioskEnabled == true) {
+                    HomeWatcherService.start(this@ParentApprovedApp)
+                    AppLogger.log("Home watcher service started")
+                }
+            } catch (e: Exception) {
+                AppLogger.error("Failed to start home watcher: ${e.message}")
+            }
         }
         // Auto-refresh all sources in background
         appScope.launch {

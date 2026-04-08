@@ -34,6 +34,12 @@
                 <action android:name="tv.parentapproved.app.DEBUG_SET_BEDTIME" />
                 <action android:name="tv.parentapproved.app.DEBUG_CLEAR_BEDTIME" />
                 <action android:name="tv.parentapproved.app.DEBUG_TIME_STATUS" />
+                <!-- Kiosk -->
+                <action android:name="tv.parentapproved.app.DEBUG_KIOSK_STATUS" />
+                <action android:name="tv.parentapproved.app.DEBUG_KIOSK_ENABLE" />
+                <action android:name="tv.parentapproved.app.DEBUG_KIOSK_DISABLE" />
+                <action android:name="tv.parentapproved.app.DEBUG_LIST_APPS" />
+                <action android:name="tv.parentapproved.app.DEBUG_WHITELIST_APP" />
                 <!-- Lifecycle -->
                 <action android:name="tv.parentapproved.app.DEBUG_FULL_RESET" />
                 <action android:name="tv.parentapproved.app.DEBUG_SIMULATE_OFFLINE" />

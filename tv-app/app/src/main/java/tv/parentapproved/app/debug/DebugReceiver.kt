@@ -75,6 +75,13 @@ class DebugReceiver : BroadcastReceiver() {
             "$PKG.DEBUG_CLEAR_BEDTIME" -> handleClearBedtime()
             "$PKG.DEBUG_TIME_STATUS" -> handleTimeStatus()
 
+            // --- Kiosk ---
+            "$PKG.DEBUG_KIOSK_STATUS" -> handleKioskStatus()
+            "$PKG.DEBUG_KIOSK_ENABLE" -> handleKioskEnable()
+            "$PKG.DEBUG_KIOSK_DISABLE" -> handleKioskDisable()
+            "$PKG.DEBUG_LIST_APPS" -> handleListApps(context)
+            "$PKG.DEBUG_WHITELIST_APP" -> handleWhitelistApp(intent)
+
             // --- Lifecycle ---
             "$PKG.DEBUG_FULL_RESET" -> handleFullReset(context)
             "$PKG.DEBUG_SIMULATE_OFFLINE" -> handleSimulateOffline()
@@ -441,6 +448,93 @@ class DebugReceiver : BroadcastReceiver() {
                 val count = ServiceLocator.database.playEventDao().count()
                 ServiceLocator.database.playEventDao().deleteAll()
                 logResult("""{"deleted":$count}""")
+            } catch (e: Exception) {
+                logResult("""{"error":"${e.message}"}""")
+            }
+        }
+    }
+
+    // --- Kiosk handlers ---
+
+    private fun handleKioskStatus() {
+        scope.launch {
+            try {
+                val kiosk = ServiceLocator.kioskManager
+                val config = ServiceLocator.database.kioskDao().getConfig()
+                val whitelisted = ServiceLocator.database.whitelistDao().getWhitelisted()
+                val result = buildJsonObject {
+                    put("isDeviceOwner", kiosk.isDeviceOwner())
+                    put("isLockTaskPermitted", kiosk.isLockTaskPermitted())
+                    put("isInLockTaskMode", kiosk.isInLockTaskMode())
+                    put("kioskEnabled", config?.kioskEnabled ?: false)
+                    put("enforceTimeLimitsOnAllApps", config?.enforceTimeLimitsOnAllApps ?: false)
+                    put("whitelistedCount", whitelisted.size)
+                }
+                logResult(result.toString())
+            } catch (e: Exception) {
+                logResult("""{"error":"${e.message}"}""")
+            }
+        }
+    }
+
+    private fun handleKioskEnable() {
+        scope.launch {
+            try {
+                val kiosk = ServiceLocator.kioskManager
+                val db = ServiceLocator.database
+                val whitelisted = db.whitelistDao().getWhitelisted()
+                kiosk.enableKiosk(db, whitelisted.map { it.packageName })
+                logResult("""{"success":true,"enabled":true}""")
+            } catch (e: Exception) {
+                logResult("""{"error":"${e.message}"}""")
+            }
+        }
+    }
+
+    private fun handleKioskDisable() {
+        scope.launch {
+            try {
+                val kiosk = ServiceLocator.kioskManager
+                val db = ServiceLocator.database
+                kiosk.disableKiosk(db)
+                logResult("""{"success":true,"enabled":false}""")
+            } catch (e: Exception) {
+                logResult("""{"error":"${e.message}"}""")
+            }
+        }
+    }
+
+    private fun handleListApps(context: Context) {
+        scope.launch {
+            try {
+                val kiosk = ServiceLocator.kioskManager
+                val apps = kiosk.getInstalledApps()
+                val result = buildJsonArray {
+                    for (app in apps) {
+                        add(buildJsonObject {
+                            put("packageName", app.packageName)
+                            put("displayName", app.displayName)
+                            put("isSystemApp", app.isSystemApp)
+                        })
+                    }
+                }
+                logResult(result.toString())
+            } catch (e: Exception) {
+                logResult("""{"error":"${e.message}"}""")
+            }
+        }
+    }
+
+    private fun handleWhitelistApp(intent: Intent) {
+        val packageName = intent.getStringExtra("package") ?: run {
+            logResult("""{"error":"missing 'package' extra"}""")
+            return
+        }
+        val whitelisted = intent.getBooleanExtra("whitelisted", true)
+        scope.launch {
+            try {
+                ServiceLocator.database.whitelistDao().setWhitelisted(packageName, whitelisted)
+                logResult("""{"success":true,"package":"$packageName","whitelisted":$whitelisted}""")
             } catch (e: Exception) {
                 logResult("""{"error":"${e.message}"}""")
             }

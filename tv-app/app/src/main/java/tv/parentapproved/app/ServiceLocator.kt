@@ -8,6 +8,7 @@ import tv.parentapproved.app.auth.SharedPrefsPinLockoutPersistence
 import tv.parentapproved.app.auth.SharedPrefsSessionPersistence
 import tv.parentapproved.app.data.cache.CacheDatabase
 import tv.parentapproved.app.data.events.PlayEventRecorder
+import tv.parentapproved.app.kiosk.KioskManager
 import tv.parentapproved.app.relay.RelayConfig
 import tv.parentapproved.app.relay.RelayConnector
 import tv.parentapproved.app.timelimits.RoomTimeLimitStore
@@ -22,6 +23,7 @@ object ServiceLocator {
     lateinit var relayConnector: RelayConnector
     lateinit var timeLimitManager: TimeLimitManager
     lateinit var updateChecker: UpdateChecker
+    lateinit var kioskManager: KioskManager
 
     private var initialized = false
     private lateinit var relayPrefs: SharedPreferences
@@ -68,6 +70,8 @@ object ServiceLocator {
         updateChecker = UpdateChecker()
         updateChecker.startPeriodicCheck()
 
+        kioskManager = KioskManager(context)
+
         initialized = true
     }
 
@@ -91,6 +95,7 @@ object ServiceLocator {
         pin: PinManager,
         session: SessionManager,
         timeLimit: TimeLimitManager? = null,
+        kiosk: KioskManager? = null,
     ) {
         database = db
         pinManager = pin
@@ -111,8 +116,12 @@ object ServiceLocator {
             }
             timeLimitManager = TimeLimitManager(store = noOpStore, watchTimeProvider = noOpWatch)
         }
+        if (kiosk != null) {
+            kioskManager = kiosk
+        }
         initialized = true
     }
 
     fun isInitialized(): Boolean = initialized
+    fun isKioskManagerInitialized(): Boolean = ::kioskManager.isInitialized
 }

@@ -1,6 +1,7 @@
 package tv.parentapproved.app.ui.screens
 
 import android.app.Application
+import android.graphics.drawable.Drawable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import tv.parentapproved.app.ServiceLocator
@@ -28,23 +29,102 @@ data class PlaylistRow(
     val youtubePlaylistId: String get() = sourceId
 }
 
+data class WhitelistedApp(
+    val packageName: String,
+    val displayName: String,
+    val icon: Drawable?,
+)
+
 data class HomeUiState(
     val rows: List<PlaylistRow> = emptyList(),
     val isLoading: Boolean = true,
     val isEmpty: Boolean = false,
+    val kioskEnabled: Boolean = false,
+    val whitelistedApps: List<WhitelistedApp> = emptyList(),
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val db = ServiceLocator.database
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState
+    private var started = false
+    private var lastChannelSignature = ""
 
     fun start() {
+        if (started) return // Prevent duplicate poll loops on re-composition
+        started = true
         loadAndResolve()
+        loadKioskApps()
+        pollForChanges()
     }
 
     fun refresh() {
         loadAndResolve()
+        loadKioskApps()
+    }
+
+    /**
+     * Single poll loop that watches for both content and kiosk config changes.
+     * Runs every 10s. Detects: channels added/removed, kiosk toggled, whitelist changed.
+     */
+    private fun pollForChanges() {
+        viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(10_000)
+
+                // Check content changes: channel list signature (ids + video counts)
+                val channels = db.channelDao().getAll()
+                val sig = channels.joinToString(",") { "${it.id}:${it.videoCount}" }
+                if (sig != lastChannelSignature) {
+                    lastChannelSignature = sig
+                    loadAndResolve()
+                }
+
+                // Check kiosk changes
+                val config = db.kioskDao().getConfig()
+                val shouldBeEnabled = config?.kioskEnabled == true
+                val whitelisted = db.whitelistDao().getWhitelisted()
+                val currentState = _uiState.value
+                if (shouldBeEnabled != currentState.kioskEnabled
+                    || whitelisted.map { it.packageName }.toSet() != currentState.whitelistedApps.map { it.packageName }.toSet()
+                ) {
+                    loadKioskApps()
+                }
+            }
+        }
+    }
+
+    private fun loadKioskApps() {
+        viewModelScope.launch {
+            val config = db.kioskDao().getConfig()
+            if (config?.kioskEnabled != true) {
+                // Kiosk disabled — clear kiosk state
+                _uiState.value = _uiState.value.copy(
+                    kioskEnabled = false,
+                    whitelistedApps = emptyList(),
+                )
+                return@launch
+            }
+
+            val whitelisted = db.whitelistDao().getWhitelisted()
+            val pm = getApplication<Application>().packageManager
+            val apps = whitelisted.map { entity ->
+                val icon = try {
+                    pm.getApplicationIcon(entity.packageName)
+                } catch (e: Exception) {
+                    null
+                }
+                WhitelistedApp(
+                    packageName = entity.packageName,
+                    displayName = entity.displayName,
+                    icon = icon,
+                )
+            }
+            _uiState.value = _uiState.value.copy(
+                kioskEnabled = true,
+                whitelistedApps = apps,
+            )
+        }
     }
 
     private fun loadAndResolve() {

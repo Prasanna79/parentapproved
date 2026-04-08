@@ -45,6 +45,12 @@ const KTOR_ROUTES: [string, string, string][] = [
 
   // CrashLogRoutes.kt
   ["GET", "/api/crash-log", "Crash log"],
+
+  // AppsRoutes.kt
+  ["GET", "/api/apps", "List installed apps"],
+  ["PUT", "/api/apps/whitelist", "Update app whitelist"],
+  ["GET", "/api/apps/kiosk", "Get kiosk config"],
+  ["POST", "/api/apps/kiosk", "Toggle kiosk mode"],
 ];
 
 // All allowlist entries (method + example path) — derived from allowlist.ts ALLOWED_ROUTES
@@ -67,6 +73,10 @@ const ALLOWLIST_ENTRIES: [string, string, string][] = [
   ["POST", "/api/time-limits/bonus", "bonus"],
   ["POST", "/api/time-limits/request", "time request"],
   ["GET", "/api/crash-log", "crash log"],
+  ["GET", "/api/apps", "list apps"],
+  ["PUT", "/api/apps/whitelist", "update whitelist"],
+  ["GET", "/api/apps/kiosk", "get kiosk config"],
+  ["POST", "/api/apps/kiosk", "toggle kiosk"],
 ];
 
 // Allowlist entries that exist in the relay but don't have dedicated Ktor handlers yet.

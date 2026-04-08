@@ -83,6 +83,9 @@ class ParentApprovedServer(private val context: Context, private val port: Int =
                     playbackRoutes(ServiceLocator.sessionManager)
                     statsRoutes(ServiceLocator.sessionManager, ServiceLocator.database)
                     timeLimitRoutes(ServiceLocator.sessionManager, ServiceLocator.timeLimitManager)
+                    if (ServiceLocator.isKioskManagerInitialized()) {
+                        appsRoutes(ServiceLocator.sessionManager, ServiceLocator.kioskManager, ServiceLocator.database)
+                    }
                     statusRoutes(ServiceLocator.sessionManager)
                     if (appContext != null) {
                         crashLogRoutes(ServiceLocator.sessionManager, appContext)

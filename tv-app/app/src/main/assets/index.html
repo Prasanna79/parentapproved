@@ -131,6 +131,27 @@
                 </div>
             </section>
 
+            <section id="kiosk-section" class="hidden">
+                <h2>Apps & Kiosk</h2>
+                <div id="kiosk-card" class="kiosk-card">
+                    <div class="kiosk-status-row">
+                        <span id="kiosk-status-badge" class="badge st-badge-allowed">Off</span>
+                        <span id="kiosk-device-owner-status" class="kiosk-hint"></span>
+                    </div>
+                    <div id="kiosk-controls" class="kiosk-controls hidden">
+                        <button id="kiosk-toggle-btn" onclick="toggleKiosk()">Enable Kiosk Mode</button>
+                        <label class="kiosk-checkbox"><input type="checkbox" id="kiosk-enforce-time" onchange="updateKioskEnforceTime()"> Apply time limits to all apps</label>
+                    </div>
+                    <div id="kiosk-setup-hint" class="kiosk-setup-hint hidden">
+                        Not set up yet. Run <code>setup-kiosk.sh</code> on the TV after factory reset.
+                    </div>
+                </div>
+                <div id="apps-list-card" class="apps-list-card hidden">
+                    <h3>Installed Apps</h3>
+                    <ul id="apps-list" class="apps-list"></ul>
+                </div>
+            </section>
+
             <section id="playlists-section">
                 <h2>Content Sources</h2>
                 <form id="playlist-form">
