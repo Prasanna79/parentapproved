@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "vitest": "^4.1.0",
-    "wrangler": "^4.73.0"
+    "wrangler": "^4.81.1"
   },
   "dependencies": {
     "mimetext": "^3.0.28",
