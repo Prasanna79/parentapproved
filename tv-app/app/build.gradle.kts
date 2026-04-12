@@ -114,7 +114,7 @@ dependencies {
     implementation("com.github.teamnewpipe:NewPipeExtractor:v0.25.2")
 
     // Media3 ExoPlayer
-    val media3Version = "1.9.2"
+    val media3Version = "1.10.0"
     implementation("androidx.media3:media3-exoplayer:$media3Version")
     implementation("androidx.media3:media3-exoplayer-dash:$media3Version")
     implementation("androidx.media3:media3-ui:$media3Version")
