@@ -6,7 +6,7 @@
     "deploy": "wrangler pages deploy . --project-name parentapproved-tv"
   },
   "devDependencies": {
-    "vitest": "^4.1.0",
+    "vitest": "^4.1.4",
     "wrangler": "^4.73.0"
   }
 }
