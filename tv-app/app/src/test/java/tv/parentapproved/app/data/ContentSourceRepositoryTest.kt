@@ -1,11 +1,23 @@
 package tv.parentapproved.app.data
 
+import io.mockk.*
+import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert.*
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
+import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeChannelExtractor
+import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeChannelTabExtractor
+import tv.parentapproved.app.data.cache.CacheDatabase
+import tv.parentapproved.app.data.cache.PlaylistCacheDao
+import tv.parentapproved.app.data.cache.VideoEntity
+import tv.parentapproved.app.util.AppLogger
+import java.io.IOException
 import org.junit.Test
 
 /**
  * Tests for ContentSourceRepository pure functions.
- * Network-dependent methods (resolve) are not tested here.
+ * Extraction failures use mocked extractors; no requests reach YouTube.
  */
 class ContentSourceRepositoryTest {
 
@@ -56,4 +68,64 @@ class ContentSourceRepositoryTest {
         val url = ContentSourceRepository.buildCanonicalUrl("yt_channel", "SomeChannelName")
         assertEquals("https://www.youtube.com/SomeChannelName", url)
     }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
+    }
+
+    @Test
+    fun channelTabFailure_preservesCachedVideos() = runBlocking {
+        val (db, videoDao) = failingChannelDatabase()
+        coEvery { videoDao.getByPlaylist("@CoolChannel") } returns listOf(
+            VideoEntity("video1", "@CoolChannel", "Cached video", "", 60L, 0),
+        )
+
+        val result = ContentSourceRepository.resolveAllChannels(listOf(channelMeta()), db)
+            .getValue("@CoolChannel")
+
+        assertTrue(result is SourceResult.CachedFallback)
+        assertEquals("video1", (result as SourceResult.CachedFallback).videos.single().videoId)
+        coVerify(exactly = 0) { videoDao.deleteByPlaylist(any()) }
+        coVerify(exactly = 0) { videoDao.insertAll(any()) }
+    }
+
+    @Test
+    fun channelTabFailure_withoutCache_reportsError() = runBlocking {
+        val (db, videoDao) = failingChannelDatabase()
+        coEvery { videoDao.getByPlaylist("@CoolChannel") } returns emptyList()
+
+        val result = ContentSourceRepository.resolveAllChannels(listOf(channelMeta()), db)
+            .getValue("@CoolChannel")
+
+        assertTrue(result is SourceResult.Error)
+        assertEquals("Channel tab unavailable", (result as SourceResult.Error).message)
+        coVerify(exactly = 0) { videoDao.deleteByPlaylist(any()) }
+    }
+
+    private fun channelMeta() = ChannelMeta(
+        1L, "yt_channel", "@CoolChannel", "https://www.youtube.com/@CoolChannel", "Cool Channel",
+    )
+
+    private fun failingChannelDatabase(): Pair<CacheDatabase, PlaylistCacheDao> {
+        mockkObject(AppLogger)
+        every { AppLogger.log(any(), any()) } just Runs
+        mockkStatic(NewPipe::class)
+        every { NewPipe.getDownloader() } returns mockk()
+        mockkConstructor(YoutubeChannelExtractor::class, YoutubeChannelTabExtractor::class)
+        every { anyConstructed<YoutubeChannelExtractor>().fetchPage() } just Runs
+        every { anyConstructed<YoutubeChannelExtractor>().name } returns "Cool Channel"
+        val url = "https://www.youtube.com/@CoolChannel/videos"
+        every { anyConstructed<YoutubeChannelExtractor>().tabs } returns listOf(
+            ListLinkHandler(url, url, "@CoolChannel", listOf("videos"), ""),
+        )
+        every { anyConstructed<YoutubeChannelTabExtractor>().fetchPage() } just Runs
+        every { anyConstructed<YoutubeChannelTabExtractor>().initialPage } throws
+            IOException("Channel tab unavailable")
+        val db = mockk<CacheDatabase>()
+        val videoDao = mockk<PlaylistCacheDao>(relaxed = true)
+        every { db.videoDao() } returns videoDao
+        return db to videoDao
+    }
+
 }
