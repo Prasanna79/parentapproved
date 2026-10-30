@@ -9,8 +9,6 @@ import tv.parentapproved.app.util.OfflineSimulator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.ServiceList
-import org.schabi.newpipe.extractor.channel.tabs.ChannelTabExtractor
-import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
 
 private const val MAX_VIDEOS_PER_SOURCE = 200
 
@@ -129,19 +127,34 @@ object ContentSourceRepository {
 
         val videos = mutableListOf<VideoItem>()
 
+        // Let extraction failures reach resolveAllChannels so cached videos are preserved.
         // Channel extractors use tabs — find the Videos tab
-        try {
-            val tabs = extractor.tabs
-            val videosTab = tabs.firstOrNull { tab ->
-                tab.contentFilters.any { it.contains("videos", ignoreCase = true) }
-            } ?: tabs.firstOrNull() // Fall back to first tab
+        val tabs = extractor.tabs
+        val videosTab = tabs.firstOrNull { tab ->
+            tab.contentFilters.any { it.contains("videos", ignoreCase = true) }
+        } ?: tabs.firstOrNull() // Fall back to first tab
 
-            if (videosTab != null) {
-                val tabExtractor = ServiceList.YouTube.getChannelTabExtractor(videosTab)
-                tabExtractor.fetchPage()
+        if (videosTab != null) {
+            val tabExtractor = ServiceList.YouTube.getChannelTabExtractor(videosTab)
+            tabExtractor.fetchPage()
 
-                val initialPage = tabExtractor.initialPage
-                initialPage.items.forEach { item ->
+            val initialPage = tabExtractor.initialPage
+            initialPage.items.forEach { item ->
+                if (videos.size >= MAX_VIDEOS_PER_SOURCE) return@forEach
+                videos.add(VideoItem(
+                    videoId = extractVideoId(item.url),
+                    title = item.name ?: "(no title)",
+                    thumbnailUrl = item.thumbnails?.firstOrNull()?.url ?: "",
+                    durationSeconds = if (item is org.schabi.newpipe.extractor.stream.StreamInfoItem) item.duration else 0L,
+                    playlistId = channelId,
+                    position = videos.size,
+                ))
+            }
+
+            var nextPage = initialPage.nextPage
+            while (nextPage != null && videos.size < MAX_VIDEOS_PER_SOURCE) {
+                val page = tabExtractor.getPage(nextPage)
+                page.items.forEach { item ->
                     if (videos.size >= MAX_VIDEOS_PER_SOURCE) return@forEach
                     videos.add(VideoItem(
                         videoId = extractVideoId(item.url),
@@ -152,26 +165,8 @@ object ContentSourceRepository {
                         position = videos.size,
                     ))
                 }
-
-                var nextPage = initialPage.nextPage
-                while (nextPage != null && videos.size < MAX_VIDEOS_PER_SOURCE) {
-                    val page = tabExtractor.getPage(nextPage)
-                    page.items.forEach { item ->
-                        if (videos.size >= MAX_VIDEOS_PER_SOURCE) return@forEach
-                        videos.add(VideoItem(
-                            videoId = extractVideoId(item.url),
-                            title = item.name ?: "(no title)",
-                            thumbnailUrl = item.thumbnails?.firstOrNull()?.url ?: "",
-                            durationSeconds = if (item is org.schabi.newpipe.extractor.stream.StreamInfoItem) item.duration else 0L,
-                            playlistId = channelId,
-                            position = videos.size,
-                        ))
-                    }
-                    nextPage = page.nextPage
-                }
+                nextPage = page.nextPage
             }
-        } catch (e: Exception) {
-            AppLogger.error("Channel tab extraction failed for $channelId: ${e.message}")
         }
 
         AppLogger.success("Resolved channel $channelId: ${videos.size} videos, title: $channelTitle")
